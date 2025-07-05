@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>FastAPI + Electron</title>
+  <style>
+    .bar-container {
+      width: 300px;
+      height: 20px;
+      background-color: #ddd;
+      border-radius: 5px;
+      margin: 10px 0;
+      overflow: hidden;
+    }
+    .bar-fill {
+      height: 100%;
+      background-color: #4caf50;
+      width: 0%;
+      transition: width 0.1s ease-in-out;
+    }
+    .bar-brake {
+      background-color: #f44336; /* красный для тормоза */
+    }
+  </style>
+</head>
+<body>
+  <h1>Hello from Electron!</h1>
+  <p>Speed: <span id="speed">loading...</span></p>
+
+  <div>
+    <label>Throttle (Gas):</label>
+    <div class="bar-container">
+      <div id="throttle-bar" class="bar-fill"></div>
+    </div>
+  </div>
+
+  <div>
+    <label>Brake:</label>
+    <div class="bar-container">
+      <div id="brake-bar" class="bar-fill bar-brake"></div>
+    </div>
+  </div>
+
+  <script>
+    async function fetchSpeed() {
+      try {
+        const res = await fetch("http://localhost:8000/api/irsdk");
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        const data = await res.json();
+
+        document.getElementById("speed").innerText = data.speed;
+
+        // Обновляем бары газа и тормоза
+        if (data.throttle !== undefined && data.throttle !== null) {
+          document.getElementById("throttle-bar").style.width = data.throttle + "%";
+        }
+        if (data.brake !== undefined && data.brake !== null) {
+          document.getElementById("brake-bar").style.width = data.brake + "%";
+        }
+
+      } catch (e) {
+        document.getElementById("speed").innerText = "Error fetching speed";
+        console.error(e);
+      }
+    }
+
+    // Запускаем обновление
+    setInterval(fetchSpeed, 100);
+
+    // Можно сразу вызвать, чтобы не ждать запуск обновления
+    fetchSpeed();
+  </script>
+</body>
+</html>
