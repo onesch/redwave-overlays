@@ -16,7 +16,6 @@
 ---
 
 ## 🖼️ Screenshot
-xxx
 
 ---
 
