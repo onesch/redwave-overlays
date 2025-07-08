@@ -12,6 +12,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "dotenv": "^17.0.1",
     "tree-kill": "^1.2.2"
   }
 }

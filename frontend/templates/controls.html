@@ -1,0 +1,44 @@
+{% extends "base_popup.html" %}
+
+{% block content %}
+  <h2>Throttle & Brake</h2>
+
+  <div>
+    <label>Throttle:</label>
+    <div class="bar-container">
+      <div id="throttle-bar" class="bar-fill"></div>
+    </div>
+  </div>
+
+  <div>
+    <label>Brake:</label>
+    <div class="bar-container">
+      <div id="brake-bar" class="bar-fill bar-brake"></div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  async function updateData() {
+    try {
+      const res = await fetch('/api/controls');
+      const data = await res.json();
+
+      if (data.throttle !== undefined && data.throttle !== null) {
+        document.getElementById("throttle-bar").style.width = data.throttle + "%";
+      }
+
+      if (data.brake !== undefined && data.brake !== null) {
+        document.getElementById("brake-bar").style.width = data.brake + "%";
+      }
+
+    } catch (e) {
+      console.error("Fetch error:", e);
+    }
+  }
+
+  setInterval(updateData, 100);
+  updateData();
+</script>
+{% endblock %}
