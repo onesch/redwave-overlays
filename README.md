@@ -51,8 +51,8 @@ npm start
 
 ```shell
 .
-├── backend                         # Backend logic of the application (FastAPI, services, routing).
-│   ├── main.py                     # Entry point for the FastAPI application.
+├── backend                        # Backend logic of the application (FastAPI, services, routing).
+│   ├── main.py                    # Entry point for the FastAPI application.
 │   │
 │   ├── routers                    # FastAPI route handlers (API and views separation).
 │   │   ├── apis.py                # API endpoints (typically return JSON).
@@ -60,8 +60,8 @@ npm start
 │   │
 │   └── services                   # Business logic and integrations.
 │       └── irsdk_service          # A service module for interacting with iRacing SDK.
-│           ├── schemas.py        # Pydantic models (used for validation).
-│           └── service.py        # Core logic for communicating with iRSDK.
+│           ├── schemas.py         # Pydantic models (used for validation).
+│           └── service.py         # Core logic for communicating with iRSDK.
 │
 ├── frontend                       # Frontend logic and Electron-related files.
 │   ├── ipc                        # IPC event handlers for communication between renderer and main process.
