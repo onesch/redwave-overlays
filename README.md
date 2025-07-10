@@ -2,6 +2,11 @@
 
 **iRacing Overlays** is a lightweight desktop application built with **Electron** and **FastAPI**, designed to display real-time telemetry from iRacing in transparent overlay windows.
 
+![coverage](https://img.shields.io/badge/coverage-required-red)
+![version](https://img.shields.io/badge/python-3.12.0-blue)
+![version](https://img.shields.io/badge/Node.js-18+-blue)
+![version](https://img.shields.io/badge/Electron-28.1.0-blue)
+
 ---
 
 ## 📦 Features
@@ -20,8 +25,6 @@
 ---
 
 ## 🛠️ Installation
-
-> Requires Python 3.12.0+ and Node.js 18+
 ```bash
 git clone https://github.com/onesch/iracing-overlays.git
 cd iracing-overlays
@@ -33,7 +36,7 @@ pip install -r requirements.txt
 cd frontend
 npm install
 ```
-or install in [releases](https://github.com/onesch/iracing-overlays/releases/tag/publish)
+or install in [releases](https://github.com/onesch/iracing-overlays/releases/tag/publish).
 
 ## 🚀 Usage
 ```bash
@@ -46,11 +49,50 @@ npm start
 
 ## 🗂️ Project Structure
 
----
-
-## 📌 TODO
-
----
+```
+.
+├── backend                         # Backend logic of the application (FastAPI, services, routing).
+│   ├── main.py                     # Entry point for the FastAPI application.
+│   │
+│   ├── routers                    # FastAPI route handlers (API and views separation).
+│   │   ├── apis.py                # API endpoints (typically return JSON).
+│   │   └── views.py               # Page-rendering routes (typically return HTML).
+│   │
+│   └── services                   # Business logic and integrations.
+│       └── irsdk_service          # A service module for interacting with iRacing SDK.
+│           ├── schemas.py        # Pydantic models (used for validation).
+│           └── service.py        # Core logic for communicating with iRSDK.
+│
+├── frontend                       # Frontend logic and Electron-related files.
+│   ├── ipc                        # IPC event handlers for communication between renderer and main process.
+│   │   ├── controlsEvents.js      # Handles events for the "controls" overlay window.
+│   │   └── speedEvents.js         # Handles events for the "speed" overlay window.
+│   │
+│   ├── static                     # Static files served to frontend (CSS/JS).
+│   │   ├── css
+│   │   │   └── styles.css         # Application-wide custom styles.
+│   │   └── js                     # JavaScript files (e.g., client-side logic).
+│   │
+│   ├── templates                  # Jinja2 HTML templates rendered by FastAPI.
+│   │   ├── index.html             # Main entry HTML page.
+│   │   └── overlays               # HTML templates for different overlay windows.
+│   │       ├── base_overlay.html  # Base template for overlays (includes shared layout/styling).
+│   │       ├── controls.html      # Template for the "controls" overlay window.
+│   │       └── speed.html         # Template for the "speed" overlay window.
+│   │
+│   ├── windows                    # Logic for creating and managing Electron windows.
+│   │   ├── layoutWindow.js        # Utility to create overlay windows (with routing support).
+│   │   └── mainWindow.js          # Logic to create and manage the main Electron window.
+│   │
+│   ├── main.js                    # Entry point for Electron main process.
+│   └── preload.js                 # Preload script for securely exposing APIs to renderer.
+│
+├── LICENSE                        # License file for the project.
+├── README.md                      # Project overview and usage instructions.
+├── package-lock.json              # NPM dependency lock file.
+├── package.json                   # NPM project metadata and dependency list.
+└── requirements.txt               # Python dependencies for the backend (used by pip).
+```
 
 ## 🧑‍💻 Contributing
 Pull requests are welcome. Feel free to open issues with suggestions or bug reports.
