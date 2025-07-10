@@ -49,7 +49,7 @@ npm start
 
 ## 🗂️ Project Structure
 
-```
+```shell
 .
 ├── backend                         # Backend logic of the application (FastAPI, services, routing).
 │   ├── main.py                     # Entry point for the FastAPI application.
