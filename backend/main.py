@@ -35,12 +35,12 @@ async def main_window_view(request: Request):
 
 @app.get("/speed", response_class=HTMLResponse)
 async def speed_page(request: Request):
-    return templates.TemplateResponse("speed.html", {"request": request})
+    return templates.TemplateResponse("overlays/speed.html", {"request": request})
 
 
 @app.get("/controls", response_class=HTMLResponse)
 async def controls_page(request: Request):
-    return templates.TemplateResponse("controls.html", {"request": request})
+    return templates.TemplateResponse("overlays/controls.html", {"request": request})
 
 
 # API (для JavaScript)

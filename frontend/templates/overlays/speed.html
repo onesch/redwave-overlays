@@ -1,4 +1,4 @@
-{% extends "base_popup.html" %}
+{% extends "overlays/base_overlay.html" %}
 
 {% block content %}
   <h2>Speed: <span id="speed">loading...</span> km/h</h2>
@@ -8,7 +8,7 @@
 <script>
   async function updateData() {
     try {
-      const res = await fetch("http://localhost:8000/api/speed");
+      const res = await fetch("/api/speed");
       const data = await res.json();
       document.getElementById("speed").innerText = data.speed;
     } catch (e) {

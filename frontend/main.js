@@ -16,6 +16,7 @@ function createWindow(route, options = {}) {
     transparent: options.transparent ?? true,
     frame: options.frame ?? false,
     resizable: options.resizable ?? false,
+    alwaysOnTop: true,
     webPreferences: {
       contextIsolation: true,
       preload: path.join(__dirname, 'preload.js'),
@@ -42,6 +43,17 @@ function createMainWindow() {
   if (!isDev) {
     mainWindow.setMenu(null);
   }
+
+
+  // Открыть DevTools по умолчанию (опционально)
+  // mainWindow.webContents.openDevTools();
+
+  // Добавляем глобальный слушатель клавиши F12
+  mainWindow.webContents.on('before-input-event', (event, input) => {
+    if (input.type === 'keyDown' && input.key === 'F12') {
+      mainWindow.webContents.toggleDevTools();
+    }
+  });
 
   mainWindow.loadURL('http://localhost:8000/main_window');
 
