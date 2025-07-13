@@ -1,9 +1,9 @@
 const { ipcMain } = require('electron');
-const { createLayout } = require('../windows/layoutWindow');
+const { createOverlay } = require('../windows/overlayWindow');
 
 function registerSpeedEvents() {
   ipcMain.on('open-speed', () => {
-    createLayout('speed', {
+    createOverlay('speed', {
       width: 400,
       height: 250,
     });

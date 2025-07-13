@@ -1,0 +1,35 @@
+<nav>
+  <h2>Menu</h2>
+
+  <a href="/main">📰 What's New</a>
+
+  <button class="menu-toggle" onclick="toggleSubmenu()">🧩 Overlays</button>
+  <div id="submenu" class="submenu hidden">
+    <a href="/foo">— Foo</a>
+  </div>
+
+  <a href="/settings">⚙️ Settings</a>
+</nav>
+
+<script>
+  function toggleSubmenu() {
+    const submenu = document.getElementById("submenu");
+    const isHidden = submenu.classList.contains("hidden");
+    if (isHidden) {
+      submenu.classList.remove("hidden");
+      localStorage.setItem("submenu-open", "true");
+    } else {
+      submenu.classList.add("hidden");
+      localStorage.setItem("submenu-open", "false");
+    }
+  }
+
+  // при загрузке страницы
+  window.addEventListener("DOMContentLoaded", () => {
+    const isOpen = localStorage.getItem("submenu-open") === "true";
+    const submenu = document.getElementById("submenu");
+    if (isOpen && submenu) {
+      submenu.classList.remove("hidden");
+    }
+  });
+</script>

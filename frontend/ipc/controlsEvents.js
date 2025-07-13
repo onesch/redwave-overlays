@@ -1,9 +1,9 @@
 const { ipcMain } = require('electron');
-const { createLayout } = require('../windows/layoutWindow');
+const { createOverlay } = require('../windows/overlayWindow');
 
 function registerControlsEvents() {
   ipcMain.on('open-controls', () => {
-    createLayout('controls', {
+    createOverlay('controls', {
       width: 450,
       height: 300,
     });

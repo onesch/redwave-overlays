@@ -1,17 +1,17 @@
 const { BrowserWindow } = require('electron');
 const path = require('path');
 
-const layouts = {}; // Кеш окон
+const overlays = {}; // Кеш окон
 
-function createLayout(route, options = {}) {
+function createOverlay(route, options = {}) {
   // Если окно уже существует и не закрыто, просто фокусируем и возвращаем
-  if (layouts[route] && !layouts[route].isDestroyed()) {
-    layouts[route].focus();
-    return layouts[route];
+  if (overlays[route] && !overlays[route].isDestroyed()) {
+    overlays[route].focus();
+    return overlays[route];
   }
 
   // Создаём новое окно
-  const layout = new BrowserWindow({
+  const overlay = new BrowserWindow({
     width: options.width || 400,
     height: options.height || 300,
     alwaysOnTop: true,
@@ -25,16 +25,16 @@ function createLayout(route, options = {}) {
     ...options.override,
   });
 
-  layout.loadURL(`http://localhost:8000/${route}`);
+  overlay.loadURL(`http://localhost:8000/${route}`);
 
   // При закрытии окна удаляем ссылку из кеша
-  layout.on('closed', () => {
-    delete layouts[route];
+  overlay.on('closed', () => {
+    delete overlays[route];
   });
 
-  layouts[route] = layout;
+  overlays[route] = overlay;
 
-  return layout;
+  return overlay;
 }
 
-module.exports = { createLayout };
+module.exports = { createOverlay };

@@ -13,7 +13,7 @@ function createMainWindow() {
     },
   });
 
-  mainWindow.loadURL('http://localhost:8000/main_window');
+  mainWindow.loadURL('http://localhost:8000/main');
 
   mainWindow.on('closed', () => {
     mainWindow = null;

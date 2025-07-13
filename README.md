@@ -65,18 +65,27 @@ npm start
 │   │
 │   ├── static                     # Static files served to frontend (CSS/JS).
 │   │   ├── css
-│   │   │   └── styles.css         # Application-wide custom styles.
-│   │   └── js                     # JavaScript files (e.g., client-side logic).
+│   │   │   ├── main.css           # Basic application styles.
+│   │   │   └── overlays.css       # Styles specific to overlays.
+│   │   └── js                     # Frontend JavaScript (optional).
 │   │
 │   ├── templates                  # Jinja2 HTML templates rendered by FastAPI.
-│   │   ├── index.html             # Main entry HTML page.
-│   │   └── overlays               # HTML templates for different overlay windows.
-│   │       ├── base_overlay.html  # Base template for overlays (includes shared layout/styling).
-│   │       ├── controls.html      # Template for the "controls" overlay window.
-│   │       └── speed.html         # Template for the "speed" overlay window.
+│   │   ├── base                   # Base and shared components.
+│   │   │   ├── base.html          # Main template.
+│   │   │   ├── base_overlay.html  # Base template for overlays windows.
+│   │   │   └── sidebar.html       # Sidebar component (included into base.html).
+│   │   │
+│   │   ├── overlays               # HTML templates for different overlay windows.
+│   │   │   ├── controls.html      # Template for the "controls" overlay window.
+│   │   │   └── speed.html         # Template for the "speed" overlay window.
+│   │   │
+│   │   └── pages                  # Sidebar pages rendered in the main application window.
+│   │       ├── foo.html           # Test page.
+│   │       ├── main.html          # Main application page.
+│   │       └── settings.html      # Settings page.
 │   │
 │   ├── windows                    # Logic for creating and managing Electron windows.
-│   │   ├── layoutWindow.js        # Utility to create overlay windows (with routing support).
+│   │   ├── overlayWindow.js        # Utility to create overlay windows (with routing support).
 │   │   └── mainWindow.js          # Logic to create and manage the main Electron window.
 │   │
 │   ├── main.js                    # Entry point for Electron main process.

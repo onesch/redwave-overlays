@@ -1,16 +1,13 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>FastAPI + Electron</title>
-  <link rel="stylesheet" href="../static/css/styles.css">
-</head>
-<body>
-  <!-- Кнопка для открытия popup -->
-  <button id="speedBtn">Speed Window</button>
-  <button id="controlsBtn">Controls Window</button>
+{% extends "base/base.html" %}
+
+{% block title %}Foo Overlay{% endblock %}
+
+{% block content %}
   
   <h1>Hello from Electron!</h1>
+
+  <button id="speedBtn">Speed Window</button>
+  <button id="controlsBtn">Controls Window</button>
 
   <script>
     // Обработчик кнопки (безопасный способ через preload)
@@ -22,5 +19,4 @@
       window.electronAPI.openControls();
     });
   </script>
-</body>
-</html>
+{% endblock %}
