@@ -46,46 +46,40 @@ npm start
 
 ```shell
 .
-├── backend                        # Backend logic of the application (FastAPI, services, routing).
+├── backend/                       # Backend logic of the application (FastAPI, services, routing).
 │   ├── main.py                    # Entry point for the FastAPI application.
 │   │
-│   ├── routers                    # FastAPI route handlers (API and views separation).
+│   ├── routers/                   # FastAPI route handlers (API and views separation).
 │   │   ├── apis.py                # API endpoints (typically return JSON).
 │   │   └── views.py               # Page-rendering routes (typically return HTML).
 │   │
-│   └── services                   # Business logic and integrations.
-│       └── irsdk_service          # A service module for interacting with iRacing SDK.
+│   └── services/                  # Business logic and integrations.
+│       └── irsdk_service/         # A service module for interacting with iRacing SDK.
 │           ├── schemas.py         # Pydantic models (used for validation).
 │           └── service.py         # Core logic for communicating with iRSDK.
 │
-├── frontend                       # Frontend logic and Electron-related files.
-│   ├── ipc                        # IPC event handlers for communication between renderer and main process.
+├── frontend/                      # Frontend logic and Electron-related files.
+│   ├── ipc/                       # IPC event handlers for communication between renderer and main process.
 │   │   ├── controlsEvents.js      # Handles events for the "controls" overlay window.
 │   │   └── speedEvents.js         # Handles events for the "speed" overlay window.
 │   │
-│   ├── static                     # Static files served to frontend (CSS/JS).
-│   │   ├── css
-│   │   │   ├── main.css           # Basic application styles.
-│   │   │   └── overlays.css       # Styles specific to overlays.
-│   │   └── js                     # Frontend JavaScript (optional).
+│   ├── static/                    # Static files served to frontend (CSS/JS).
+│   │   ├── css/                   # Base and overlay-specific styles.
+│   │   ├── images/                # App images.
+│   │   └── js/                    # Frontend JavaScript (optional).
 │   │
-│   ├── templates                  # Jinja2 HTML templates rendered by FastAPI.
-│   │   ├── base                   # Base and shared components.
+│   ├── templates/                 # Jinja2 HTML templates rendered by FastAPI.
+│   │   ├── base/                  # Base and shared components.
 │   │   │   ├── base.html          # Main template.
 │   │   │   ├── base_overlay.html  # Base template for overlays windows.
-│   │   │   └── sidebar.html       # Sidebar component (included into base.html).
+│   │   │   └── navigation.html    # Top navigation cards component (included into base.html).
 │   │   │
-│   │   ├── overlays               # HTML templates for different overlay windows.
-│   │   │   ├── controls.html      # Template for the "controls" overlay window.
-│   │   │   └── speed.html         # Template for the "speed" overlay window.
+│   │   ├── overlays/              # HTML templates for different overlay windows.
 │   │   │
-│   │   └── pages                  # Sidebar pages rendered in the main application window.
-│   │       ├── foo.html           # Test page.
-│   │       ├── main.html          # Main application page.
-│   │       └── settings.html      # Settings page.
+│   │   └── pages/                 # Pages rendered in the main application window.
 │   │
-│   ├── windows                    # Logic for creating and managing Electron windows.
-│   │   ├── overlayWindow.js        # Utility to create overlay windows (with routing support).
+│   ├── windows/                   # Logic for creating and managing Electron windows.
+│   │   ├── overlayWindow.js       # Utility to create overlay windows (with routing support).
 │   │   └── mainWindow.js          # Logic to create and manage the main Electron window.
 │   │
 │   ├── main.js                    # Entry point for Electron main process.

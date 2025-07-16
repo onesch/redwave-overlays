@@ -11,9 +11,14 @@ async def main_view(request: Request):
     return templates.TemplateResponse("pages/main.html", {"request": request})
 
 
-@router.get("/foo", response_class=HTMLResponse)
-async def foo_view(request: Request):
-    return templates.TemplateResponse("pages/foo.html", {"request": request})
+@router.get("/changelog", response_class=HTMLResponse)
+async def changelog_view(request: Request):
+    return templates.TemplateResponse("pages/changelog.html", {"request": request})
+
+
+@router.get("/overlays", response_class=HTMLResponse)
+async def overlays_view(request: Request):
+    return templates.TemplateResponse("pages/overlays.html", {"request": request})
 
 
 @router.get("/settings", response_class=HTMLResponse)

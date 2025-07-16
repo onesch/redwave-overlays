@@ -1,0 +1,15 @@
+{% set current_path = request.url.path %}
+{% if request.url.path != '/main' %}
+  <div class="top-nav">
+    <a href="/main" class="value nav-btn accent-cyan">Main</a>
+    {% if current_path != '/changelog' %}
+    <a href="/changelog" class="value nav-btn accent-yellow">Changelog</a>
+    {% endif %}
+    {% if current_path != '/overlays' %}
+    <a href="/overlays" class="value nav-btn accent-red">See Overlays</a>
+    {% endif %}
+    {% if current_path != '/settings' %}
+    <a href="/settings" class="value nav-btn accent-gray">Settings</a>
+    {% endif %}
+  </div>
+{% endif %}

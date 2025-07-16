@@ -1,9 +1,36 @@
 {% extends "base/base.html" %}
 
-{% block title %}What's New{% endblock %}
+{% block title %}Main{% endblock %}
 
 {% block content %}
-<h1>iRacing Overlays — Version 0.0.0</h1>
-<p>🚀 Now powered by FastAPI + Electron.</p>
-<p>✅ Faster real-time updates.</p>
+<h1>
+  <span>iRacing Overlays</span>
+  <span class="version-text">version 0.0.0</span>
+</h1>
+
+<div class="card-grid">
+  <a href="/changelog" class="card accent-yellow">
+    <div class="card-header">
+      <div class="value">What's new in the app?</div>
+      <span class="card-arrow">↗</span>
+    </div>
+    <div class="title">Changelog</div>
+  </a>
+
+  <a href="/overlays" class="card accent-red">
+    <div class="card-header">
+      <div class="value">Manage your overlays</div>
+      <span class="card-arrow">↗</span>
+    </div>
+    <div class="title">See Overlays</div>
+  </a>
+
+  <a href="/settings" class="card accent-gray">
+    <div class="card-header">
+      <div class="value">App preferences & behavior</div>
+      <span class="card-arrow">↗</span>
+    </div>
+    <div class="title">Settings</div>
+</a>
+</div>
 {% endblock %}
