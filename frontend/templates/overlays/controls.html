@@ -24,7 +24,7 @@
 <script>
   async function updateData() {
     try {
-      const res = await fetch('/api/controls');
+      const res = await fetch("/api/controls");
       const data = await res.json();
 
       if (data.throttle !== undefined && data.throttle !== null) {
