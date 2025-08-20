@@ -9,6 +9,10 @@
 ![version](https://img.shields.io/badge/Node.js-18+-blue)
 ![version](https://img.shields.io/badge/Electron-28.1.0-blue)
 
+## 🖼️ Images
+
+<img width="525" alt="image" src="frontend/static/images/main_window.png" />
+
 ## 📦 Features
 
 - Real-time telemetry for iracing.
@@ -47,50 +51,59 @@ npm start
 
 ```shell
 .
-├── backend/                       # Backend logic of the application (FastAPI, services, routing).
-│   ├── main.py                    # Entry point for the FastAPI application.
+├── backend/                         # FastAPI backend logic.
+│   ├── main.py                      # FastAPI entrypoint.
 │   │
-│   ├── routers/                   # FastAPI route handlers (API and views separation).
-│   │   ├── apis.py                # API endpoints (typically return JSON).
-│   │   └── views.py               # Page-rendering routes (typically return HTML).
+│   ├── routers/                     # API and views.
+│   │   ├── apis.py                  # JSON endpoints.
+│   │   └── views.py                 # HTML routes.
 │   │
-│   └── services/                  # Business logic and integrations.
-│       └── irsdk_service/         # A service module for interacting with iRacing SDK.
-│           ├── schemas.py         # Pydantic models (used for validation).
-│           └── service.py         # Core logic for communicating with iRSDK.
+│   ├── services/                    # Business logic modules.
+│   │   ├── irsdk/                   # iRacing SDK service.
+│   │   │  ├── schemas.py            # Pydantic models (used for validation).
+│   │   │  └── service.py            # SDK interaction.
+│   │   └── radar/                   # Radar overlay logic.
+│   │
+│   └── database                     # Local JSON storage.
+│       ├── card_desc_database.json  # Card descriptions.
+│       ├── data_loader.py           # JSON loader utils.
+│       ├── metadata.json            # General metadata.
+│       └── overlays_settings.json   # Overlay settings.
 │
-├── frontend/                      # Frontend logic and Electron-related files.
-│   ├── ipc/                       # IPC event handlers for communication between renderer and main process.
-│   │   ├── controlsEvents.js      # Handles events for the "controls" overlay window.
-│   │   └── speedEvents.js         # Handles events for the "speed" overlay window.
+├── frontend/                        # Electron frontend app.
+│   ├── ipc/                         # IPC event handlers (for communication between renderer and main process).
+│   │   ├── RadarEvents.js           # Radar window events.
+│   │   └── controlsEvents.js        # Controls window events.
 │   │
-│   ├── static/                    # Static files served to frontend (CSS/JS).
-│   │   ├── css/                   # Base and overlay-specific styles.
-│   │   ├── images/                # App images.
-│   │   └── js/                    # Frontend JavaScript (optional).
+│   ├── static/                      # Static frontend files.
+│   │   ├── css/                     # Base and specific styles.
+│   │   ├── images/                  # Project images.
+│   │   ├── js/                      # Frontend JavaScript (optional).
+│   │   └── video/                   # Project videos.
 │   │
-│   ├── templates/                 # Jinja2 HTML templates rendered by FastAPI.
-│   │   ├── base/                  # Base and shared components.
-│   │   │   ├── base.html          # Main template.
-│   │   │   ├── base_overlay.html  # Base template for overlays windows.
-│   │   │   └── navigation.html    # Top navigation cards component (included into base.html).
-│   │   │
-│   │   ├── overlays/              # HTML templates for different overlay windows.
-│   │   │
-│   │   └── pages/                 # Pages rendered in the main application window.
+│   ├── templates/                   # Jinja2 HTML views.
+│   │   ├── base/                    # Base and shared components/templates.
+│   │   ├── overlays/                # Overlay templates.
+│   │   └── pages/                   # Page templates.
 │   │
-│   ├── windows/                   # Logic for creating and managing Electron windows.
-│   │   ├── overlayWindow.js       # Utility to create overlay windows (with routing support).
-│   │   └── mainWindow.js          # Logic to create and manage the main Electron window.
+│   ├── utils/                       # Frontend utilities.
+│   │   ├── keyboard_protection.js   # Keyboard protection.
+│   │   ├── overlay_position.js      # Control overlay position.
+│   │   ├── overlay_settings.js      # Control Overlay settings.
+│   │   └── overlay_zoom.js          # Control Overlay zoom.
 │   │
-│   ├── main.js                    # Entry point for Electron main process.
-│   └── preload.js                 # Preload script for securely exposing APIs to renderer.
+│   ├── windows/                     # Electron windows logic.
+│   │   ├── overlayWindow.js         # Utility to create overlay windows (with routing support).
+│   │   └── mainWindow.js            # Logic to create and manage the main Electron window.
+│   │
+│   ├── main.js                      # Electron entrypoint.
+│   └── preload.js                   # Secure preload API.
 │
-├── LICENSE                        # License file for the project.
-├── README.md                      # Project overview and usage instructions.
-├── package-lock.json              # NPM dependency lock file.
-├── package.json                   # NPM project metadata and dependency list.
-└── requirements.txt               # Python dependencies for the backend (used by pip).
+├── LICENSE                          # Project license.
+├── README.md                        # Documentation.
+├── package-lock.json                # NPM lock file.
+├── package.json                     # NPM metadata.
+└── requirements.txt                 # Python dependencies (used by pip).
 ```
 
 ## 🧑‍💻 Contributing

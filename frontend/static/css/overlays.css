@@ -1,3 +1,7 @@
+::-webkit-scrollbar {
+  display: none;
+}
+
 .bar-container {
   width: 300px;
   height: 20px;
@@ -9,7 +13,6 @@
 
 .bar-fill {
   height: 100%;
-  background-color: #4caf50;
   width: 0%;
   transition: width 0.1s ease-in-out;
 }
@@ -20,11 +23,93 @@
 
 .overlay-body {
   margin: 0;
+  /* border: 2px solid green; */
   overflow: hidden;
-  background-color: rgba(0, 0, 0, 0.22);
-  border: 2px solid rgb(115, 255, 0);
   color: rgb(255, 255, 255);
   box-sizing: border-box;
   -webkit-app-region: drag;
   user-select: none;
+}
+
+.radar-container {
+  position: relative;
+  width: 260px;
+  height: 260px;
+  margin: 30px auto;
+  border-radius: 50%;
+  overflow: hidden;
+  font-family: system-ui, Arial, sans-serif;
+}
+
+.my-car {
+  position:absolute;
+  top:50%; left:50%;
+  width:20px; height:40px;
+  margin:-20px -10px;
+  background:rgba(255,255,255,0.55);
+  border-radius:4px;
+  box-shadow:0 0 4px rgba(255,255,255,0.35);
+  z-index:3;
+}
+
+.fb-box {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 125px;
+  height: 60px;
+  opacity: 0;
+  transition: opacity 0.08s linear;
+  z-index: 1;
+  border-top-left-radius: 1150px;
+  border-top-right-radius: 1150px;
+}
+
+.fb-box.ahead {
+  top: 70px;
+}
+
+.fb-box.behind {
+  bottom: 70px;
+  transform: translateX(-50%) rotate(180deg);
+}
+
+/* Боковые прямоугольники */
+.side-box {
+  position:absolute;
+  width:22px;
+  height:40px;
+  top:50%;
+  margin-top:-20px;
+  background: rgba(255,0,0,0.55);
+  border-radius:4px;
+  box-shadow:0 0 4px rgba(255,0,0,0.35);
+  opacity:0;
+  transition:top 0.08s linear, opacity 0.08s linear;
+  z-index:2;
+}
+.side-box.left { left:80px; }
+.side-box.right { right:80px; }
+
+.radar-line {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.30);
+  z-index: 1;
+}
+
+.radar-line.horizontal,
+.radar-line.vertical {
+  width: 2px;
+  height: 130px;
+}
+
+.radar-line.horizontal {
+  top: 50%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-50%) rotate(90deg);
+}
+.radar-line.vertical {
+  top: 50%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-50%);
 }

@@ -1,0 +1,104 @@
+{% extends "base/base.html" %} 
+
+{% block title %}Overlays - {{ card_data.title }}{% endblock %}
+
+{% block content %}
+<div class="card-detail-container">
+  <div class="text-column">
+    <h1>
+      <span class="card-detail-title">{{ card_data.title }}</span>
+      <span class="version-text">version {{ radar_version }}</span>
+    </h1>
+    <p class="card-detail-desc">{{ card_data.desc }}</p>
+    <a id="OpenBtn" class="value nav-btn accent-red">Open</a>
+  </div>
+  <div class="video-wrapper" id="videoWrapper">
+    <video autoplay loop muted class="card-detail img" width="360" height="360">
+      <source src="{{ card_data.video }}" type="video/mp4">
+    </video>
+    <div class="play-overlay">▶</div>
+  </div>
+</div>
+
+<!-- Модальное окно -->
+<div id="videoModal" class="modal">
+  <div class="modal-content">
+    <span class="close">&times;</span>
+    <video id="modalVideo" autoplay loop muted></video>
+    <div id="progressContainer">
+      <div id="progressBar"></div>
+    </div>
+  </div>
+</div>
+
+<div class="card-detail-container">
+  <div class="text-column">
+    <h1>
+      <span class="card-detail-title">Settings</span>
+    </h1>
+    <div class="zoom-control">
+      <label for="zoomRange">Zoom: <span id="zoomValue">100%</span></label>
+      <input id="zoomRange" type="range" min="50" max="200" step="10" value="100">
+    </div>
+  </div>
+</div>
+
+<script>
+  const zoomRange = document.getElementById('zoomRange');
+  const zoomValue = document.getElementById('zoomValue');
+  const videoWrapper = document.getElementById('videoWrapper');
+  const videoModal = document.getElementById('videoModal');
+  const modalVideo = document.getElementById('modalVideo');
+  const closeBtn = document.querySelector('.close');
+  const progressBar = document.getElementById('progressBar');
+
+  // При загрузке страницы получаем текущий zoom
+  (async () => {
+    const zoomFactor = await window.electronAPI.getOverlayZoom('radar');
+    const percent = Math.round(zoomFactor * 100);
+    zoomRange.value = percent;
+    zoomValue.textContent = `${percent}%`;
+  })();
+
+  document.getElementById('OpenBtn').addEventListener('click', () => {
+    window.electronAPI.openRadar();
+  });
+
+  zoomRange.addEventListener('input', () => {
+    const percent = zoomRange.value;
+    zoomValue.textContent = `${percent}%`;
+    window.electronAPI.setOverlayZoom('radar', percent / 100);
+  });
+
+  // === Видео модалка ===
+  videoWrapper.addEventListener('click', () => {
+    videoModal.style.display = 'flex';
+    modalVideo.src = "{{ card_data.video }}";
+    modalVideo.currentTime = 0;
+    modalVideo.play();
+  });
+
+  closeBtn.addEventListener('click', () => {
+    modalVideo.pause();
+    modalVideo.src = "";
+    videoModal.style.display = 'none';
+  });
+
+  // Клик по фону закрывает модалку
+  window.addEventListener('click', (e) => {
+    if (e.target === videoModal) {
+      modalVideo.pause();
+      modalVideo.src = "";
+      videoModal.style.display = 'none';
+    }
+  });
+
+  // Прогресс бар
+  modalVideo.addEventListener('timeupdate', () => {
+    const percent = (modalVideo.currentTime / modalVideo.duration) * 100;
+    progressBar.style.width = percent + '%';
+  });
+</script>
+
+<link rel="stylesheet" href="{{ url_for('static', path='/css/card_detail.css') }}">
+{% endblock %}

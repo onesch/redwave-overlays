@@ -1,25 +1,52 @@
-from typing import Any
 import irsdk
+import re
+from typing import Any
 
 
 class IRSDKService:
     def __init__(self):
         self.ir = irsdk.IRSDK()
-        self.ir.startup()
+        self.started = False
+
+
+    def _ensure_connected(self):
+        if not self.started:
+            self.ir.startup()
+            self.started = True
+        elif not self.ir.is_connected:
+            self.ir.shutdown()
+            self.ir.startup()
 
 
     def is_connected(self) -> bool:
-        return self.ir.is_initialized
+        return self.ir.is_initialized and self.ir.is_connected
 
 
     def get_value(self, field: str) -> Any | None:
+        """
+        Универсальный метод получения значения.
+        """
         if not self.is_connected():
             return None
         try:
-            value = self.ir[field]
+            return self.ir[field]
         except KeyError:
             return None
-        return value
+
+
+    def get_track_length_m(self, weekend_info) -> float:
+        if not isinstance(weekend_info, dict):
+            return 0.0
+        tl = weekend_info.get("TrackLength", "")
+        if not tl:
+            return 0.0
+        m = re.match(r"\s*([\d\.]+)\s*(km|mi|m|ft)?", tl, re.IGNORECASE)
+        if not m:
+            return 0.0
+        val = float(m.group(1))
+        unit = (m.group(2) or "m").lower()
+        mult = {"km": 1000.0, "mi": 1609.344, "ft": 0.3048, "m": 1.0}.get(unit, 1.0)
+        return val * mult
 
 
     def get_speed(self, speed_type: str) -> int | None:

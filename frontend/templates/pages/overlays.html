@@ -3,20 +3,15 @@
 {% block title %}Overlays{% endblock %}
 
 {% block content %}
-  
   <h1>Overlays</h1>
+  <p>Choose and customize the overlays.</p>
 
-  <button id="speedBtn">Speed Window</button>
-  <button id="controlsBtn">Controls Window</button>
-
-  <script>
-    // Обработчик кнопки (безопасный способ через preload)
-    document.getElementById('speedBtn').addEventListener('click', () => {
-      window.electronAPI.openSpeed();
-    });
-
-    document.getElementById('controlsBtn').addEventListener('click', () => {
-      window.electronAPI.openControls();
-    });
-  </script>
+  <div class="overlay-catalog-grid">
+      {% for card in cards %}
+        <a href="{{ card.url }}" class="overlay-catalog-card">
+          <img src="{{ card.image }}" alt="{{ card.title }}">
+          <div class="overlay-catalog-card-text">{{ card.title }}</div>
+        </a>
+      {% endfor %}
+  </div>
 {% endblock %}

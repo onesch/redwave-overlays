@@ -1,0 +1,9 @@
+[
+  {
+    "title": "Radar",
+    "desc": "Displays nearby cars, taking into account the front, left, and right sides, as well as the presence of cars on the sides.",
+    "image": "/static/images/radar_icon.png",
+    "video": "/static/video/radar_video.mp4",
+    "url": "/overlays/radar"
+  }
+]

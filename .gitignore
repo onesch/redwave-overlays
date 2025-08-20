@@ -1,6 +1,18 @@
+# System files
 __pycache__/
 node_modules/
+
+# Test file
 test.py
+test.html
+test_v2.py
+test_v2.html
+test_v3_irsdk.py
 TODOLIST.md
 print_tree.py
 asd.py
+video_cut_util.py
+first_radar_code.py
+
+# Сreated by the user
+overlays_settings.json

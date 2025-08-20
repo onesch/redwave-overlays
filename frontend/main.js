@@ -1,11 +1,11 @@
-const { app, ipcMain } = require('electron');
+const { app } = require('electron');
 const { createMainWindow } = require('./windows/mainWindow');
-const registerSpeedEvents = require('./ipc/speedEvents');
+const registerRadarEvents = require('./ipc/radarEvents');
 const registerControlsEvents = require('./ipc/controlsEvents');
 
 app.whenReady().then(() => {
   createMainWindow();
-  registerSpeedEvents();
+  registerRadarEvents();
   registerControlsEvents();
 });
 

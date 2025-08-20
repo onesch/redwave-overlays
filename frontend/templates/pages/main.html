@@ -5,7 +5,7 @@
 {% block content %}
 <h1>
   <span>iRacing Overlays</span>
-  <span class="version-text">version 0.0.0</span>
+  <span class="version-text">version {{ app_verion }}</span>
 </h1>
 
 <div class="card-grid">
@@ -19,7 +19,7 @@
 
   <a href="/overlays" class="card accent-red">
     <div class="card-header">
-      <div class="value">Manage your overlays</div>
+      <div class="value">Choose your overlays</div>
       <span class="card-arrow">↗</span>
     </div>
     <div class="title">See Overlays</div>
@@ -27,7 +27,7 @@
 
   <a href="/settings" class="card accent-gray">
     <div class="card-header">
-      <div class="value">App preferences & behavior</div>
+      <div class="value">Application preferences</div>
       <span class="card-arrow">↗</span>
     </div>
     <div class="title">Settings</div>

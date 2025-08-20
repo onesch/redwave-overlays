@@ -1,0 +1,6 @@
+{
+  "app_version": "1.0.0-dev",
+  "overlays": {
+    "radar": "1.0.0"
+  }
+}
