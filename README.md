@@ -99,6 +99,8 @@ npm start
 │   ├── main.js                      # Electron entrypoint.
 │   └── preload.js                   # Secure preload API.
 │
+├── .gitattributes                   # LFS config.
+├── .gitignore                       # Ignored files.
 ├── LICENSE                          # Project license.
 ├── README.md                        # Documentation.
 ├── package-lock.json                # NPM lock file.
