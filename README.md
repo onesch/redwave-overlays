@@ -2,6 +2,7 @@
 
 **iRacing Overlays** is a lightweight desktop application built with **Electron** and **FastAPI**, designed to display real-time telemetry from iRacing in transparent overlay windows.
 
+![coverage](https://img.shields.io/badge/Version-v1.0.0_dev-blue)
 ![coverage](https://img.shields.io/badge/Coverage-Required-red)
 ![version](https://img.shields.io/badge/CodeClimate-А-42f7c0)
 ![version](https://img.shields.io/badge/Python-3.12.0-blue)
@@ -10,7 +11,7 @@
 
 ## 📦 Features
 
-- Real-time telemetry (speed, throttle, brake, etc.).
+- Real-time telemetry for iracing.
 - Fast and responsive: no UI lag, updates every 100ms.
 - Transparent always-on-top overlays, styled via HTML/CSS.
 - Backend powered by FastAPI with clean API endpoints.
