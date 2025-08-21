@@ -8,6 +8,7 @@ router = APIRouter(prefix="/api")
 irsdk_service = IRSDKService()
 radar_service = RadarService(irsdk_service)
 
+
 @router.get("/radar")
 def get_radar_data():
     return radar_service.get_radar_json()

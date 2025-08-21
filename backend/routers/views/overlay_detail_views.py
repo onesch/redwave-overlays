@@ -2,7 +2,10 @@ from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
-from backend.database.data_loader import get_card_data_by_title, get_overlay_version
+from backend.database.data_loader import (
+    get_card_data_by_title,
+    get_overlay_version,
+)
 
 
 templates = Jinja2Templates(directory="frontend/templates")
@@ -18,6 +21,6 @@ async def radar_detail_view(request: Request):
         {
             "request": request,
             "card_data": card_data,
-            "radar_version": radar_version
-        }
+            "radar_version": radar_version,
+        },
     )

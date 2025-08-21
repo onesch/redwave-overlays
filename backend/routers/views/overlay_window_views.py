@@ -9,9 +9,13 @@ router = APIRouter()
 
 @router.get("/radar", response_class=HTMLResponse)
 async def radar_window_view(request: Request):
-    return templates.TemplateResponse("overlays/radar.html", {"request": request})
+    return templates.TemplateResponse(
+        "overlays/radar.html", {"request": request}
+    )
 
 
 @router.get("/controls", response_class=HTMLResponse)
 async def controls_window_view(request: Request):
-    return templates.TemplateResponse("overlays/controls.html", {"request": request})
+    return templates.TemplateResponse(
+        "overlays/controls.html", {"request": request}
+    )
