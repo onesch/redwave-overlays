@@ -1,5 +1,7 @@
 from typing import Optional
 
+from backend.services.irsdk.parser import IRSDKParser
+
 
 RED_M = 4.5
 YEL_M = 6.5
@@ -18,6 +20,7 @@ CLR_TWO_RIGHT = 6
 class RadarService:
     def __init__(self, irsdk_service):
         self.irsdk_service = irsdk_service
+        self.irsdk_parser = IRSDKParser(irsdk_service)
 
 
     def _severity_for_dist(self, dist: float | None) -> str:
@@ -48,7 +51,7 @@ class RadarService:
         right_present = clr in (CLR_RIGHT, CLR_TWO_RIGHT, CLR_BOTH)
 
         weekend_info = self.irsdk_service.get_value("WeekendInfo")
-        track_len_m = self.irsdk_service.get_track_length_m(weekend_info)
+        track_len_m = self.irsdk_parser.get_track_length_m(weekend_info)
         if track_len_m <= 0:
             return {"reason": "track_len=0"}
 

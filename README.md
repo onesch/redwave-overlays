@@ -61,7 +61,8 @@ npm start
 │   ├── services/                    # Business logic modules.
 │   │   ├── irsdk/                   # iRacing SDK service.
 │   │   │  ├── schemas.py            # Pydantic models (used for validation).
-│   │   │  └── service.py            # SDK interaction.
+│   │   │  ├── service.py            # Connection logic.
+│   │   │  └── parser.py             # Telemetry parsing.
 │   │   └── radar/                   # Radar overlay logic.
 │   │
 │   └── database                     # Local JSON storage.
@@ -71,7 +72,7 @@ npm start
 │       └── overlays_settings.json   # Overlay settings.
 │
 ├── frontend/                        # Electron frontend app.
-│   ├── ipc/                         # IPC event handlers (for communication between renderer and main process).
+│   ├── ipc/                         # IPC event handlers.
 │   │   ├── RadarEvents.js           # Radar window events.
 │   │   └── controlsEvents.js        # Controls window events.
 │   │
@@ -93,11 +94,13 @@ npm start
 │   │   └── overlay_zoom.js          # Control Overlay zoom.
 │   │
 │   ├── windows/                     # Electron windows logic.
-│   │   ├── overlayWindow.js         # Utility to create overlay windows (with routing support).
-│   │   └── mainWindow.js            # Logic to create and manage the main Electron window.
+│   │   ├── overlayWindow.js         # Utility to create overlay windows.
+│   │   └── mainWindow.js            # Manage main Electron window.
 │   │
 │   ├── main.js                      # Electron entrypoint.
 │   └── preload.js                   # Secure preload API.
+│
+├── tests/                           # Project test cases
 │
 ├── .gitattributes                   # LFS config.
 ├── .gitignore                       # Ignored files.
