@@ -4,12 +4,14 @@ from typing import Any
 
 
 class IRSDKService:
-    def __init__(self):
+    """Service to interact with iRacing SDK"""
+
+    def __init__(self) -> None:
         self.ir = irsdk.IRSDK()
         self.started = False
 
-
-    def _ensure_connected(self):
+    def _ensure_connected(self) -> None:
+        """Ensure IRSDK connection is active"""
         if not self.started:
             self.ir.startup()
             self.started = True
@@ -17,15 +19,12 @@ class IRSDKService:
             self.ir.shutdown()
             self.ir.startup()
 
-
     def is_connected(self) -> bool:
+        """Check if IRSDK is connected"""
         return self.ir.is_initialized and self.ir.is_connected
 
-
     def get_value(self, field: str) -> Any | None:
-        """
-        Универсальный метод получения значения.
-        """
+        """Get any IRSDK field value"""
         if not self.is_connected():
             return None
         try:
@@ -33,8 +32,8 @@ class IRSDKService:
         except KeyError:
             return None
 
-
-    def get_track_length_m(self, weekend_info) -> float:
+    def get_track_length_m(self, weekend_info: dict) -> float:
+        """Parse track length from weekend info"""
         if not isinstance(weekend_info, dict):
             return 0.0
         tl = weekend_info.get("TrackLength", "")
@@ -45,11 +44,13 @@ class IRSDKService:
             return 0.0
         val = float(m.group(1))
         unit = (m.group(2) or "m").lower()
-        mult = {"km": 1000.0, "mi": 1609.344, "ft": 0.3048, "m": 1.0}.get(unit, 1.0)
+        mult = {"km": 1000.0, "mi": 1609.344, "ft": 0.3048, "m": 1.0}.get(
+            unit, 1.0
+        )
         return val * mult
 
-
     def get_speed(self, speed_type: str) -> int | None:
+        """Get speed in specified units"""
         speed_ms = self.get_value("Speed")
         if speed_ms is None:
             return None
@@ -60,19 +61,18 @@ class IRSDKService:
             speed = int(round(speed_ms * 2.23694, 1))
         else:
             speed = None
-
         return speed
 
-
     def get_throttle(self) -> int | None:
+        """Get throttle percentage"""
         throttle = self.get_value("Throttle")
         if throttle is None:
             return None
         throttle_percent = int(max(0, min(throttle * 100, 100)))
         return throttle_percent
 
-
     def get_brake(self) -> int | None:
+        """Get brake percentage"""
         brake = self.get_value("BrakeRaw")
         if brake is None:
             return None
