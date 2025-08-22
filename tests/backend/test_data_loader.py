@@ -31,9 +31,12 @@ def bad_json_file(tmp_path):
         file = tmp_path / name
         file.write_text("{ bad json }", encoding="utf-8")
         return file
+
     return _factory
 
+
 # --- Data tests ---
+
 
 def test_load_cards_data(fake_cards_file):
     cards = data_loader.load_cards_data()
@@ -55,7 +58,9 @@ def test_get_overlay_version(fake_metadata_file):
     assert data_loader.get_overlay_version("overlay1") == "v1"
     assert data_loader.get_overlay_version("overlay2") is None
 
+
 # --- Error tests ---
+
 
 def test_load_cards_file_not_found(tmp_path):
     data_loader.DB_PATH = tmp_path / "missing.json"
