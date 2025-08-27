@@ -1,9 +1,10 @@
 import re
 
 from backend.services.irsdk.service import IRSDKService
+from backend.services.radar.parser import IRadarParser
 
 
-class IRSDKParser:
+class IRSDKParser(IRadarParser):
     """Parse and interpret iRacing telemetry values"""
 
     def __init__(self, service: IRSDKService):

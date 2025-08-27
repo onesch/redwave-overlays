@@ -1,12 +1,12 @@
 import pytest
 from unittest.mock import MagicMock
+
 from backend.services.irsdk.service import IRSDKService
 from backend.services.irsdk.parser import IRSDKParser
 
 
 @pytest.fixture
 def mock_service(monkeypatch):
-    """Mock IRSDKService.ir object to avoid real SDK connection."""
     service = IRSDKService()
     mock_ir = MagicMock()
     mock_ir.is_initialized = True

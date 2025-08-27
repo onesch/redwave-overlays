@@ -1,10 +1,9 @@
 import irsdk
-import re
 from typing import Any
 
 
-class IRSDKService:
-    """Service to interact with iRacing SDK"""
+class IRSDKService():
+    """Low level service to interact with iRacing SDK"""
 
     def __init__(self) -> None:
         self.ir = irsdk.IRSDK()

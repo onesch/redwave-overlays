@@ -1,29 +1,27 @@
 from typing import Optional
 
-from backend.services.irsdk.parser import IRSDKParser
-
-
-RED_M = 4.5
-YEL_M = 6.5
-MAX_SHOW_DIST = 15.0
-SIDE_WINDOW_M = 8.0
-
-CLR_OFF = 0
-CLR_CLEAR = 1
-CLR_LEFT = 2
-CLR_RIGHT = 3
-CLR_BOTH = 4
-CLR_TWO_LEFT = 5
-CLR_TWO_RIGHT = 6
+from backend.services.radar.parser import IRadarParser
+from backend.services.radar.constants import (
+    RED_M,
+    YEL_M,
+    MAX_SHOW_DIST,
+    CLR_LEFT,
+    CLR_TWO_LEFT,
+    CLR_BOTH,
+    CLR_RIGHT,
+    CLR_TWO_RIGHT,
+)
 
 
 class RadarService:
-    def __init__(self, irsdk_service):
-        self.irsdk_service = irsdk_service
-        self.irsdk_parser = IRSDKParser(irsdk_service)
+    """Business logic service working with radar data"""
 
+    def __init__(self, irsdk_service, parser: IRadarParser):
+        self.irsdk_service = irsdk_service
+        self.irsdk_parser = parser
 
     def _severity_for_dist(self, dist: float | None) -> str:
+        """Return severity level for distance."""
         if dist is None:
             return "none"
         if dist <= RED_M:
@@ -32,14 +30,16 @@ class RadarService:
             return "yellow"
         return "ok"
 
-
-    def _format_dist_meta(self, dist: float | None) -> tuple[Optional[float], str]:
+    def _format_dist_meta(
+        self, dist: float | None
+    ) -> tuple[Optional[float], str]:
+        """Format distance with severity metadata."""
         if dist is None:
             return None, "none"
         return dist, self._severity_for_dist(dist)
 
-
     def get_radar_json(self) -> dict:
+        """Build radar telemetry JSON response."""
         self.irsdk_service._ensure_connected()
         if not self.irsdk_service.is_connected():
             return {"reason": "not connected"}

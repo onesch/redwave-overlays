@@ -1,6 +1,7 @@
 # System files
 __pycache__/
 node_modules/
+.coverage
 
 # Test file
 test.py

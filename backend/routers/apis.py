@@ -8,7 +8,7 @@ from backend.services.radar.service import RadarService
 router = APIRouter(prefix="/api")
 irsdk_service = IRSDKService()
 irsdk_parser = IRSDKParser(irsdk_service)
-radar_service = RadarService(irsdk_service)
+radar_service = RadarService(irsdk_service, irsdk_parser)
 
 
 @router.get("/radar")
