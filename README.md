@@ -15,20 +15,19 @@
 
 ## 📦 Features
 
-- 📊 Live telemetry display for iRacing.
-- ⚡ Fast and responsive overlays with smooth updates.
-- 🖼️ Always-on-top windows styled with HTML/CSS.
-- 🌐 Modern web stack (**FastAPI**, **Electron**, **JavaScript**).
+- Live telemetry display for iRacing.
+- Fast and responsive overlays with smooth updates.
+- Always-on-top windows styled with HTML/CSS.
+- Modern web stack (**FastAPI**, **Electron**, **JavaScript**).
 
 ## 🛠️ Installation
 
-Download the latest version from 👉 [Releases](https://github.com/onesch/iracing-overlays/releases/tag/publish)
+Download the latest version from [releases](https://github.com/onesch/iracing-overlays/releases/tag/publish).
 
 ## 🧑‍💻 Contributing
 
 Pull requests and issues are welcome.
-Check out the full guide here:  
-👉 [docs/CONTRIBUTING.md](https://github.com/onesch/iracing-overlays/blob/electron-version/docs/CONTRIBUTING.md)
+Check out the full [guide here](https://github.com/onesch/iracing-overlays/blob/electron-version/docs/CONTRIBUTING.md).
 
 # 📄 License
 
