@@ -31,4 +31,4 @@ Check out the full [guide here](https://github.com/onesch/iracing-overlays/blob/
 
 # 📄 License
 
-[MIT](https://github.com/onesch/iracing-overlays/blob/electron-version/LICENSE) License.
+[GPL-3.0](https://github.com/onesch/iracing-overlays/blob/electron-version/LICENSE) License.
