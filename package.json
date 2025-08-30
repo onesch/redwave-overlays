@@ -9,7 +9,7 @@
     "electron": "^28.1.0"
   },
   "author": "onesch",
-  "license": "MIT",
+  "license": "GPL-3.0",
   "description": "",
   "dependencies": {}
 }
