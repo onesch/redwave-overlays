@@ -100,7 +100,7 @@ npm start
 │   ├── main.js                      # Electron entrypoint.
 │   └── preload.js                   # Secure preload API.
 │
-├── tests/                           # Project test cases
+├── tests/                           # Project test cases.
 │
 ├── .gitattributes                   # LFS config.
 ├── .gitignore                       # Ignored files.
