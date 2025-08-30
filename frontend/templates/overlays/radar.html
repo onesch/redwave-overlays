@@ -8,16 +8,15 @@
 
   <div class="my-car"></div>
 
-  <!-- полосы впереди/сзади -->
+  <!-- front/rear lines -->
   <div id="fb-ahead" class="fb-box ahead">
     <div class="clipper"></div>
   </div>
-
   <div id="fb-behind" class="fb-box behind">
     <div class="clipper"></div>
   </div>
 
-  <!-- боковые -->
+  <!-- side -->
   <div id="side-left"  class="side-box left"></div>
   <div id="side-right" class="side-box right"></div>
 </div>
@@ -29,47 +28,39 @@ const MAX_DIST = 15.0;
 const RADAR_H = 260;
 const CENTER_Y = RADAR_H / 2;
 
+// Front/rear lane control
 function setFB(el, dist, severity){
+  el.classList.remove("sev-red","sev-yellow","sev-gray");
+
   if(dist == null){
     el.style.opacity = 0;
     return;
   }
   el.style.opacity = 1;
 
-  let color;
   switch(severity){
-    case "red":    color = "rgba(255,0,0,0.75)"; break;
-    case "yellow": color = "rgba(255,255,0,0.65)"; break;
-    case "ok":     color = "rgba(255,255,255,0.45)"; break;
-    default:       color = "rgba(180,180,180,0.45)";
+    case "red": el.classList.add("sev-red"); break;
+    case "yellow": el.classList.add("sev-yellow"); break;
+    default: el.classList.add("sev-gray");
   }
-  el.style.background = `radial-gradient(circle at bottom, ${color} 0%, rgba(255,255,255,0) 100%)`;
 }
 
-
+// Side indicator controls
 function setSide(el, info){
-  el.classList.remove("sev-red","sev-yellow","sev-ok","sev-gray");
+  el.classList.remove("red","gray");
   if(!info){
     el.style.opacity = 0;
     return;
   }
   el.style.opacity = 1;
-
-  // Просто фиксированная позиция (по умолчанию)
-  el.style.top = (CENTER_Y) + "px";
-
-  switch(info.severity){
-    case "red": el.classList.add("sev-red"); break;
-    case "yellow": el.classList.add("sev-yellow"); break;
-    case "ok": el.classList.add("sev-ok"); break;
-    case "gray": el.classList.add("sev-gray"); break;
-    default: el.classList.add("sev-ok");
-  }
+  el.style.top = CENTER_Y + "px";
+  // side ones are always red according to the current implementation of the service
+  el.classList.add("red");
 }
 
 async function updateRadar(){
   try {
-    // anti-cache
+    // Anti-cache
     const r = await fetch("/api/radar?ts=" + Date.now());
     if(!r.ok) return;
     const data = await r.json();
