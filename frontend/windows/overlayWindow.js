@@ -1,5 +1,6 @@
 const { app, BrowserWindow } = require('electron');
 const path = require('path');
+const isDev = process.env.NODE_ENV === "development";
 const { protectWindowShortcuts, disableZoomShortcuts, registerOverlayMoveShortcuts } = require('../utils/keyboard_protection');
 const { applySavedZoom, registerZoomHandlers } = require('../utils/overlay_zoom');
 const { applySavedPosition, registerPositionHandlers, watchOverlayPosition } = require('../utils/overlay_position');
@@ -41,7 +42,7 @@ function createOverlay(route, options = {}) {
   overlay.setMovable(false);
 
   // Отключаем нежелательные сочетания клавиш
-  protectWindowShortcuts(overlay, { allowDevTools: true });
+  protectWindowShortcuts(overlay, { allowDevTools: isDev });
   disableZoomShortcuts(overlay);
 
   overlay.loadURL(`http://localhost:8000/${route}`);
