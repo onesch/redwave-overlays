@@ -24,11 +24,10 @@ npm install
 ## 🚀 Usage
 
 ```bash
-# Start FastAPI backend (in one terminal)
-uvicorn backend.main:app --reload
+# Start both FastAPI backend and Electron app
+npm run start:dev
 
-# Start Electron app (in another terminal)
-npm start
+npm run start:prod
 ```
 
 ## 🧪 Tests

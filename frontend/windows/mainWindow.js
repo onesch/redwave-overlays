@@ -1,6 +1,7 @@
 const { BrowserWindow } = require('electron');
 const path = require('path');
 const { protectWindowShortcuts, disableZoomShortcuts } = require('../utils/keyboard_protection');
+const isDev = process.env.NODE_ENV === "development";
 
 let mainWindow = null;
 
@@ -16,7 +17,7 @@ function createMainWindow() {
     },
   });
 
-  protectWindowShortcuts(mainWindow, { allowDevTools: true });
+  protectWindowShortcuts(mainWindow, { allowDevTools: isDev });
   disableZoomShortcuts(mainWindow);
 
   mainWindow.loadURL('http://localhost:8000/main');
