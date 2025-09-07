@@ -1,35 +1,4 @@
-::-webkit-scrollbar {
-  display: none;
-}
-
-.bar-container {
-  width: 300px;
-  height: 20px;
-  background-color: #ddd;
-  border-radius: 5px;
-  margin: 10px 0;
-  overflow: hidden;
-}
-
-.bar-fill {
-  height: 100%;
-  width: 0%;
-  transition: width 0.1s ease-in-out;
-}
-
-.bar-brake {
-  background-color: #f44336;
-}
-
-.overlay-body {
-  margin: 0;
-  /* border: 2px solid green; */
-  overflow: hidden;
-  color: rgb(255, 255, 255);
-  box-sizing: border-box;
-  -webkit-app-region: drag;
-  user-select: none;
-}
+@import url('base.css');
 
 .radar-container {
   position: relative;
@@ -74,7 +43,6 @@
   transform: translateX(-50%) rotate(180deg);
 }
 
-/* Боковые прямоугольники */
 .side-box {
   position:absolute;
   width:22px;

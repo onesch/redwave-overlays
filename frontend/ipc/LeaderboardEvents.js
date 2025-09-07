@@ -1,13 +1,13 @@
 const { ipcMain } = require('electron');
 const { createOverlay } = require('../windows/overlayWindow');
 
-function registerControlsEvents() {
-  ipcMain.on('open-controls', () => {
-    createOverlay('controls', {
+function registerLeaderboardEvents() {
+  ipcMain.on('open-leaderboard', () => {
+    createOverlay('leaderboard', {
       width: 450,
       height: 300,
     });
   });
 }
 
-module.exports = registerControlsEvents;
+module.exports = registerLeaderboardEvents;

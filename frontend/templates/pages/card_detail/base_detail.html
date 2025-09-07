@@ -1,0 +1,57 @@
+{% extends "base/base.html" %}
+
+{% block title %}Overlays - {{ card_data.title }}{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+<div class="card-detail-container">
+  <div class="text-column">
+    <h1>
+      <span class="card-detail-title">{{ card_data.title }}</span>
+      <span class="version-text">version {{ version }}</span>
+    </h1>
+    <p class="card-detail-desc">{{ card_data.desc }}</p>
+    <a id="OpenBtn" class="value nav-btn accent-red">Open</a>
+  </div>
+  <div class="video-wrapper" id="videoWrapper">
+    <video autoplay loop muted class="card-detail img" width="360" height="360">
+      <source src="{{ card_data.video }}" type="video/mp4">
+    </video>
+    <div class="play-overlay">
+      <i class="bi bi-caret-right-fill"></i>
+    </div>
+  </div>
+</div>
+
+<div id="videoModal" class="modal">
+  <div class="modal-content">
+    <span class="close">
+      <i class="bi bi-x"></i>
+    </span>
+    <video id="modalVideo" autoplay loop muted></video>
+    <div id="progressContainer">
+      <div id="progressBar"></div>
+    </div>
+  </div>
+</div>
+
+<div class="card-detail-container">
+  <div class="text-column">
+    <h1>
+      <span class="card-detail-title">Settings</span>
+    </h1>
+    <div class="zoom-control">
+      <label for="zoomRange">Zoom: <span id="zoomValue">100%</span></label>
+      <input id="zoomRange" type="range" min="50" max="200" step="10" value="100">
+    </div>
+    {% block additional_settings %}{% endblock %}
+  </div>
+</div>
+
+<script src="{{ url_for('static', path='/js/overlay_base.js') }}"></script>
+<script src="{{ url_for('static', path='/js/base_detail.js') }}"></script>
+{% block overlay_scripts %}{% endblock %}
+
+<link rel="stylesheet" href="{{ url_for('static', path='/css/card_detail.css') }}">
+{% endblock %}
