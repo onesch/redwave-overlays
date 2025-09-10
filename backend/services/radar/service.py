@@ -41,8 +41,6 @@ class RadarService:
     def get_radar_json(self) -> dict:
         """Build radar telemetry JSON response."""
         self.irsdk_service._ensure_connected()
-        if not self.irsdk_service.is_connected():
-            return {"reason": "not connected"}
 
         dist_ahead_raw = self.irsdk_service.get_value("CarDistAhead")
         dist_behind_raw = self.irsdk_service.get_value("CarDistBehind")
