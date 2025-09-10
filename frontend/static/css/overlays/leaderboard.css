@@ -10,7 +10,7 @@
   border: 1px solid var(--m3-outline-variant);
   overflow: clip;
   height: calc(18px + (var(--row-height) * 3) + 18px);
-  background: rgba(var(--m3-surface), 0.8);
+  background: var(--m3-surface-gradient);
   display: grid;
   grid-template-rows: 18px 54px 54px 54px 18px;
 }
@@ -74,7 +74,7 @@
   height: 18px;
   padding: 0 var(--pad-4);
   background: rgba(var(--m3-surface), 0.85);
-  color: #888;
+  color: #FFCC00;
   font-size: var(--fs-label);
   text-transform: uppercase;
   border-top: 1px solid var(--m3-outline-variant);
@@ -90,7 +90,7 @@
 }
 
 .pos-car-badge .pos {
-  background: #333;
+  background: #1A1A1F;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -161,6 +161,7 @@
 }
 .lic {
   padding: 2px 6px;
+  width: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
