@@ -158,7 +158,7 @@ class LeaderboardUpdater {
             licElement.className = 'lic';
         }
         
-        irElement.textContent = player.irating ? Math.round(player.irating/100)/10 + 'k' : '--';
+        irElement.textContent = player.irating ? Math.floor(player.irating/100)/10 + 'k' : '--';
         
         // Обновляем время последнего круга
         row.querySelector('.time').textContent = player.last_lap || '--:--.---';
