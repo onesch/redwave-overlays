@@ -44,7 +44,7 @@ function createOverlay(route, options = {}) {
 
   // Disable unwanted keyboard shortcuts
   protectWindowShortcuts(overlay, { allowDevTools: isDev });
-  disableZoomShortcuts(overlay);ы
+  disableZoomShortcuts(overlay);
 
   overlay.loadURL(`http://localhost:8000/${route}`);
 
