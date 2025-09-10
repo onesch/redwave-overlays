@@ -32,8 +32,6 @@ class Leaderboard:
     def get_leaderboard_snapshot(self):
         """Build leaderboard telemetry JSON response."""
         self.irsdk_service._ensure_connected()
-        if not self.irsdk_service.is_connected():
-            return {"error": "No connection to iRacing"}
 
         positions = self.irsdk_service.get_value("CarIdxPosition") or []
         laps_completed = self.irsdk_service.get_value("CarIdxLapCompleted") or []
@@ -52,6 +50,8 @@ class Leaderboard:
         def build_car(idx: int):
             driver = drivers[idx]
             name = driver.get("UserName") or ""
+            words = name.strip().split()
+            first_name = words[0] if words else ""
             # фильтр Pace Car
             if name.upper() == "PACE CAR":
                 return None
@@ -66,7 +66,7 @@ class Leaderboard:
                 "pos": pos,
                 "car_idx": int(idx),
                 "car_number": driver.get("CarNumber"),
-                "name": name.split()[0] if name else "",
+                "name": first_name,
                 "laps_completed": laps,
                 "last_lap": last_lap,
                 "irating": driver.get("IRating"),
