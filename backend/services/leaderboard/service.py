@@ -20,23 +20,17 @@ class Leaderboard:
         return f"{m:02d}:{s:02d}.{ms_remain:03d}"
 
     @staticmethod
-    def _normalize_laps_completed(laps: int) -> int:
+    def _normalize_laps_started(laps: int) -> int:
         """Replaces -1 with 0, otherwise as is"""
         return 0 if laps < 0 else laps
-
-    @staticmethod
-    def _normalize_total_laps(total: int) -> int:
-        """32767 (unlimited) → 0, otherwise as is"""
-        return 0 if total == 32767 else total
 
     def get_leaderboard_snapshot(self):
         """Build leaderboard telemetry JSON response."""
         self.irsdk_service._ensure_connected()
 
         positions = self.irsdk_service.get_value("CarIdxPosition") or []
-        laps_completed = self.irsdk_service.get_value("CarIdxLapCompleted") or []
+        laps_started = self.irsdk_service.get_value("CarIdxLap") or []
         player_idx = self.irsdk_service.get_value("PlayerCarIdx")
-        total_laps = self.irsdk_service.get_value("SessionLapsTotal") or 0
         last_lap_times = self.irsdk_service.get_value("CarIdxLastLapTime") or []
         lap_dist_pct = self.irsdk_service.get_value("CarIdxLapDistPct") or []
         drivers = (self.irsdk_service.get_value("DriverInfo") or {}).get("Drivers", [])
@@ -58,8 +52,8 @@ class Leaderboard:
 
             pos = int(safe_get(positions, idx, 0) or 0)
             last_lap = self.format_lap_time(safe_get(last_lap_times, idx, 0))
-            laps = self._normalize_laps_completed(
-                int(safe_get(laps_completed, idx, 0) or 0)
+            laps = self._normalize_laps_started(
+                int(safe_get(laps_started, idx, 0) or 0)
             )
             dist = safe_get(lap_dist_pct, idx, -1.0)
             return {
@@ -67,7 +61,7 @@ class Leaderboard:
                 "car_idx": int(idx),
                 "car_number": driver.get("CarNumber"),
                 "name": first_name,
-                "laps_completed": laps,
+                "laps_started": laps,
                 "last_lap": last_lap,
                 "irating": driver.get("IRating"),
                 "license": driver.get("LicString"),
@@ -98,8 +92,8 @@ class Leaderboard:
             "name": "",
             "car_number": None,
             "last_lap": self.format_lap_time(safe_get(last_lap_times, player_idx, 0)),
-            "laps_completed": self._normalize_laps_completed(
-                int(safe_get(laps_completed, player_idx, 0) or 0)
+            "laps_started": self._normalize_laps_started(
+                int(safe_get(laps_started, player_idx, 0) or 0)
             ),
             "irating": None,
             "license": None,
@@ -138,8 +132,35 @@ class Leaderboard:
             "behind": (dict(behind, gap_pct=round(best_behind, 3)) if behind else None),
         }
 
+        session_info = self.irsdk_service.get_value("SessionInfo")
+        current_session_number = session_info.get("CurrentSessionNum")
+        current_session = session_info.get("Sessions")[current_session_number]
+        session_laps = current_session.get("SessionLaps")
+
+        session_time_str = current_session.get("SessionTime")
+        if session_time_str and "sec" in session_time_str:
+            session_time_sec = float(session_time_str.split()[0])
+
+        # оценка времени круга для игрока
+        driver = drivers[player_idx]
+        est_lap_time = driver.get("CarClassEstLapTime")
+
+        # проверяем реальные быстрые круги из SessionInfo
+        fastest_time = None
+        results_fastest = current_session.get("ResultsFastestLap", [])
+        for f in results_fastest:
+            if f.get("CarIdx") == player_idx and f.get("FastestTime", -1) > 0:
+                fastest_time = f["FastestTime"]
+                break
+
+        # используем реальный быстрый круг, если есть
+        car_est_lap_time = fastest_time or est_lap_time
+
+        # передаем на фронт
         leaderboard_data = {
-            "total_laps": self._normalize_total_laps(int(total_laps)),
+            "session_laps": session_laps,
+            "session_time": session_time_sec,
+            "car_est_lap_time": car_est_lap_time,
         }
 
         snapshot = {

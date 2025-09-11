@@ -115,82 +115,70 @@ class LeaderboardUpdater {
         document.getElementById('behind-row').style.display = 'none';
 
         // Render the player
-        this.renderPlayer(data.player, data.leaderboard_data.total_laps);
+        this.renderPlayer(data.player);
 
         // Render neighbors
         const neighbors = data.neighbors;
-        let hasNeighbors = false;
+        if (neighbors.ahead) this.renderCar('ahead', neighbors.ahead);
+        if (neighbors.behind) this.renderCar('behind', neighbors.behind);
 
-        if (neighbors.ahead) {
-            this.renderCar('ahead', neighbors.ahead);
-            hasNeighbors = true;
-        }
-
-        if (neighbors.behind) {
-            this.renderCar('behind', neighbors.behind);
-            hasNeighbors = true;
-        }
+        // Update session laps separately
+        this.updateSessionLaps(
+            data.leaderboard_data.session_laps,
+            data.leaderboard_data.session_time,
+            data.leaderboard_data.car_est_lap_time,
+            data.player.laps_started
+        );
     }
 
-    renderPlayer(player, totalLaps) {
+    renderPlayer(player) {
         const row = document.getElementById('player-row');
-        const lapsElement = document.getElementById('race-laps');
-        
-        // Update data
-        row.querySelector('.pos').textContent = player.pos || '--';
-        row.querySelector('.num').textContent = player.car_number || '--';
-        row.querySelector('.name').textContent = player.name || 'Unknown';
-        const licElement = row.querySelector('.lic');
-        const irElement = row.querySelector('.ir');
-
-        // License, Add a class by the first letter of the license
-        if (player.license) {
-            licElement.textContent = player.license;
-            licElement.className = 'lic';
-            const licClass = player.license.charAt(0).toLowerCase();
-            licElement.classList.add(licClass);
-        } else {
-            licElement.textContent = '--';
-            licElement.className = 'lic';
-        }
-
-        // iRating
-        irElement.textContent = player.irating ? Math.floor(player.irating/100)/10 + 'k' : '--';
-
-        // Update the last lap time
-        row.querySelector('.time').textContent = player.last_lap || '--:--.---';
-
-        // Update player the laps completed counter
-        lapsElement.textContent = `LAPS ${player.laps_completed}/${totalLaps || '∞'}`;
+        this.renderRow(row, player);
     }
 
     renderCar(sectionId, car) {
         const row = document.getElementById(sectionId + '-row');
-        row.style.display = 'grid'; // Показываем ряд
+        row.style.display = 'grid';
+        this.renderRow(row, car);
+    }
 
-        // Update data
-        row.querySelector('.pos').textContent = car.pos || '--';
-        row.querySelector('.num').textContent = car.car_number || '--';
-        row.querySelector('.name').textContent = car.name || 'Unknown';
-        const licElement = row.querySelector('.lic');
-        const irElement = row.querySelector('.ir');
+    renderRow(rowElement, car) {
+        rowElement.querySelector('.pos').textContent = car.pos || '--';
+        rowElement.querySelector('.num').textContent = car.car_number || '--';
+        rowElement.querySelector('.name').textContent = car.name || 'Unknown';
 
-        // License, Add a class by the first letter of the license
+        const licElement = rowElement.querySelector('.lic');
         if (car.license) {
             licElement.textContent = car.license;
             licElement.className = 'lic';
-            const licClass = car.license.charAt(0).toLowerCase();
-            licElement.classList.add(licClass);
+            licElement.classList.add(car.license.charAt(0).toLowerCase());
         } else {
             licElement.textContent = '--';
             licElement.className = 'lic';
         }
 
-        // iRating
+        const irElement = rowElement.querySelector('.ir');
         irElement.textContent = car.irating ? Math.floor(car.irating/100)/10 + 'k' : '--';
-        
-        // Update the last lap time
-        row.querySelector('.time').textContent = car.last_lap || '--:--.---';
+
+        this.updateLapTime(rowElement, car.last_lap);
+    }
+
+    updateLapTime(row, lapTime) {
+        row.querySelector('.time').textContent = lapTime || '--:--.---';
+    }
+
+    updateSessionLaps(sessionLaps, sessionTime, carEstLapTime, lapsStarted) {
+        const lapsElement = document.getElementById('race-laps');
+        let lapsDisplay = '';
+
+        if (sessionLaps !== "unlimited") {
+            lapsDisplay = `${lapsStarted}/${sessionLaps}`;
+        } else {
+            const approxLaps = (sessionTime / carEstLapTime).toFixed(1);
+            lapsDisplay = `${lapsStarted}/~${approxLaps}`;
+        }
+
+        lapsElement.textContent = `LAPS ${lapsDisplay}`;
     }
 
     showError(message) {
