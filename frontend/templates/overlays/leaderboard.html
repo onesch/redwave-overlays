@@ -95,29 +95,29 @@ class LeaderboardUpdater {
         try {
             const response = await fetch('/api/leaderboard');
             const data = await response.json();
-            
+
             if (data.error) {
                 this.showError(data.error);
                 return;
             }
 
-            this.renderCars(data);
-            
+            this.renderLeaderboard(data);
+
         } catch (error) {
             this.showError('Failed to fetch data');
             console.error('Error:', error);
         }
     }
 
-    renderCars(data) {
-        // Скрываем все ряды сначала
+    renderLeaderboard(data) {
+        // First we hide all rows
         document.getElementById('ahead-row').style.display = 'none';
         document.getElementById('behind-row').style.display = 'none';
 
-        // Рендерим игрока
+        // Render the player
         this.renderPlayer(data.player, data.leaderboard_data.total_laps);
 
-        // Рендерим соседей
+        // Render neighbors
         const neighbors = data.neighbors;
         let hasNeighbors = false;
 
@@ -136,20 +136,16 @@ class LeaderboardUpdater {
         const row = document.getElementById('player-row');
         const lapsElement = document.getElementById('race-laps');
         
-        // Обновляем позицию и номер
+        // Update data
         row.querySelector('.pos').textContent = player.pos || '--';
         row.querySelector('.num').textContent = player.car_number || '--';
-        
-        // Обновляем имя драйвера
         row.querySelector('.name').textContent = player.name || 'Unknown';
-        
-        // Обновляем лицензию и рейтинг
         const licElement = row.querySelector('.lic');
         const irElement = row.querySelector('.ir');
-        
+
+        // License, Add a class by the first letter of the license
         if (player.license) {
             licElement.textContent = player.license;
-            // Добавляем класс по первой букве лицензии (A, B, C, R, etc.)
             licElement.className = 'lic';
             const licClass = player.license.charAt(0).toLowerCase();
             licElement.classList.add(licClass);
@@ -157,34 +153,31 @@ class LeaderboardUpdater {
             licElement.textContent = '--';
             licElement.className = 'lic';
         }
-        
+
+        // iRating
         irElement.textContent = player.irating ? Math.floor(player.irating/100)/10 + 'k' : '--';
-        
-        // Обновляем время последнего круга
+
+        // Update the last lap time
         row.querySelector('.time').textContent = player.last_lap || '--:--.---';
-        
-        // Обновляем счетчик кругов
+
+        // Update player the laps completed counter
         lapsElement.textContent = `LAPS ${player.laps_completed}/${totalLaps || '∞'}`;
     }
 
     renderCar(sectionId, car) {
         const row = document.getElementById(sectionId + '-row');
         row.style.display = 'grid'; // Показываем ряд
-        
-        // Обновляем позицию и номер
+
+        // Update data
         row.querySelector('.pos').textContent = car.pos || '--';
         row.querySelector('.num').textContent = car.car_number || '--';
-        
-        // Обновляем имя драйвера
         row.querySelector('.name').textContent = car.name || 'Unknown';
-        
-        // Обновляем лицензию и рейтинг
         const licElement = row.querySelector('.lic');
         const irElement = row.querySelector('.ir');
-        
+
+        // License, Add a class by the first letter of the license
         if (car.license) {
             licElement.textContent = car.license;
-            // Добавляем класс по первой букве лицензии
             licElement.className = 'lic';
             const licClass = car.license.charAt(0).toLowerCase();
             licElement.classList.add(licClass);
@@ -192,10 +185,11 @@ class LeaderboardUpdater {
             licElement.textContent = '--';
             licElement.className = 'lic';
         }
+
+        // iRating
+        irElement.textContent = car.irating ? Math.floor(car.irating/100)/10 + 'k' : '--';
         
-        irElement.textContent = car.irating ? Math.round(car.irating/100)/10 + 'k' : '--';
-        
-        // Обновляем время последнего круга
+        // Update the last lap time
         row.querySelector('.time').textContent = car.last_lap || '--:--.---';
     }
 
