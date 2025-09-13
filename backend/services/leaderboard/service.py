@@ -137,9 +137,13 @@ class Leaderboard:
         current_session = session_info.get("Sessions")[current_session_number]
         session_laps = current_session.get("SessionLaps")
 
+        session_time_sec = None
         session_time_str = current_session.get("SessionTime")
         if session_time_str and "sec" in session_time_str:
-            session_time_sec = float(session_time_str.split()[0])
+            try:
+                session_time_sec = float(session_time_str.split()[0])
+            except ValueError:
+                session_time_sec = None
 
         # оценка времени круга для игрока
         driver = drivers[player_idx]
