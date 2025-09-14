@@ -9,7 +9,7 @@ class Leaderboard:
 
     @staticmethod
     def format_lap_time(seconds):
-        """Get formated(--:--.---) last lap time"""
+        """Get formatted (--:--.---) last lap time"""
         if seconds is None or seconds <= 0:
             return "--:--.---"
         ms = int(seconds * 1000)
