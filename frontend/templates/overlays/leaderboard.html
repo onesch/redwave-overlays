@@ -159,7 +159,7 @@ class LeaderboardUpdater {
 
         const irElement = rowElement.querySelector('.ir');
         irElement.textContent = car.irating
-            ? (car.irating / 1000).toFixed(1) + 'k' 
+            ? (Math.floor(car.irating / 100) / 10).toFixed(1) + 'k'
             : '--';
 
         this.updateLapTime(rowElement, car.last_lap);
