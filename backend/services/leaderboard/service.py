@@ -24,6 +24,18 @@ class Leaderboard:
         """Replaces -1 with 0, otherwise as is"""
         return 0 if laps < 0 else laps
 
+    def _get_starting_position(self, car_idx: int) -> int:
+        """Get a starting position from the qualification results"""
+        session_info = self.irsdk_service.get_value("SessionInfo") or {}
+        sessions = session_info.get("Sessions") or []
+
+        for sess in sessions:
+            if sess.get("SessionType") in ("Lone Qualify", "Open Qualify"):
+                for res in sess.get("ResultsPositions") or []:
+                    if res.get("CarIdx") == car_idx:
+                        return int(res.get("Position", 0))
+        return 0
+
     def get_leaderboard_snapshot(self):
         """Build leaderboard telemetry JSON response."""
         self.irsdk_service._ensure_connected()
@@ -46,16 +58,22 @@ class Leaderboard:
             name = driver.get("UserName") or ""
             words = name.strip().split()
             first_name = words[0] if words else ""
+
             # фильтр Pace Car
             if name.upper() == "PACE CAR":
                 return None
 
+            # основная позиция
             pos = int(safe_get(positions, idx, 0) or 0)
+            if pos == 0:
+                pos = self._get_starting_position(idx)
+
             last_lap = self.format_lap_time(safe_get(last_lap_times, idx, 0))
             laps = self._normalize_laps_started(
                 int(safe_get(laps_started, idx, 0) or 0)
             )
             dist = safe_get(lap_dist_pct, idx, -1.0)
+
             return {
                 "pos": pos,
                 "car_idx": int(idx),
@@ -160,7 +178,6 @@ class Leaderboard:
         # используем реальный быстрый круг, если есть
         car_est_lap_time = fastest_time or est_lap_time
 
-        # передаем на фронт
         leaderboard_data = {
             "session_laps": session_laps,
             "session_time": session_time_sec,
