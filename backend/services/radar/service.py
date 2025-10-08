@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Tuple
 
 from backend.services.radar.parser import IRadarParser
 from backend.services.radar.constants import (
@@ -13,15 +13,19 @@ from backend.services.radar.constants import (
 )
 
 
-class RadarService:
-    """Business logic service working with radar data"""
+class DistanceSeverity:
+    """Encapsulates logic to calculate severity for distances"""
 
-    def __init__(self, irsdk_service, parser: IRadarParser):
-        self.irsdk_service = irsdk_service
-        self.irsdk_parser = parser
+    @staticmethod
+    def _sanitize_distance(dist: Optional[float]) -> Optional[float]:
+        """Ignore distances outside valid range"""
+        if dist is None or not (0 <= dist <= MAX_SHOW_DIST):
+            return None
+        return dist
 
-    def _severity_for_dist(self, dist: float | None) -> str:
-        """Return severity level for distance."""
+    @staticmethod
+    def for_distance(dist: Optional[float]) -> str:
+        """Return severity level for a given distance"""
         if dist is None:
             return "none"
         if dist <= RED_M:
@@ -30,47 +34,50 @@ class RadarService:
             return "yellow"
         return "ok"
 
-    def _format_dist_meta(
-        self, dist: float | None
-    ) -> tuple[Optional[float], str]:
-        """Format distance with severity metadata."""
-        if dist is None:
-            return None, "none"
-        return dist, self._severity_for_dist(dist)
+    @staticmethod
+    def format_meta(dist: Optional[float]) -> Tuple[Optional[float], str]:
+        """Return sanitized distance with severity."""
+        sanitized_dist = DistanceSeverity._sanitize_distance(dist)
+        return (sanitized_dist, DistanceSeverity.for_distance(sanitized_dist))
+
+
+class RadarService:
+    """Business logic service working with radar data"""
+
+    def __init__(self, irsdk_service, parser: IRadarParser):
+        self.irsdk_service = irsdk_service
+        self.irsdk_parser = parser
+
+    def _sanitize_distance(self, dist: Optional[float]) -> Optional[float]:
+        """Ignore distances outside valid range"""
+        if dist is None or not (0 <= dist <= MAX_SHOW_DIST):
+            return None
+        return dist
 
     def get_radar_json(self) -> dict:
-        """Build radar telemetry JSON response."""
-        self.irsdk_service._ensure_connected()
+        """Build radar telemetry JSON response"""
+        connected, reason = self.irsdk_service._ensure_connected()
+        if not connected:
+            return {"reason": reason}
 
         dist_ahead_raw = self.irsdk_service.get_value("CarDistAhead")
         dist_behind_raw = self.irsdk_service.get_value("CarDistBehind")
         clr = self.irsdk_service.get_value("CarLeftRight")
-        left_present = clr in (CLR_LEFT, CLR_TWO_LEFT, CLR_BOTH)
-        right_present = clr in (CLR_RIGHT, CLR_TWO_RIGHT, CLR_BOTH)
-
         weekend_info = self.irsdk_service.get_value("WeekendInfo")
+
         track_len_m = self.irsdk_parser.get_track_length_m(weekend_info)
         if track_len_m <= 0:
             return {"reason": "track_len=0"}
 
+        left_present = clr in (CLR_LEFT, CLR_TWO_LEFT, CLR_BOTH)
+        right_present = clr in (CLR_RIGHT, CLR_TWO_RIGHT, CLR_BOTH)
         suppress_ahead = left_present or right_present
-        if suppress_ahead:
-            dist_ahead = None
-            dist_behind = None
-        else:
-            dist_ahead = (
-                dist_ahead_raw
-                if 0 <= dist_ahead_raw <= MAX_SHOW_DIST
-                else None
-            )
-            dist_behind = (
-                dist_behind_raw
-                if 0 <= dist_behind_raw <= MAX_SHOW_DIST
-                else None
-            )
 
-        ahead_val, ahead_sev = self._format_dist_meta(dist_ahead)
-        behind_val, behind_sev = self._format_dist_meta(dist_behind)
+        dist_ahead = None if suppress_ahead else dist_ahead_raw
+        dist_behind = None if suppress_ahead else dist_behind_raw
+
+        ahead_val, ahead_sev = DistanceSeverity.format_meta(dist_ahead)
+        behind_val, behind_sev = DistanceSeverity.format_meta(dist_behind)
 
         return {
             "ahead_m": ahead_val,

@@ -9,7 +9,7 @@ class IRSDKService():
         self.ir = irsdk.IRSDK()
         self.started = False
 
-    def _ensure_connected(self) -> None:
+    def _ensure_connected(self) -> tuple[bool, str]:
         """Ensure IRSDK connection is active"""
         if not self.started:
             self.ir.startup()
@@ -17,6 +17,12 @@ class IRSDKService():
         elif not self.ir.is_connected:
             self.ir.shutdown()
             self.ir.startup()
+
+        if not getattr(self.ir, "is_connected", False):
+            return False, "not connected"
+        if not getattr(self.ir, "is_initialized", True):
+            return False, "not initialized"
+        return True, ""
 
     def is_connected(self) -> bool:
         """Check if IRSDK is connected"""
