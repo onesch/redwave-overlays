@@ -48,12 +48,6 @@ class RadarService:
         self.irsdk_service = irsdk_service
         self.irsdk_parser = parser
 
-    def _sanitize_distance(self, dist: Optional[float]) -> Optional[float]:
-        """Ignore distances outside valid range"""
-        if dist is None or not (0 <= dist <= MAX_SHOW_DIST):
-            return None
-        return dist
-
     def get_radar_json(self) -> dict:
         """Build radar telemetry JSON response"""
         connected, reason = self.irsdk_service._ensure_connected()
