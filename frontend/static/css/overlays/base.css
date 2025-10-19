@@ -15,10 +15,8 @@
     --font: "Schibsted Grotesk", Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
     --fs-label: 12px;
     --fs-body: 16px;
-    --gap-2: 10px;
-    --pad-3: 16px;
-    --pad-4: 24px;
-    --row-height: 54px;
+    --pad-4: 6px;
+    --row-height: 27px;
  }
 
 ::-webkit-scrollbar {

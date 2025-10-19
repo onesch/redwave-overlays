@@ -8,11 +8,12 @@
         <div class="thead">
             <div>POS #</div>
             <div>Driver</div>
+            <div>Rating</div>
             <div>Last Lap</div>
         </div>
 
-        <!-- Ahead Car -->
-        <div id="ahead-row" class="row" style="display: none;">
+        <!-- Ahead Cars (up to 3) -->
+        <div id="ahead-row-1" class="row ahead" style="display: none;">
             <div class="pos-car-badge">
                 <div class="pos">--</div>
                 <div class="car">
@@ -21,11 +22,52 @@
             </div>
             <div class="driver">
                 <div class="name">Loading...</div>
-                <div class="meta">
-                    <div class="lic-container">
-                        <span class="lic">--</span>
-                        <span class="ir">--</span>
-                    </div>
+                <div class="gap">+---</div>
+            </div>
+            <div class="lic-column">
+                <div class="lic-container">
+                    <span class="lic">--</span>
+                    <span class="ir">--</span>
+                </div>
+            </div>
+            <div class="time">--:--.---</div>
+        </div>
+
+        <div id="ahead-row-2" class="row ahead" style="display: none;">
+            <div class="pos-car-badge">
+                <div class="pos">--</div>
+                <div class="car">
+                    <span class="num">--</span>
+                </div>
+            </div>
+            <div class="driver">
+                <div class="name">Loading...</div>
+                <div class="gap">+---</div>
+            </div>
+            <div class="lic-column">
+                <div class="lic-container">
+                    <span class="lic">--</span>
+                    <span class="ir">--</span>
+                </div>
+            </div>
+            <div class="time">--:--.---</div>
+        </div>
+
+        <div id="ahead-row-3" class="row ahead" style="display: none;">
+            <div class="pos-car-badge">
+                <div class="pos">--</div>
+                <div class="car">
+                    <span class="num">--</span>
+                </div>
+            </div>
+            <div class="driver">
+                <div class="name">Loading...</div>
+                <div class="gap">+---</div>
+            </div>
+            <div class="lic-column">
+                <div class="lic-container">
+                    <span class="lic">--</span>
+                    <span class="ir">--</span>
                 </div>
             </div>
             <div class="time">--:--.---</div>
@@ -39,20 +81,18 @@
                     <span class="num">--</span>
                 </div>
             </div>
-            <div class="driver">
-                <div class="name">Loading...</div>
-                <div class="meta">
-                    <div class="lic-container">
-                        <span class="lic">--</span>
-                        <span class="ir">--</span>
-                    </div>
+            <div class="driver"><div class="name">Loading...</div></div>
+            <div class="lic-column">
+                <div class="lic-container">
+                    <span class="lic">--</span>
+                    <span class="ir">--</span>
                 </div>
             </div>
             <div class="time">--:--.---</div>
         </div>
 
-        <!-- Behind Car -->
-        <div id="behind-row" class="row" style="display: none;">
+        <!-- Behind Cars (up to 3) -->
+        <div id="behind-row-1" class="row behind" style="display: none;">
             <div class="pos-car-badge">
                 <div class="pos">--</div>
                 <div class="car">
@@ -61,18 +101,64 @@
             </div>
             <div class="driver">
                 <div class="name">Loading...</div>
-                <div class="meta">
-                    <div class="lic-container">
-                        <span class="lic">--</span>
-                        <span class="ir">--</span>
-                    </div>
+                <div class="gap">- ---</div>
+            </div>
+            <div class="lic-column">
+                <div class="lic-container">
+                    <span class="lic">--</span>
+                    <span class="ir">--</span>
+                </div>
+            </div>
+            <div class="time">--:--.---</div>
+        </div>
+
+        <div id="behind-row-2" class="row behind" style="display: none;">
+            <div class="pos-car-badge">
+                <div class="pos">--</div>
+                <div class="car">
+                    <span class="num">--</span>
+                </div>
+            </div>
+            <div class="driver">
+                <div class="name">Loading...</div>
+                <div class="gap">- ---</div>
+            </div>
+            <div class="lic-column">
+                <div class="lic-container">
+                    <span class="lic">--</span>
+                    <span class="ir">--</span>
+                </div>
+            </div>
+            <div class="time">--:--.---</div>
+        </div>
+
+        <div id="behind-row-3" class="row behind" style="display: none;">
+            <div class="pos-car-badge">
+                <div class="pos">--</div>
+                <div class="car">
+                    <span class="num">--</span>
+                </div>
+            </div>
+            <div class="driver">
+                <div class="name">Loading...</div>
+                <div class="gap">- ---</div>
+            </div>
+            <div class="lic-column">
+                <div class="lic-container">
+                    <span class="lic">--</span>
+                    <span class="ir">--</span>
                 </div>
             </div>
             <div class="time">--:--.---</div>
         </div>
 
         <div class="tfoot">
-            <div id="race-laps" class="race-laps">LAPS 0/0</div>
+            <div class="race-stats">
+                <span class="label">LAPS</span>
+                <span id="laps-current" class="value">--</span>
+                <span class="sep">/</span>
+                <span id="laps-total" class="value">--</span>
+            </div>
         </div>
     </section>
 </div>
@@ -110,19 +196,38 @@ class LeaderboardUpdater {
     }
 
     renderLeaderboard(data) {
-        // First we hide all rows
-        document.getElementById('ahead-row').style.display = 'none';
-        document.getElementById('behind-row').style.display = 'none';
+        // Hide all neighbor rows first
+        for (let i = 1; i <= 3; i++) {
+            document.getElementById(`ahead-row-${i}`).style.display = 'none';
+            document.getElementById(`behind-row-${i}`).style.display = 'none';
+        }
 
         // Render the player
         this.renderPlayer(data.player);
 
-        // Render neighbors
-        const neighbors = data.neighbors;
-        if (neighbors.ahead) this.renderCar('ahead', neighbors.ahead);
-        if (neighbors.behind) this.renderCar('behind', neighbors.behind);
+        const aheadCars = data.neighbors.ahead || [];
+        const behindCars = data.neighbors.behind || [];
 
-        // Update session laps separately
+        // FIX: Reverse ahead cars so farthest ahead is at the top (row 1), then closer cars below
+        const displayedAheadCars = [...aheadCars].reverse();
+        
+        // Render ahead cars - farthest ahead in row 1, then closer cars in row 2, etc.
+        for (let i = 0; i < 3; i++) {
+            const rowId = `ahead-row-${i + 1}`;
+            if (i < displayedAheadCars.length) {
+                this.renderCar(rowId, displayedAheadCars[i], true);
+            }
+        }
+
+        // Render behind cars - closest behind goes in row 1, then row 2, etc. (no reverse needed)
+        for (let i = 0; i < 3; i++) {
+            const rowId = `behind-row-${i + 1}`;
+            if (i < behindCars.length) {
+                this.renderCar(rowId, behindCars[i], false);
+            }
+        }
+
+        // Update session laps
         this.updateSessionLaps(
             data.leaderboard_data.session_laps,
             data.leaderboard_data.session_time,
@@ -136,22 +241,39 @@ class LeaderboardUpdater {
         this.renderRow(row, player);
     }
 
-    renderCar(sectionId, car) {
-        const row = document.getElementById(sectionId + '-row');
+    renderCar(rowId, car, isAhead) {
+        const row = document.getElementById(rowId);
         row.style.display = 'grid';
-        this.renderRow(row, car);
+        this.renderRow(row, car, isAhead);
     }
 
-    renderRow(rowElement, car) {
+    renderRow(rowElement, car, isAhead = null) {
         rowElement.querySelector('.pos').textContent = car.pos || '--';
         rowElement.querySelector('.num').textContent = car.car_number || '--';
-        rowElement.querySelector('.name').textContent = car.name || 'Unknown';
+        
+        // Handle name and gap display for neighbor cars
+        const driverElement = rowElement.querySelector('.driver');
+        const nameElement = driverElement.querySelector('.name');
+        nameElement.textContent = car.name || 'Unknown';
+        
+        // Show gap for neighbor cars (not player)
+        if (isAhead !== null) {
+            let gapElement = driverElement.querySelector('.gap');
+            if (!gapElement) {
+                gapElement = document.createElement('div');
+                gapElement.className = 'gap';
+                driverElement.appendChild(gapElement);
+            }
+            const gap = car.gap_pct || 0;
+            gapElement.textContent = isAhead ? `+${gap.toFixed(3)}` : `-${gap.toFixed(3)}`;
+        }
 
         const licElement = rowElement.querySelector('.lic');
         if (car.license) {
-            licElement.textContent = car.license;
+            let licenseText = car.license.replace(/(\.\d)0$/, "$1");
+            licElement.textContent = licenseText;
             licElement.className = 'lic';
-            licElement.classList.add(car.license.charAt(0).toLowerCase());
+            licElement.classList.add(licenseText.charAt(0).toLowerCase());
         } else {
             licElement.textContent = '--';
             licElement.className = 'lic';
@@ -170,17 +292,16 @@ class LeaderboardUpdater {
     }
 
     updateSessionLaps(sessionLaps, sessionTime, carEstLapTime, lapsStarted) {
-        const lapsElement = document.getElementById('race-laps');
-        let lapsDisplay = '';
+        const currentElement = document.getElementById('laps-current');
+        const totalElement = document.getElementById('laps-total');
 
         if (sessionLaps !== "unlimited") {
-            lapsDisplay = `${lapsStarted}/${sessionLaps}`;
+            currentElement.textContent = lapsStarted;
+            totalElement.textContent = sessionLaps;
         } else {
-            const approxLaps = (sessionTime / carEstLapTime).toFixed(1);
-            lapsDisplay = `${lapsStarted}/~${approxLaps}`;
+            currentElement.textContent = lapsStarted;
+            totalElement.textContent = `~${(sessionTime / carEstLapTime).toFixed(1)}`;
         }
-
-        lapsElement.textContent = `LAPS ${lapsDisplay}`;
     }
 
     showError(message) {

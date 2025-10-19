@@ -30,7 +30,9 @@ class Leaderboard:
         sessions = session_info.get("Sessions") or []
 
         for sess in sessions:
-            if sess.get("SessionType") in ("Lone Qualify", "Open Qualify"):
+            session_type = sess.get("SessionType")
+
+            if session_type in ("Lone Qualify", "Open Qualify"):
                 for res in sess.get("ResultsPositions") or []:
                     if res.get("CarIdx") == car_idx:
                         return int(res.get("Position", 0))
@@ -65,6 +67,9 @@ class Leaderboard:
 
             # основная позиция
             pos = int(safe_get(positions, idx, 0) or 0)
+            if pos == -1:
+                pos = None
+
             if pos == 0:
                 pos = self._get_starting_position(idx)
 
@@ -100,56 +105,71 @@ class Leaderboard:
                 cars.append(car)
 
         # Сортировка по pos для общего списка
-        cars_sorted = sorted(cars, key=lambda c: (c["pos"] == 0, c["pos"]))
+        cars_sorted = sorted(
+            cars,
+            key=lambda c: (
+                c["pos"] is None or c["pos"] == 0,
+                c["pos"] if isinstance(c["pos"], int) else 9999
+            )
+        )
 
         # Данные игрока
         player_car = build_car(int(player_idx))
-        player_data = player_car or {
-            "pos": int(safe_get(positions, player_idx, 0) or 0),
-            "car_idx": int(player_idx),
-            "name": "",
-            "car_number": None,
-            "last_lap": self.format_lap_time(safe_get(last_lap_times, player_idx, 0)),
-            "laps_started": self._normalize_laps_started(
-                int(safe_get(laps_started, player_idx, 0) or 0)
-            ),
-            "irating": None,
-            "license": None,
-            "lap_dist_pct": None,
-        }
+        player_data = player_car
 
-        # Соседи по прогрессу круга
+        # Соседи по прогрессу круга - 3 впереди и 3 позади
         my_dist = safe_get(lap_dist_pct, player_idx, -1.0)
-        ahead = None
-        behind = None
-        best_ahead = 1.1
-        best_behind = 1.1
+        ahead_cars = []
+        behind_cars = []
 
         if isinstance(my_dist, (int, float)) and my_dist >= 0:
+            ahead_candidates = []
+            behind_candidates = []
+            
             for idx in range(len(drivers)):
                 if idx == player_idx:
                     continue
                 other_dist = safe_get(lap_dist_pct, idx, -1.0)
                 if not isinstance(other_dist, (int, float)) or other_dist < 0:
                     continue
+                
+                # Calculate gap in lap percentage
+                gap = (other_dist - my_dist) % 1.0
+                
+                car_data = build_car(idx)
+                if car_data:
+                    # Cars ahead have gap between 0 and 0.5
+                    if 0 < gap <= 0.5:
+                        ahead_candidates.append({
+                            'car': car_data,
+                            'gap': gap
+                        })
+                    # Cars behind have gap between 0.5 and 1.0 (convert to negative)
+                    elif gap > 0.5:
+                        behind_candidates.append({
+                            'car': car_data,
+                            'gap': gap - 1.0  # Convert to negative value
+                        })
+            
+            ahead_candidates.sort(key=lambda x: x['gap'])
+            behind_candidates.sort(key=lambda x: x['gap'], reverse=True)
 
-                # расстояние вперёд по кругу [0..1)
-                forward = (other_dist - my_dist) % 1.0
-                if 1e-9 < forward < best_ahead:
-                    best_ahead = forward
-                    ahead = build_car(idx)
+            for candidate in ahead_candidates[:3]:
+                ahead_cars.append({
+                    **candidate['car'],
+                    'gap_pct': round(candidate['gap'], 3)
+                })
 
-                # расстояние назад по кругу [0..1)
-                backward = (my_dist - other_dist) % 1.0
-                if 1e-9 < backward < best_behind:
-                    best_behind = backward
-                    behind = build_car(idx)
+            for candidate in behind_candidates[:3]:
+                behind_cars.append({
+                    **candidate['car'],
+                    'gap_pct': round(abs(candidate['gap']), 3)  # Convert to positive for display
+                })
 
         neighbors = {
-            "ahead": (dict(ahead, gap_pct=round(best_ahead, 3)) if ahead else None),
-            "behind": (dict(behind, gap_pct=round(best_behind, 3)) if behind else None),
+            "ahead": ahead_cars,
+            "behind": behind_cars,
         }
-
         session_info = self.irsdk_service.get_value("SessionInfo")
         current_session_number = session_info.get("CurrentSessionNum")
         current_session = session_info.get("Sessions")[current_session_number]
@@ -191,5 +211,4 @@ class Leaderboard:
             "leaderboard_data": leaderboard_data,
             "timestamp": int(time.time()),
         }
-
         return snapshot

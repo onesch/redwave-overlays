@@ -1,7 +1,7 @@
 @import url('base.css');
 
 .app {
-  max-width: 330px;
+  max-width: 415px;
   margin: 40px auto;
  }
 
@@ -9,15 +9,15 @@
   border-radius: var(--m3-radius-lg);
   border: 1px solid var(--m3-outline-variant);
   overflow: clip;
-  height: calc(18px + (var(--row-height) * 3) + 18px);
-  background: var(--m3-surface-gradient);
+  height: calc(18px + (var(--row-height) * 7) + 18px);
   display: grid;
-  grid-template-rows: 18px 54px 54px 54px 18px;
+  grid-template-rows: 18px repeat(7, var(--row-height)) 18px;
+  background: var(--m3-surface-gradient);
 }
 
 .thead, .row {
   display: grid;
-  grid-template-columns: 85px 90px 80px;
+  grid-template-columns: 80px 100px 100px 80px;
   align-items: center;
   column-gap: 12px;
   background: rgba(var(--m3-surface), 0.85);
@@ -31,10 +31,13 @@
   letter-spacing: .08em;
 }
 .thead > *:nth-child(1),
-.thead > *:nth-child(2) {
+.thead > *:nth-child(2),
+.thead > *:nth-child(3) {
   text-align: left;
 }
-.thead > *:nth-child(3) { text-align: right; }
+.thead > *:nth-child(4) {
+  text-align: right;
+}
 
 .row {
   height: var(--row-height);
@@ -67,17 +70,31 @@
 }
 
 .tfoot {
-  grid-row: 5 / 6;
+  grid-row: 9;
   display: flex;
   justify-content: space-between;
   align-items: center;
   height: 18px;
   padding: 0 var(--pad-4);
   background: rgba(var(--m3-surface), 0.85);
-  color: #FFCC00;
-  font-size: var(--fs-label);
+  font-size: 14px;
   text-transform: uppercase;
   border-top: 1px solid var(--m3-outline-variant);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+.race-stats .label {
+  color: #FFCC00;
+  margin-right: 4px;
+}
+
+.race-stats .value {
+  color: #fff;
+}
+
+.race-stats .sep {
+  color: #888;
 }
 
 .pos-car-badge {
@@ -90,30 +107,32 @@
 }
 
 .pos-car-badge .pos {
+  height: var(--row-height);
+  padding: 0 8px;
+  min-width: 16px;
   background: #1A1A1F;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 14px;
-  padding: 8px 8px;
   font-weight: 800;
   color: #fff;
-  min-width: 15px;
 }
 
 .pos-car-badge .car {
+  height: var(--row-height);
+  padding: 0 8px;
+  min-width: 16px;
   flex: 1;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  padding: 4px 8px;
   line-height: 1.1;
-  height: 30px;
 }
 
 .pos-car-badge .car .num {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 800;
 }
 
@@ -129,33 +148,35 @@
 
 .time {
   text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
 }
 
 .driver {
   display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 2px;
+  flex-direction: row;
+  align-items: center;
   overflow: hidden;
 }
 .driver .name {
   font-weight: 500;
+  margin-right: 6px;
   font-size: var(--fs-body);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.driver .meta {
+
+.lic-column {
   display: flex;
-  gap: 6px;
+  justify-content: flex-start;
   align-items: center;
 }
-
 .lic-container {
   display: inline-flex;
   border-radius: var(--m3-radius-pill);
   overflow: hidden;
-  font-size: var(--fs-label);
+  font-size: 13px;
   font-weight: 500;
   color: #fff;
 }
@@ -165,9 +186,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .ir {
-  width: 27px;
+  width: 40px;
   padding: 2px 6px;
   background: rgba(var(--m3-surface), 0.5);
   display: flex;
