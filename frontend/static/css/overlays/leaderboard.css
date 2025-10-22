@@ -104,6 +104,8 @@
   overflow: hidden;
   font-weight: 700;
   width: 80px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .pos-car-badge .pos {
@@ -179,6 +181,8 @@
   font-size: 13px;
   font-weight: 500;
   color: #fff;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 .lic {
   padding: 2px 6px;
