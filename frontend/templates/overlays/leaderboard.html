@@ -6,7 +6,7 @@
 <div class="app">
     <section class="card">
         <div class="thead">
-            <div>POS #</div>
+            <div>POS</div>
             <div>Driver</div>
             <div>Rating</div>
             <div>Last Lap</div>
@@ -22,7 +22,6 @@
             </div>
             <div class="driver">
                 <div class="name">Loading...</div>
-                <div class="gap">+---</div>
             </div>
             <div class="lic-column">
                 <div class="lic-container">
@@ -42,7 +41,6 @@
             </div>
             <div class="driver">
                 <div class="name">Loading...</div>
-                <div class="gap">+---</div>
             </div>
             <div class="lic-column">
                 <div class="lic-container">
@@ -62,7 +60,6 @@
             </div>
             <div class="driver">
                 <div class="name">Loading...</div>
-                <div class="gap">+---</div>
             </div>
             <div class="lic-column">
                 <div class="lic-container">
@@ -76,7 +73,7 @@
         <!-- Player Car -->
         <div id="player-row" class="row me">
             <div class="pos-car-badge">
-                <div class="pos">--</div>
+                <div class="pos me">--</div>
                 <div class="car">
                     <span class="num">--</span>
                 </div>
@@ -101,7 +98,6 @@
             </div>
             <div class="driver">
                 <div class="name">Loading...</div>
-                <div class="gap">- ---</div>
             </div>
             <div class="lic-column">
                 <div class="lic-container">
@@ -121,7 +117,6 @@
             </div>
             <div class="driver">
                 <div class="name">Loading...</div>
-                <div class="gap">- ---</div>
             </div>
             <div class="lic-column">
                 <div class="lic-container">
@@ -141,7 +136,6 @@
             </div>
             <div class="driver">
                 <div class="name">Loading...</div>
-                <div class="gap">- ---</div>
             </div>
             <div class="lic-column">
                 <div class="lic-container">
@@ -207,8 +201,6 @@ class LeaderboardUpdater {
 
         const aheadCars = data.neighbors.ahead || [];
         const behindCars = data.neighbors.behind || [];
-
-        // FIX: Reverse ahead cars so farthest ahead is at the top (row 1), then closer cars below
         const displayedAheadCars = [...aheadCars].reverse();
         
         // Render ahead cars - farthest ahead in row 1, then closer cars in row 2, etc.
@@ -231,7 +223,7 @@ class LeaderboardUpdater {
         this.updateSessionLaps(
             data.leaderboard_data.session_laps,
             data.leaderboard_data.session_time,
-            data.leaderboard_data.car_est_lap_time,
+            data.leaderboard_data.player_lap_time,
             data.player.laps_started
         );
     }
@@ -239,6 +231,11 @@ class LeaderboardUpdater {
     renderPlayer(player) {
         const row = document.getElementById('player-row');
         this.renderRow(row, player);
+
+        const posElement = row.querySelector('.pos');
+        if (posElement && !posElement.classList.contains('me')) {
+            posElement.classList.add('me');
+        }
     }
 
     renderCar(rowId, car, isAhead) {
@@ -249,24 +246,11 @@ class LeaderboardUpdater {
 
     renderRow(rowElement, car, isAhead = null) {
         rowElement.querySelector('.pos').textContent = car.pos || '--';
-        rowElement.querySelector('.num').textContent = car.car_number || '--';
+        rowElement.querySelector('.num').textContent = `#${car.car_number}` || '--';
         
-        // Handle name and gap display for neighbor cars
         const driverElement = rowElement.querySelector('.driver');
         const nameElement = driverElement.querySelector('.name');
         nameElement.textContent = car.name || 'Unknown';
-        
-        // Show gap for neighbor cars (not player)
-        if (isAhead !== null) {
-            let gapElement = driverElement.querySelector('.gap');
-            if (!gapElement) {
-                gapElement = document.createElement('div');
-                gapElement.className = 'gap';
-                driverElement.appendChild(gapElement);
-            }
-            const gap = car.gap_pct || 0;
-            gapElement.textContent = isAhead ? `+${gap.toFixed(3)}` : `-${gap.toFixed(3)}`;
-        }
 
         const licElement = rowElement.querySelector('.lic');
         if (car.license) {
@@ -291,7 +275,7 @@ class LeaderboardUpdater {
         row.querySelector('.time').textContent = lapTime || '--:--.---';
     }
 
-    updateSessionLaps(sessionLaps, sessionTime, carEstLapTime, lapsStarted) {
+    updateSessionLaps(sessionLaps, sessionTime, playerLapTime, lapsStarted) {
         const currentElement = document.getElementById('laps-current');
         const totalElement = document.getElementById('laps-total');
 
@@ -300,7 +284,7 @@ class LeaderboardUpdater {
             totalElement.textContent = sessionLaps;
         } else {
             currentElement.textContent = lapsStarted;
-            totalElement.textContent = `~${(sessionTime / carEstLapTime).toFixed(1)}`;
+            totalElement.textContent = `~${(sessionTime / playerLapTime).toFixed(1)}`;
         }
     }
 

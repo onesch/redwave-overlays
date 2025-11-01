@@ -1,11 +1,13 @@
 :root {
-    --m3-surface: 26, 26, 31;
+    --m3-surface-top: 28, 28, 37;
+    --m3-surface-bottom: 20, 20, 30;
     --m3-surface-gradient: linear-gradient(
         to bottom,
-        rgba(26, 26, 31, 0.8) 0%,
-        rgba(13, 12, 18, 0.8) 100%
+        rgba(var(--m3-surface-top), 0.6) 0%,
+        rgba(var(--m3-surface-bottom), 0.6) 100%
     );
 
+    --m3-surface-bg: 37, 37, 46;
     --m3-on-surface: #e0e0e0;
     --m3-outline-variant: #1A1A1F;
 

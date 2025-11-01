@@ -1,7 +1,7 @@
 @import url('base.css');
 
 .app {
-  max-width: 415px;
+  max-width: 390px;
   margin: 40px auto;
  }
 
@@ -17,10 +17,9 @@
 
 .thead, .row {
   display: grid;
-  grid-template-columns: 80px 100px 100px 80px;
+  grid-template-columns: 70px 80px 100px 90px;
   align-items: center;
   column-gap: 12px;
-  background: rgba(var(--m3-surface), 0.85);
 }
 .thead {
   height: 18px;
@@ -29,6 +28,7 @@
   font-size: var(--fs-label);
   text-transform: uppercase;
   letter-spacing: .08em;
+  background: rgba(var(--m3-surface-top), 0.6);
 }
 .thead > *:nth-child(1),
 .thead > *:nth-child(2),
@@ -42,7 +42,7 @@
 .row {
   height: var(--row-height);
   padding: 0 var(--pad-4);
-  background: rgba(var(--m3-surface), 0);
+  background: rgba(var(--m3-surface-bottom), 0);
   position: relative;
 }
 .row:nth-child(2) { grid-row: 2 / 3; }
@@ -56,7 +56,7 @@
       rgba(179, 194, 66, 0.25) 50%,
       rgba(255, 255, 0, 0) 100%
     ),
-    rgba(var(--m3-surface), 0);
+    rgba(var(--m3-surface-bottom), 0);
 }
 .row + .row::before {
   content: "";
@@ -76,12 +76,17 @@
   align-items: center;
   height: 18px;
   padding: 0 var(--pad-4);
-  background: rgba(var(--m3-surface), 0.85);
+  background: rgba(var(--m3-surface-bottom), 0.6);
   font-size: 14px;
   text-transform: uppercase;
   border-top: 1px solid var(--m3-outline-variant);
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum";
+}
+
+.race-stats {
+  background: rgb(var(--m3-surface-bg), 0.6);
+  border-radius: var(--m3-radius-pill);
 }
 
 .race-stats .label {
@@ -95,6 +100,16 @@
 
 .race-stats .sep {
   color: #888;
+}
+.pos.me {
+  background: 
+    linear-gradient(
+      to bottom,
+      rgba(255, 255, 0, 0) 0%,
+      rgba(255, 204, 0, 0.25) 50%,
+      rgba(255, 255, 0, 0) 100%
+    ),
+    rgba(var(--m3-surface-bottom), 0) !important;
 }
 
 .pos-car-badge {
@@ -112,7 +127,7 @@
   height: var(--row-height);
   padding: 0 8px;
   min-width: 16px;
-  background: #1A1A1F;
+  background: rgb(var(--m3-surface-bg), 0.6);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -131,11 +146,19 @@
   justify-content: center;
   align-items: center;
   line-height: 1.1;
+  align-items: flex-start;
+  padding-left: 4px;
 }
 
 .pos-car-badge .car .num {
   font-size: 13px;
   font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+.num {
+  text-align: left;
 }
 
 .pos-car-badge .car .class {
@@ -152,6 +175,10 @@
   text-align: right;
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum";
+  border-radius: var(--m3-radius-pill);
+  background: rgb(var(--m3-surface-bg), 0.6);
+  min-width: 90px;
+  font-size: 15px;
 }
 
 .driver {
@@ -197,7 +224,7 @@
 .ir {
   width: 40px;
   padding: 2px 6px;
-  background: rgba(var(--m3-surface), 0.5);
+  background: rgb(var(--m3-surface-bg), 0.6);
   display: flex;
   align-items: center;
   justify-content: center;
