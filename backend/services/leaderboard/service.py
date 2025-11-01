@@ -204,12 +204,11 @@ class Leaderboard:
                 if record.get("CarIdx") == player_idx and record.get("FastestTime", -1) > 0:
                     fastest_time = record["FastestTime"] if fastest_time is None else min(fastest_time, record["FastestTime"])
 
-            if fastest_time is None:
-                results_positions = sess.get("ResultsPositions") or []
-                for r in results_positions:
-                    last_time = r.get("LastTime", -1)
-                    if r.get("CarIdx") == player_idx and last_time > 0:
-                        fastest_time = last_time if fastest_time is None else min(fastest_time, last_time)
+        if fastest_time is None:
+            for sess in sessions:
+                for record in sess.get("ResultsFastestLap", []) or []:
+                    if record.get("FastestTime", -1) > 0:
+                        fastest_time = record["FastestTime"] if fastest_time is None else min(fastest_time, record["FastestTime"])
 
         driver = (self.irsdk.get_value("DriverInfo") or {}).get("Drivers", [])[player_idx]
         est_lap_time = driver.get("CarClassEstLapTime")
