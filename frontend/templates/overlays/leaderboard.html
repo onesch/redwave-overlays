@@ -6,10 +6,11 @@
 <div class="app">
     <section class="card">
         <div class="thead">
-            <div>POS</div>
+            <div>Pos</div>
             <div>Driver</div>
             <div>Rating</div>
             <div>Last Lap</div>
+            <div>Gap</div>
         </div>
 
         <!-- Ahead Cars (up to 3) -->
@@ -30,6 +31,7 @@
                 </div>
             </div>
             <div class="time">--:--.---</div>
+            <div class="gap">--</div>
         </div>
 
         <div id="ahead-row-2" class="row ahead" style="display: none;">
@@ -49,6 +51,7 @@
                 </div>
             </div>
             <div class="time">--:--.---</div>
+            <div class="gap">--</div>
         </div>
 
         <div id="ahead-row-3" class="row ahead" style="display: none;">
@@ -68,6 +71,7 @@
                 </div>
             </div>
             <div class="time">--:--.---</div>
+            <div class="gap">--</div>
         </div>
 
         <!-- Player Car -->
@@ -86,6 +90,7 @@
                 </div>
             </div>
             <div class="time">--:--.---</div>
+            <div class="gap">0.0</div>
         </div>
 
         <!-- Behind Cars (up to 3) -->
@@ -106,6 +111,7 @@
                 </div>
             </div>
             <div class="time">--:--.---</div>
+            <div class="gap">--</div>
         </div>
 
         <div id="behind-row-2" class="row behind" style="display: none;">
@@ -125,6 +131,7 @@
                 </div>
             </div>
             <div class="time">--:--.---</div>
+            <div class="gap">--</div>
         </div>
 
         <div id="behind-row-3" class="row behind" style="display: none;">
@@ -144,6 +151,7 @@
                 </div>
             </div>
             <div class="time">--:--.---</div>
+            <div class="gap">--</div>
         </div>
 
         <div class="tfoot">
@@ -162,7 +170,7 @@
 <script>
 class LeaderboardUpdater {
     constructor() {
-        this.updateInterval = 500;
+        this.updateInterval = 100;
         this.init();
     }
 
@@ -236,6 +244,11 @@ class LeaderboardUpdater {
         if (posElement && !posElement.classList.contains('me')) {
             posElement.classList.add('me');
         }
+
+        const gapElement = row.querySelector('.gap');
+        if (gapElement) {
+            gapElement.textContent = '0.0';
+        }
     }
 
     renderCar(rowId, car, isAhead) {
@@ -244,17 +257,58 @@ class LeaderboardUpdater {
         this.renderRow(row, car, isAhead);
     }
 
+    hexToRgb(hex) {
+        let c = hex.replace('#','');
+        if (c.length === 3) {
+            c = c.split('').map(ch => ch + ch).join('');
+        }
+        const bigint = parseInt(c, 16);
+        const r = (bigint >> 16) & 255;
+        const g = (bigint >> 8) & 255;
+        const b = bigint & 255;
+        return [r, g, b];
+    }
+
+    applyGradient(numElement, hexColor) {
+        const [r,g,b] = this.hexToRgb(hexColor);
+        numElement.style.backgroundImage = `
+            linear-gradient(to right,
+                rgba(${r},${g},${b},1),
+                rgba(${r},${g},${b},0.2),
+                rgba(${r},${g},${b},0)
+            )
+            `;
+    }
+
     renderRow(rowElement, car, isAhead = null) {
         rowElement.querySelector('.pos').textContent = car.pos || '--';
-        rowElement.querySelector('.num').textContent = `#${car.car_number}` || '--';
-        
+        const numElement = rowElement.querySelector('.num');
+        numElement.textContent = `#${car.car_number}` || '--';
+        const DARKEN_PERCENT = 20;
+
+        if (car.car_class_color) {
+            if (car.car_class_color.toUpperCase() === '#FFFFFF') {
+                numElement.style.backgroundImage = 'none';
+                numElement.style.fontWeight = 'normal';
+            } else {
+                this.applyGradient(numElement, car.car_class_color);
+                numElement.style.fontWeight = 'normal';
+            }
+        } else {
+            numElement.style.backgroundImage = '';
+            numElement.style.color = ''; 
+        }
+
         const driverElement = rowElement.querySelector('.driver');
         const nameElement = driverElement.querySelector('.name');
         nameElement.textContent = car.name || 'Unknown';
 
         const licElement = rowElement.querySelector('.lic');
         if (car.license) {
-            let licenseText = car.license.replace(/(\.\d)0$/, "$1");
+            let licenseText = car.license;
+            if (licenseText.length > 5) {
+                licenseText = licenseText.slice(0, 5) + licenseText.slice(6);
+            }
             licElement.textContent = licenseText;
             licElement.className = 'lic';
             licElement.classList.add(licenseText.charAt(0).toLowerCase());
@@ -269,10 +323,21 @@ class LeaderboardUpdater {
             : '--';
 
         this.updateLapTime(rowElement, car.last_lap);
+        this.updateGap(rowElement, car.gap_sec);
     }
 
     updateLapTime(row, lapTime) {
         row.querySelector('.time').textContent = lapTime || '--:--.---';
+    }
+
+    updateGap(row, gapSec) {
+        const gapElement = row.querySelector('.gap');
+        if (!gapElement) return;
+        if (gapSec === undefined || gapSec === null) {
+            gapElement.textContent = '--';
+        } else {
+            gapElement.textContent = `${gapSec.toFixed(1)}`;
+        }
     }
 
     updateSessionLaps(sessionLaps, sessionTime, playerLapTime, lapsStarted) {
