@@ -5,7 +5,7 @@
 }
 
 .app {
-  max-width: 400px;
+  max-width: 410px;
   margin: 40px auto;
  }
 
@@ -21,7 +21,7 @@
 
 .thead, .row {
   display: grid;
-  grid-template-columns: 50px 80px 80px 90px 40px;
+  grid-template-columns: 60px 80px 80px 90px 40px;
   align-items: center;
   column-gap: 12px;
 }
