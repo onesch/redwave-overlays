@@ -1,9 +1,5 @@
 @import url('base.css');
 
-* {
-  font-weight: 400 !important;
-}
-
 .app {
   max-width: 410px;
   margin: 40px auto;

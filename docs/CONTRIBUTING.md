@@ -64,7 +64,7 @@ coverage report -m
 │       ├── card_desc_database.json  # Card descriptions.
 │       ├── data_loader.py           # JSON loader utils.
 │       ├── metadata.json            # General metadata.
-│       └── overlays_settings.json   # (Appears when saving overlays settings).
+│       └── overlays_settings.json   # Appears when saving overlays settings.
 │
 ├── frontend/                        # Electron frontend app.
 │   ├── ipc/                         # IPC event handlers.
@@ -72,8 +72,7 @@ coverage report -m
 │   ├── static/                      # Static frontend files.
 │   │   ├── css/                     # Base and specific styles.
 │   │   ├── images/                  # Project images.
-│   │   ├── js/                      # Frontend JavaScript (optional).
-│   │   └── video/                   # Project videos.
+│   │   ├── js/                      # Frontend JavaScript.
 │   │
 │   ├── templates/                   # Jinja2 HTML views.
 │   │   ├── base/                    # Base and shared components/templates.
@@ -94,6 +93,7 @@ coverage report -m
 │   └── preload.js                   # Secure preload API.
 │
 ├── tests/                           # Project test cases.
+├── docs/                           # Project docs.
 │
 ├── .gitattributes                   # LFS config.
 ├── .gitignore                       # Ignored files.

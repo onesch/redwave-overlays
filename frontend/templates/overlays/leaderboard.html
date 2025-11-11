@@ -289,10 +289,8 @@ class LeaderboardUpdater {
         if (car.car_class_color) {
             if (car.car_class_color.toUpperCase() === '#FFFFFF') {
                 numElement.style.backgroundImage = 'none';
-                numElement.style.fontWeight = 'normal';
             } else {
                 this.applyGradient(numElement, car.car_class_color);
-                numElement.style.fontWeight = 'normal';
             }
         } else {
             numElement.style.backgroundImage = '';

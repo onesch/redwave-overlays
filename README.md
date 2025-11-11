@@ -1,6 +1,6 @@
 # iRacing Overlays
 
-**iRacing Overlays** is a lightweight desktop application built with **Electron** and **FastAPI**, designed to display live iRacing telemetry.
+**iRacing Overlays** is a lightweight desktop application designed to ***display live iRacing telemetry***. Powered by ***FastAPI*** & ***Electron***.
 
 ![coverage](https://img.shields.io/badge/Version-v1.0.0_dev-blue)
 ![coverage](https://img.shields.io/badge/Coverage-97%25-green)
@@ -11,24 +11,21 @@
 
 ## 🖼️ Screenshots
 
-<img width="525" alt="image" src="frontend/static/images/main_window.png" />
-
-## 📦 Features
-
-- Live telemetry display for iRacing.
-- Fast and responsive overlays with smooth updates.
-- Always-on-top windows styled with HTML/CSS.
-- Modern web stack (**FastAPI**, **Electron**, **JavaScript**).
+<img width="600" alt="image" src="frontend/static/images/overlays_example.png" />
 
 ## 🛠️ Installation
 
-Download the latest version from [releases](https://github.com/onesch/iracing-overlays/releases/tag/publish).
+1. Go to the [latest release](https://github.com/onesch/iracing-overlays/releases/tag/publish).
+2. Download the latest installer.
+3. Run it and launch the app.
 
-## 🧑‍💻 Contributing
 
-Pull requests and issues are welcome.
-Check out the full [guide here](https://github.com/onesch/iracing-overlays/blob/electron-version/docs/CONTRIBUTING.md).
+## 🤝 Contributing
 
-# 📄 License
+Contributions, issues, and feature requests are welcome!  
+Read our [Contributing Guide](docs/CONTRIBUTING.md) for details.
 
-[GPL-3.0](https://github.com/onesch/iracing-overlays/blob/electron-version/LICENSE) License.
+## 📜 License
+
+Distributed under the [GPL-3.0 License](LICENSE).  
+© 2025 onesch. All rights reserved.

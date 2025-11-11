@@ -15,6 +15,7 @@
     --m3-radius-pill: 6px;
 
     --font: "Schibsted Grotesk", Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+
     --fs-label: 12px;
     --fs-body: 16px;
     --pad-4: 6px;
@@ -32,6 +33,7 @@
 body {
     margin: 0;
     font-family: var(--font);
+    font-weight: 400;
     color: var(--m3-on-surface);
     -webkit-app-region: drag;
     /* border: 2px solid green; */
