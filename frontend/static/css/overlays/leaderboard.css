@@ -118,7 +118,6 @@
   align-items: stretch;
   border-radius: var(--m3-radius-pill);
   overflow: hidden;
-  font-weight: 700;
   width: 80px;
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -151,19 +150,17 @@
 
 .pos-car-badge .car .num {
   font-size: 13px;
-  font-weight: 800;
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum";
 }
 
 .num {
-  min-width: 26px;
+  min-width: 40px;
   flex: 1;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  color: white;
 }
 
 .pos-car-badge .car .class {

@@ -1,6 +1,7 @@
 import time
 from typing import Any, Dict, List, Optional
 
+from backend.services.leaderboard.parser import ILeaderboardParser
 
 class TimeFormatter:
     """Utility for formatting lap times."""
@@ -21,8 +22,9 @@ class TimeFormatter:
 class CarDataBuilder:
     """Responsible for constructing car data entries."""
 
-    def __init__(self, irsdk_service):
+    def __init__(self, irsdk_service, parser: ILeaderboardParser):
         self.irsdk = irsdk_service
+        self.parser = parser
 
     def _get_starting_position(
         self, car_idx: int, field: str, offset: int
@@ -77,7 +79,7 @@ class CarDataBuilder:
 
         dist = lap_dist_pct[idx]
         first_name = (name.strip().split() or [""])[0]
-        car_class_color = self.irsdk.normalize_color(
+        car_class_color = self.parser.normalize_color(
             driver.get("CarClassColor")
         )
 
@@ -116,9 +118,9 @@ class CarSorter:
 class Leaderboard:
     """Main service for building leaderboard telemetry data."""
 
-    def __init__(self, irsdk_service):
+    def __init__(self, irsdk_service, parser: ILeaderboardParser):
         self.irsdk = irsdk_service
-        self.builder = CarDataBuilder(irsdk_service)
+        self.builder = CarDataBuilder(irsdk_service, parser)
 
     def _is_multiclass(self, drivers: list) -> bool:
         """Check if race contains multiple car classes."""

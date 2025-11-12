@@ -14,18 +14,18 @@ from backend.services.radar.constants import (
 
 
 class DistanceSeverity:
-    """Encapsulates logic to calculate severity for distances"""
+    """Encapsulates logic to calculate severity for distances."""
 
     @staticmethod
     def _sanitize_distance(dist: Optional[float]) -> Optional[float]:
-        """Ignore distances outside valid range"""
+        """Ignore distances outside valid range."""
         if dist is None or not (0 <= dist <= MAX_SHOW_DIST):
             return None
         return dist
 
     @staticmethod
     def for_distance(dist: Optional[float]) -> str:
-        """Return severity level for a given distance"""
+        """Return severity level for a given distance."""
         if dist is None:
             return "none"
         if dist <= RED_M:
@@ -42,14 +42,14 @@ class DistanceSeverity:
 
 
 class RadarService:
-    """Business logic service working with radar data"""
+    """Business logic service working with radar data."""
 
     def __init__(self, irsdk_service, parser: IRadarParser):
         self.irsdk_service = irsdk_service
         self.irsdk_parser = parser
 
     def get_radar_json(self) -> dict:
-        """Build radar telemetry JSON response"""
+        """Build radar telemetry JSON response."""
         connected, reason = self.irsdk_service._ensure_connected()
         if not connected:
             return {"reason": reason}
