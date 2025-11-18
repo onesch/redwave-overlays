@@ -56,14 +56,3 @@ class IRSDKParser(IRadarParser):
             unit, 1.0
         )
         return val * mult
-
-    @staticmethod
-    def normalize_color(value: Any) -> str | None:
-        """Normalize color from int or hex string to #RRGGBB format."""
-        if not value:
-            return None
-        if isinstance(value, int):
-            return f"#{value:06X}"
-        if isinstance(value, str) and value.startswith("0x"):
-            return f"#{int(value, 16):06X}"
-        return value

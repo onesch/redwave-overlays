@@ -1,8 +1,6 @@
 import time
 from typing import Any, Dict, List, Optional
 
-from backend.services.leaderboard.parser import ILeaderboardParser
-
 class TimeFormatter:
     """Utility for formatting lap times."""
 
@@ -22,9 +20,8 @@ class TimeFormatter:
 class CarDataBuilder:
     """Responsible for constructing car data entries."""
 
-    def __init__(self, irsdk_service, parser: ILeaderboardParser):
+    def __init__(self, irsdk_service):
         self.irsdk = irsdk_service
-        self.parser = parser
 
     def _get_starting_position(
         self, car_idx: int, field: str, offset: int
@@ -79,9 +76,6 @@ class CarDataBuilder:
 
         dist = lap_dist_pct[idx]
         first_name = (name.strip().split() or [""])[0]
-        car_class_color = self.parser.normalize_color(
-            driver.get("CarClassColor")
-        )
 
         return {
             "pos": pos,
@@ -92,7 +86,7 @@ class CarDataBuilder:
             "last_lap": last_lap,
             "irating": driver.get("IRating"),
             "license": driver.get("LicString"),
-            "car_class_color": car_class_color,
+            "car_class_color": driver.get("CarClassColor"),
             "lap_dist_pct": (
                 round(dist, 3)
                 if isinstance(dist, (int, float)) and dist >= 0
@@ -105,7 +99,7 @@ class CarSorter:
     """Sort cars by position, keeping None or 0 at the end."""
 
     @staticmethod
-    def sort(cars: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def sort(cars: List[Dict[str, int | None]]) -> List[Dict[str, int | None]]:
         return sorted(
             cars,
             key=lambda c: (
@@ -118,9 +112,9 @@ class CarSorter:
 class Leaderboard:
     """Main service for building leaderboard telemetry data."""
 
-    def __init__(self, irsdk_service, parser: ILeaderboardParser):
+    def __init__(self, irsdk_service):
         self.irsdk = irsdk_service
-        self.builder = CarDataBuilder(irsdk_service, parser)
+        self.builder = CarDataBuilder(irsdk_service)
 
     def _is_multiclass(self, drivers: list) -> bool:
         """Check if race contains multiple car classes."""

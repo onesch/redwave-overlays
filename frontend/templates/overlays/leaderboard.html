@@ -257,27 +257,22 @@ class LeaderboardUpdater {
         this.renderRow(row, car, isAhead);
     }
 
-    hexToRgb(hex) {
-        let c = hex.replace('#','');
-        if (c.length === 3) {
-            c = c.split('').map(ch => ch + ch).join('');
-        }
-        const bigint = parseInt(c, 16);
-        const r = (bigint >> 16) & 255;
-        const g = (bigint >> 8) & 255;
-        const b = bigint & 255;
+    intToRgb(num) {
+        const r = (num >> 16) & 255;
+        const g = (num >> 8) & 255;
+        const b = num & 255;
         return [r, g, b];
     }
 
-    applyGradient(numElement, hexColor) {
-        const [r,g,b] = this.hexToRgb(hexColor);
+    applyGradient(numElement, rgbInt) {
+        const [r, g, b] = this.intToRgb(rgbInt);
         numElement.style.backgroundImage = `
             linear-gradient(to right,
                 rgba(${r},${g},${b},1),
                 rgba(${r},${g},${b},0.2),
                 rgba(${r},${g},${b},0)
             )
-            `;
+        `;
     }
 
     renderRow(rowElement, car, isAhead = null) {
@@ -287,7 +282,7 @@ class LeaderboardUpdater {
         const DARKEN_PERCENT = 20;
 
         if (car.car_class_color) {
-            if (car.car_class_color.toUpperCase() === '#FFFFFF') {
+            if (car.car_class_color === 0xFFFFFF) {
                 numElement.style.backgroundImage = 'none';
             } else {
                 this.applyGradient(numElement, car.car_class_color);
