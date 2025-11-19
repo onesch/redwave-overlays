@@ -7,39 +7,6 @@ from backend.services.radar.service import RadarService
 from backend.services.radar.constants import CLR_LEFT, CLR_RIGHT, CLR_BOTH
 
 
-@pytest.fixture
-def default_radar_values():
-    return {
-        "WeekendInfo": {"TrackLength": "3000 m"},
-        "CarDistAhead": 0.0,
-        "CarDistBehind": 0.0,
-        "CarLeftRight": 0,
-    }
-
-
-@pytest.fixture
-def mock_service(default_radar_values):
-    def _factory(values=None, connected=True):
-        service = IRSDKService()
-        mock_ir = MagicMock()
-        mock_ir.is_initialized = True
-        mock_ir.is_connected = connected
-
-        final_values = dict(default_radar_values)
-        if values:
-            final_values.update(values)
-
-        mock_ir.__getitem__.side_effect = lambda key: final_values.get(key)
-        service.ir = mock_ir
-        service.started = True
-
-        parser = IRSDKParser(service)
-
-        return RadarService(service, parser)
-
-    return _factory
-
-
 # --- Data tests ---
 
 
