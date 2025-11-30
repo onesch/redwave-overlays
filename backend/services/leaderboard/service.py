@@ -1,6 +1,7 @@
 import time
 from typing import Any, Dict, List, Optional
 
+
 class TimeFormatter:
     """Utility for formatting lap times."""
 
