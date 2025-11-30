@@ -15,7 +15,7 @@
 
 ## 🛠️ Installation
 
-1. Go to the [latest release](https://github.com/onesch/iracing-overlays/releases/tag/publish).
+1. Go to the [Latest Release](https://github.com/onesch/iracing-overlays/releases/tag/publish).
 2. Download the latest installer.
 3. Run it and launch the app.
 
