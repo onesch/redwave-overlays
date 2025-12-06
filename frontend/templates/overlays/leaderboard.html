@@ -161,6 +161,11 @@
                 <span class="sep">/</span>
                 <span id="laps-total" class="value">--</span>
             </div>
+            <div class="race-stats">
+                <span id="time-current" class="value">--</span>
+                <span class="sep">/</span>
+                <span id="time-total" class="value">--</span>
+            </div>
         </div>
     </section>
 </div>
@@ -227,12 +232,17 @@ class LeaderboardUpdater {
             }
         }
 
-        // Update session laps
-        this.updateSessionLaps(
+        // Update session lap time
+        this.updateSessionLapTime(
             data.leaderboard_data.session_laps,
             data.leaderboard_data.session_time,
             data.leaderboard_data.player_lap_time,
             data.player.laps_started
+        );
+        // Update session time
+        this.updateSessionTime(
+            data.leaderboard_data.session_time_current,
+            data.leaderboard_data.session_time_formatted,
         );
     }
 
@@ -276,10 +286,17 @@ class LeaderboardUpdater {
     }
 
     renderRow(rowElement, car, isAhead = null) {
-        rowElement.querySelector('.pos').textContent = car.pos || '--';
+        this.renderPositionAndCar(rowElement, car);
+        this.renderDriver(rowElement, car);
+        this.renderLicenseAndIrating(rowElement, car);
+        this.renderGapAndLap(rowElement, car);
+    }
+
+    renderPositionAndCar(rowElement, car) {
+        const posElement = rowElement.querySelector('.pos');
+        posElement.textContent = car.pos || '--';
         const numElement = rowElement.querySelector('.num');
-        numElement.textContent = `#${car.car_number}` || '--';
-        const DARKEN_PERCENT = 20;
+        numElement.textContent = car.car_number ? `#${car.car_number}` : '--';
 
         if (car.car_class_color) {
             if (car.car_class_color === 0xFFFFFF) {
@@ -289,13 +306,16 @@ class LeaderboardUpdater {
             }
         } else {
             numElement.style.backgroundImage = '';
-            numElement.style.color = ''; 
+            numElement.style.color = '';
         }
+    }
 
-        const driverElement = rowElement.querySelector('.driver');
-        const nameElement = driverElement.querySelector('.name');
+    renderDriver(rowElement, car) {
+        const nameElement = rowElement.querySelector('.driver .name');
         nameElement.textContent = car.name || 'Unknown';
+    }
 
+    renderLicenseAndIrating(rowElement, car) {
         const licElement = rowElement.querySelector('.lic');
         if (car.license) {
             let licenseText = car.license;
@@ -314,13 +334,24 @@ class LeaderboardUpdater {
         irElement.textContent = car.irating
             ? (Math.floor(car.irating / 100) / 10).toFixed(1) + 'k'
             : '--';
+    }
+
+    renderGapAndLap(rowElement, car) {
+        const gapElement = rowElement.querySelector('.gap');
+        if (car.lap_status === "ahead_lap") {
+            gapElement.style.color = "#FF5C5C";
+        } else if (car.lap_status === "behind_lap") {
+            gapElement.style.color = "#6F8EEB";
+        } else {
+            gapElement.style.color = "#FFCC00";
+        }
 
         this.updateLapTime(rowElement, car.last_lap);
         this.updateGap(rowElement, car.gap_sec);
     }
 
     updateLapTime(row, lapTime) {
-        row.querySelector('.time').textContent = lapTime || '--:--.---';
+        row.querySelector('.time').textContent = lapTime;
     }
 
     updateGap(row, gapSec) {
@@ -333,17 +364,23 @@ class LeaderboardUpdater {
         }
     }
 
-    updateSessionLaps(sessionLaps, sessionTime, playerLapTime, lapsStarted) {
+    updateSessionLapTime(sessionLaps, sessionTime, playerLapTime, lapsStarted) {
         const currentElement = document.getElementById('laps-current');
         const totalElement = document.getElementById('laps-total');
 
+        currentElement.textContent = lapsStarted;
         if (sessionLaps !== "unlimited") {
-            currentElement.textContent = lapsStarted;
             totalElement.textContent = sessionLaps;
         } else {
-            currentElement.textContent = lapsStarted;
             totalElement.textContent = `~${(sessionTime / playerLapTime).toFixed(1)}`;
         }
+    }
+
+    updateSessionTime(current_time, total_time) {
+        const currentElement = document.getElementById('time-current');
+        const totalElement = document.getElementById('time-total');
+        currentElement.textContent = current_time;
+        totalElement.textContent = total_time;
     }
 
     showError(message) {

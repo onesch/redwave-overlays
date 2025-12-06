@@ -7,6 +7,7 @@ from backend.services.leaderboard.service import (
     CarDataBuilder,
     TimeFormatter,
     CarSorter,
+    LAP_RACE_API_PLACEHOLDER,
 )
 
 
@@ -22,7 +23,22 @@ from backend.services.leaderboard.service import (
     ],
 )
 def test_time_formatter(seconds, expected):
-    assert TimeFormatter.format(seconds) == expected
+    assert TimeFormatter.format_lap_time(seconds) == expected
+
+
+@pytest.mark.parametrize(
+    "secs,expected",
+    [
+        (None, "--:--.---"),
+        (-5, "--:--.---"),
+        (0, "00:00m"),
+        (3600, "01:00:00h"),
+        (3665, "01:01:05h"),
+        (65, "01:05m"),
+    ],
+)
+def test_format_session_time_edge_cases(secs, expected):
+    assert TimeFormatter.format_session_time(secs, is_seconds=True) == expected
 
 
 # --- CarSorter tests ---
@@ -124,7 +140,7 @@ def test_builder_lap_dist_pct_negative_becomes_none(mock_irsdk_leaderboard):
         [1], [0], [80], [1], [-0.5],
         multiclass=False
     )
-    assert result["lap_dist_pct"] == None
+    assert result["lap_dist_pct"] is None
 
 
 def test_builder_returns_valid_data(mock_irsdk_leaderboard):
@@ -154,6 +170,28 @@ def test_builder_returns_valid_data(mock_irsdk_leaderboard):
 
 
 # --- Leaderboard tests ---
+
+
+def test_is_lap_race_variants(mock_irsdk_leaderboard):
+    leaderboard = Leaderboard(mock_irsdk_leaderboard)
+    assert not leaderboard._is_lap_race(None)
+    assert leaderboard._is_lap_race("Unlimited") is True
+    assert leaderboard._is_lap_race(LAP_RACE_API_PLACEHOLDER) is True
+    assert leaderboard._is_lap_race("100 sec") is False
+    assert leaderboard._is_lap_race(5000.0) is False
+
+
+def test_resolve_session_time_formats(mock_irsdk_leaderboard):
+    leaderboard = Leaderboard(mock_irsdk_leaderboard)
+    session = mock_irsdk_leaderboard.get_value("SessionInfo")["Sessions"][1]
+    player_lap_time = 79.8
+
+    result = leaderboard._resolve_session_time(session, player_lap_time, "100 sec", format=False)
+    assert result == 100.0
+
+    formatted = leaderboard._resolve_session_time(session, player_lap_time, "100 sec", format=True)
+    assert isinstance(formatted, str)
+    assert formatted.endswith("m")
 
 
 def test_leaderboard_snapshot_structure(mock_irsdk_leaderboard):

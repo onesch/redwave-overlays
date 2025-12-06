@@ -1,13 +1,16 @@
 import time
 from typing import Any, Dict, List, Optional
 
+# Constant for offline races: in a RACE session, if the race is lap-based, the API returns this "magic" value.
+LAP_RACE_API_PLACEHOLDER: float = 86400.0
+
 
 class TimeFormatter:
     """Utility for formatting lap times."""
 
     @staticmethod
-    def format(seconds: Optional[float]) -> str:
-        """Convert lap time in seconds to formatted string."""
+    def format_lap_time(seconds: float | None) -> str:
+        """Convert lap time in seconds to '--:--.---' format."""
         if seconds is None or seconds <= 0:
             return "--:--.---"
         ms = int(seconds * 1000)
@@ -16,6 +19,25 @@ class TimeFormatter:
         m = s // 60
         s = s % 60
         return f"{m:02d}:{s:02d}.{ms_remain:03d}"
+
+    @staticmethod
+    def format_session_time(secs: float, is_seconds: bool) -> str:
+        """Format session time from seconds to 'HH:MM:SS' or 'MM:SS' format."""
+        if secs is None or secs < 0:
+            return "--:--.---"
+
+        hrs = int(secs // 3600)
+        mins = int((secs % 3600) // 60)
+        secs_remain = int(secs % 60)
+
+        if is_seconds:
+            if hrs > 0:
+                return f"{hrs:02d}:{mins:02d}:{secs_remain:02d}h"
+            return f"{mins:02d}:{secs_remain:02d}m"
+        else:
+            if hrs > 0:
+                return f"{hrs:02d}:{mins:02d}h"
+            return f"{hrs:02d}:{mins:02d}m"
 
 
 class CarDataBuilder:
@@ -70,7 +92,7 @@ class CarDataBuilder:
                 offset=1 if multiclass else 0,
             )
 
-        last_lap = TimeFormatter.format(last_lap_times[idx])
+        last_lap = TimeFormatter.format_lap_time(last_lap_times[idx])
         laps = int(laps_started[idx] or 0)
         if laps < 0:
             laps = 0
@@ -183,7 +205,7 @@ class Leaderboard:
             "timestamp": int(time.time()),
         }
 
-    def _get_neighbors(self, player_idx, drivers, lap_dist_pct):
+    def _get_neighbors(self, player_idx: int, drivers: list, lap_dist_pct: list[float]):
         """Return 3 cars ahead and 3 behind with gap in percent and seconds."""
         my_dist = lap_dist_pct[player_idx]
         if not isinstance(my_dist, (int, float)) or my_dist < 0:
@@ -201,6 +223,10 @@ class Leaderboard:
                 .get("CarClassEstLapTime")
             )
 
+        is_multiclass = self._is_multiclass(drivers)
+        positions = self.irsdk.get_value("CarIdxPosition") or []
+        class_positions = self.irsdk.get_value("CarIdxClassPosition") or []
+        laps_started = self.irsdk.get_value("CarIdxLap") or []
         candidates_ahead, candidates_behind = [], []
 
         for idx, dist in enumerate(lap_dist_pct):
@@ -218,19 +244,29 @@ class Leaderboard:
             car_data = self.builder.build(
                 idx,
                 drivers,
-                self.irsdk.get_value("CarIdxPosition"),
-                self.irsdk.get_value("CarIdxClassPosition"),
+                positions,
+                class_positions,
                 lap_times,
-                self.irsdk.get_value("CarIdxLap"),
+                laps_started,
                 lap_dist_pct,
-                self._is_multiclass(drivers),
+                is_multiclass,
             )
+
             if not car_data:
                 continue
+            lap_diff = laps_started[idx] - laps_started[player_idx]
+            pct_diff = abs(dist - my_dist)
+
+            if lap_diff > 0:
+                car_data["lap_status"] = "ahead_lap"
+            elif lap_diff < 0:
+                car_data["lap_status"] = "behind_lap"
+            else:
+                car_data["lap_status"] = None
 
             if 0 < gap_pct <= 0.5:
                 candidates_ahead.append(
-                    {"car": car_data, "gap_pct": gap_pct, "gap_sec": gap_sec}
+                    {"car": car_data, "gap_pct": gap_pct, "gap_sec": gap_sec, "lap_status": car_data["lap_status"]}
                 )
             elif gap_pct > 0.5:
                 candidates_behind.append(
@@ -238,8 +274,10 @@ class Leaderboard:
                         "car": car_data,
                         "gap_pct": gap_pct - 1.0,
                         "gap_sec": (gap_pct - 1.0) * my_lap_time,
+                        "lap_status": car_data["lap_status"]
                     }
                 )
+
 
         candidates_ahead.sort(key=lambda x: x["gap_pct"])
         candidates_behind.sort(key=lambda x: x["gap_pct"], reverse=True)
@@ -263,53 +301,103 @@ class Leaderboard:
 
         return {"ahead": ahead, "behind": behind}
 
-    def _get_session_info(self, player_idx):
-        """Extract relevant session & timing info, considering all sessions."""
-        session_info = self.irsdk.get_value("SessionInfo") or {}
-        sessions = session_info.get("Sessions", [])
-        current_session_num = session_info.get("CurrentSessionNum", 0)
-        current = (
-            sessions[current_session_num]
-            if 0 <= current_session_num < len(sessions)
-            else {}
-        )
+    def _is_lap_race(self, session_time: str | float | None) -> bool:
+        if session_time is None:
+            return False
 
-        session_laps = current.get("SessionLaps")
-        session_time_str = current.get("SessionTime")
-        session_time_sec = None
-        if session_time_str and "sec" in session_time_str:
-            session_time_sec = float(session_time_str.split()[0])
+        try:
+            val = float(session_time)
+            if val >= LAP_RACE_API_PLACEHOLDER:
+                return True
+        except (ValueError, TypeError):
+            s = str(session_time).lower()
+            if "unlimited" in s:
+                return True
+            if "sec" in s:
+                try:
+                    val_sec = float(s.split()[0])
+                    if val_sec == LAP_RACE_API_PLACEHOLDER:
+                        return True
+                except ValueError:
+                    return False
+        return False
 
+    def _get_player_lap_time(self, player_idx: int, sessions: list) -> Optional[float]:
         fastest_time = None
+
         for sess in sessions:
             for record in sess.get("ResultsFastestLap", []) or []:
                 if (
                     record.get("CarIdx") == player_idx
                     and record.get("FastestTime", -1) > 0
                 ):
-                    fastest_time = (
-                        record["FastestTime"]
-                        if fastest_time is None
-                        else min(fastest_time, record["FastestTime"])
-                    )
+                    fastest_time = record["FastestTime"]
 
-        if fastest_time is None:
-            for sess in sessions:
-                for record in sess.get("ResultsFastestLap", []) or []:
-                    if record.get("FastestTime", -1) > 0:
-                        fastest_time = (
-                            record["FastestTime"]
-                            if fastest_time is None
-                            else min(fastest_time, record["FastestTime"])
-                        )
-
-        driver = (self.irsdk.get_value("DriverInfo") or {}).get("Drivers", [])[
-            player_idx
-        ]
+        driver = (self.irsdk.get_value("DriverInfo") or {}).get("Drivers", [])[player_idx]
         est_lap_time = driver.get("CarClassEstLapTime")
 
+        return fastest_time if fastest_time is not None else est_lap_time
+
+    def _resolve_session_time(
+        self,
+        current_session: dict,
+        player_lap_time: float,
+        session_time_str: str | float,
+        format: bool = True,
+    ) -> str | float | None:
+        """
+        Resolve session time. Returns formatted string by default or float seconds if format=False.
+        """
+        session_type = current_session.get("SessionType", "").upper()
+        approx = False
+        result: float | str | None = None
+
+        if session_type == "RACE":
+            if self._is_lap_race(session_time_str):
+                session_laps = current_session.get("SessionLaps")
+                if isinstance(session_laps, int) and session_laps > 0 and player_lap_time and player_lap_time > 0:
+                    result = session_laps * player_lap_time
+                    approx = True
+            elif isinstance(session_time_str, str) and "sec" in session_time_str:
+                result = float(session_time_str.split()[0])
+                approx = True
+
+        if result is None:
+            try:
+                result = float(session_time_str)
+            except (ValueError, TypeError):
+                result = None
+
+        if format and result is not None:
+            formatted = TimeFormatter.format_session_time(result, is_seconds=False)
+            if approx:
+                formatted = f"~{formatted}"
+            return formatted
+        return result
+
+    def _get_session_info(self, player_idx: int) -> Dict[str, Any]:
+        """Extract relevant session & timing info, considering all sessions."""
+        session_info = self.irsdk.get_value("SessionInfo") or {}
+        sessions = session_info.get("Sessions", [])
+        current_session_num = session_info.get("CurrentSessionNum", 0)
+        current = sessions[current_session_num] if 0 <= current_session_num < len(sessions) else {}
+
+        session_laps = current.get("SessionLaps")
+        session_time_current = self.irsdk.get_value("SessionTime")
+        session_time_total = self.irsdk.get_value("SessionTimeTotal")
+
+        player_lap_time = self._get_player_lap_time(player_idx, sessions)
+        resolved_session_time_current = TimeFormatter.format_session_time(session_time_current, is_seconds=True)
+        resolved_session_time = self._resolve_session_time(
+            current, player_lap_time, session_time_total, format=False
+        )
+        resolved_session_time_formatted = self._resolve_session_time(
+            current, player_lap_time, session_time_total, format=True
+        )
         return {
             "session_laps": session_laps,
-            "session_time": session_time_sec,
-            "player_lap_time": fastest_time or est_lap_time,
+            "player_lap_time": player_lap_time,
+            "session_time_current": resolved_session_time_current,
+            "session_time": resolved_session_time,
+            "session_time_formatted": resolved_session_time_formatted,
         }

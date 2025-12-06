@@ -58,6 +58,8 @@ def mock_irsdk_leaderboard(irsdk_mock_factory):
         "CarIdxLastLapTime": [80.0, 81.5, 82.2],
         "CarIdxLapDistPct": [0.6, 0.3, 0.9],
         "PlayerCarIdx": 0,
+        "SessionTime": 100.0,
+        "SessionTimeTotal": 100.0,
         "DriverInfo": {
             "Drivers": [
                 {
