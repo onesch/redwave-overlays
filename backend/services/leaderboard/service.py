@@ -1,8 +1,7 @@
 import time
 from typing import Any, Dict, List, Optional
 
-# Constant for offline races: in a RACE session, if the race is lap-based, the API returns this "magic" value.
-LAP_RACE_API_PLACEHOLDER: float = 86400.0
+from backend.services.leaderboard.constants import LAP_RACE_API_PLACEHOLDER
 
 
 class TimeFormatter:
@@ -205,7 +204,9 @@ class Leaderboard:
             "timestamp": int(time.time()),
         }
 
-    def _get_neighbors(self, player_idx: int, drivers: list, lap_dist_pct: list[float]):
+    def _get_neighbors(
+        self, player_idx: int, drivers: list, lap_dist_pct: list[float]
+    ):
         """Return 3 cars ahead and 3 behind with gap in percent and seconds."""
         my_dist = lap_dist_pct[player_idx]
         if not isinstance(my_dist, (int, float)) or my_dist < 0:
@@ -255,7 +256,6 @@ class Leaderboard:
             if not car_data:
                 continue
             lap_diff = laps_started[idx] - laps_started[player_idx]
-            pct_diff = abs(dist - my_dist)
 
             if lap_diff > 0:
                 car_data["lap_status"] = "ahead_lap"
@@ -266,7 +266,12 @@ class Leaderboard:
 
             if 0 < gap_pct <= 0.5:
                 candidates_ahead.append(
-                    {"car": car_data, "gap_pct": gap_pct, "gap_sec": gap_sec, "lap_status": car_data["lap_status"]}
+                    {
+                        "car": car_data,
+                        "gap_pct": gap_pct,
+                        "gap_sec": gap_sec,
+                        "lap_status": car_data["lap_status"],
+                    }
                 )
             elif gap_pct > 0.5:
                 candidates_behind.append(
@@ -274,10 +279,9 @@ class Leaderboard:
                         "car": car_data,
                         "gap_pct": gap_pct - 1.0,
                         "gap_sec": (gap_pct - 1.0) * my_lap_time,
-                        "lap_status": car_data["lap_status"]
+                        "lap_status": car_data["lap_status"],
                     }
                 )
-
 
         candidates_ahead.sort(key=lambda x: x["gap_pct"])
         candidates_behind.sort(key=lambda x: x["gap_pct"], reverse=True)
@@ -322,7 +326,9 @@ class Leaderboard:
                     return False
         return False
 
-    def _get_player_lap_time(self, player_idx: int, sessions: list) -> Optional[float]:
+    def _get_player_lap_time(
+        self, player_idx: int, sessions: list
+    ) -> Optional[float]:
         fastest_time = None
 
         for sess in sessions:
@@ -333,7 +339,9 @@ class Leaderboard:
                 ):
                     fastest_time = record["FastestTime"]
 
-        driver = (self.irsdk.get_value("DriverInfo") or {}).get("Drivers", [])[player_idx]
+        driver = (self.irsdk.get_value("DriverInfo") or {}).get("Drivers", [])[
+            player_idx
+        ]
         est_lap_time = driver.get("CarClassEstLapTime")
 
         return fastest_time if fastest_time is not None else est_lap_time
@@ -346,7 +354,8 @@ class Leaderboard:
         format: bool = True,
     ) -> str | float | None:
         """
-        Resolve session time. Returns formatted string by default or float seconds if format=False.
+        Resolve session time. Returns formatted string by default or
+        float seconds if format=False.
         """
         session_type = current_session.get("SessionType", "").upper()
         approx = False
@@ -355,10 +364,17 @@ class Leaderboard:
         if session_type == "RACE":
             if self._is_lap_race(session_time_str):
                 session_laps = current_session.get("SessionLaps")
-                if isinstance(session_laps, int) and session_laps > 0 and player_lap_time and player_lap_time > 0:
+                if (
+                    isinstance(session_laps, int)
+                    and session_laps > 0
+                    and player_lap_time
+                    and player_lap_time > 0
+                ):
                     result = session_laps * player_lap_time
                     approx = True
-            elif isinstance(session_time_str, str) and "sec" in session_time_str:
+            elif (
+                isinstance(session_time_str, str) and "sec" in session_time_str
+            ):
                 result = float(session_time_str.split()[0])
                 approx = True
 
@@ -369,7 +385,9 @@ class Leaderboard:
                 result = None
 
         if format and result is not None:
-            formatted = TimeFormatter.format_session_time(result, is_seconds=False)
+            formatted = TimeFormatter.format_session_time(
+                result, is_seconds=False
+            )
             if approx:
                 formatted = f"~{formatted}"
             return formatted
@@ -380,14 +398,20 @@ class Leaderboard:
         session_info = self.irsdk.get_value("SessionInfo") or {}
         sessions = session_info.get("Sessions", [])
         current_session_num = session_info.get("CurrentSessionNum", 0)
-        current = sessions[current_session_num] if 0 <= current_session_num < len(sessions) else {}
+        current = (
+            sessions[current_session_num]
+            if 0 <= current_session_num < len(sessions)
+            else {}
+        )
 
         session_laps = current.get("SessionLaps")
         session_time_current = self.irsdk.get_value("SessionTime")
         session_time_total = self.irsdk.get_value("SessionTimeTotal")
 
         player_lap_time = self._get_player_lap_time(player_idx, sessions)
-        resolved_session_time_current = TimeFormatter.format_session_time(session_time_current, is_seconds=True)
+        resolved_session_time_current = TimeFormatter.format_session_time(
+            session_time_current, is_seconds=True
+        )
         resolved_session_time = self._resolve_session_time(
             current, player_lap_time, session_time_total, format=False
         )
