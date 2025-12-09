@@ -23,6 +23,7 @@
             </div>
             <div class="driver">
                 <div class="name">Loading...</div>
+                <div class="pit-flag" style="display:none;">PIT</div>
             </div>
             <div class="lic-column">
                 <div class="lic-container">
@@ -43,6 +44,7 @@
             </div>
             <div class="driver">
                 <div class="name">Loading...</div>
+                <div class="pit-flag" style="display:none;">PIT</div>
             </div>
             <div class="lic-column">
                 <div class="lic-container">
@@ -63,6 +65,7 @@
             </div>
             <div class="driver">
                 <div class="name">Loading...</div>
+                <div class="pit-flag" style="display:none;">PIT</div>
             </div>
             <div class="lic-column">
                 <div class="lic-container">
@@ -82,7 +85,10 @@
                     <span class="num">--</span>
                 </div>
             </div>
-            <div class="driver"><div class="name">Loading...</div></div>
+            <div class="driver">
+                <div class="name">Loading...</div>
+                <div class="pit-flag" style="display:none;">PIT</div>
+            </div>
             <div class="lic-column">
                 <div class="lic-container">
                     <span class="lic">--</span>
@@ -103,6 +109,7 @@
             </div>
             <div class="driver">
                 <div class="name">Loading...</div>
+                <div class="pit-flag" style="display:none;">PIT</div>
             </div>
             <div class="lic-column">
                 <div class="lic-container">
@@ -123,6 +130,7 @@
             </div>
             <div class="driver">
                 <div class="name">Loading...</div>
+                <div class="pit-flag" style="display:none;">PIT</div>
             </div>
             <div class="lic-column">
                 <div class="lic-container">
@@ -143,6 +151,7 @@
             </div>
             <div class="driver">
                 <div class="name">Loading...</div>
+                <div class="pit-flag" style="display:none;">PIT</div>
             </div>
             <div class="lic-column">
                 <div class="lic-container">
@@ -312,7 +321,37 @@ class LeaderboardUpdater {
 
     renderDriver(rowElement, car) {
         const nameElement = rowElement.querySelector('.driver .name');
+        const pitFlag = rowElement.querySelector('.driver .pit-flag');
+
         nameElement.textContent = car.name || 'Unknown';
+        nameElement.classList.remove('with-flag', 'in-pit', 'gradient');
+
+        let pitLapText = car.last_pit_lap;
+        if (pitLapText === "L0 IN") {
+            pitLapText = "";
+        }
+        if (pitLapText === "L0") {
+            pitLapText = "";
+        }
+        if (pitLapText === "L0 OUT") {
+            pitLapText = "OUT";
+        }
+
+        if (car.is_in_pitroad) {
+            nameElement.classList.add('with-flag', 'in-pit', 'gradient');
+            if (pitLapText) {
+                pitFlag.textContent = pitLapText;
+                pitFlag.style.display = 'inline-flex';
+            } else {
+                pitFlag.style.display = 'none';
+            }
+        } else if (pitLapText) {
+            nameElement.classList.add('with-flag', 'gradient');
+            pitFlag.textContent = pitLapText;
+            pitFlag.style.display = 'inline-flex';
+        } else {
+            pitFlag.style.display = 'none';
+        }
     }
 
     renderLicenseAndIrating(rowElement, car) {

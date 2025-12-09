@@ -1,7 +1,7 @@
 @import url('base.css');
 
 .app {
-  max-width: 410px;
+  max-width: 420px;
   margin: 40px auto;
  }
 
@@ -17,7 +17,7 @@
 
 .thead, .row {
   display: grid;
-  grid-template-columns: 60px 80px 80px 90px 40px;
+  grid-template-columns: 60px 90px 80px 90px 40px;
   align-items: center;
   column-gap: 12px;
 }
@@ -142,7 +142,6 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-  align-items: center;
   line-height: 1.1;
   align-items: flex-start;
   padding-left: 4px;
@@ -188,6 +187,7 @@
   flex-direction: row;
   align-items: center;
   overflow: hidden;
+  gap: 6px;
 }
 .driver .name {
   font-weight: 500;
@@ -195,7 +195,18 @@
   font-size: var(--fs-body);
   white-space: nowrap;
   overflow: hidden;
-  text-overflow: ellipsis;
+}
+.name.with-flag {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: clip !important;
+}
+.name.gradient {
+  -webkit-mask-image: linear-gradient(to right, black 70%, transparent);
+  mask-image: linear-gradient(to right, black 70%, transparent);
+}
+.name.in-pit {
+  opacity: 0.6;
 }
 
 .lic-column {
@@ -246,4 +257,20 @@
   font-size: 15px;
   color: #FFCC00;
   width: 40px;
+}
+
+.pit-flag {
+  padding: 2px 6px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: #FFCC00;
+  background: rgba(var(--m3-surface-bg), 0.6);
+  border-radius: var(--m3-radius-pill);
+  text-transform: uppercase;
+  white-space: nowrap;
+  margin-left: auto;
 }
