@@ -48,7 +48,6 @@ def mock_service(irsdk_mock_factory):
 def parser(mock_service):
     return IRSDKParser(mock_service)
 
-
 @pytest.fixture
 def mock_irsdk_leaderboard(irsdk_mock_factory):
     values = {
@@ -57,6 +56,7 @@ def mock_irsdk_leaderboard(irsdk_mock_factory):
         "CarIdxLap": [5, 5, 4],
         "CarIdxLastLapTime": [80.0, 81.5, 82.2],
         "CarIdxLapDistPct": [0.6, 0.3, 0.9],
+        "CarIdxOnPitRoad": [False, False, False],
         "PlayerCarIdx": 0,
         "SessionTime": 100.0,
         "SessionTimeTotal": 100.0,
@@ -124,8 +124,8 @@ def mock_irsdk_leaderboard(irsdk_mock_factory):
             ],
         },
     }
-
     return irsdk_mock_factory(values)
+
 
 
 @pytest.fixture
@@ -136,6 +136,7 @@ def mock_irsdk_leaderboard_multiclass(irsdk_mock_factory):
     ]
     values = {
         "DriverInfo": {"Drivers": drivers},
+        "CarIdxOnPitRoad": [False, False],
         "PlayerCarIdx": 0,
         "CarIdxPosition": [1, 2],
         "CarIdxClassPosition": [0, 0],
