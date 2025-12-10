@@ -1,5 +1,5 @@
 {
-  "name": "iracing_overlays",
+  "name": "redwave_overlays",
   "version": "1.0.0-dev",
   "main": "frontend/main.js",
   "scripts": {

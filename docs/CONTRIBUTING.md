@@ -1,6 +1,6 @@
 # 🧑‍💻 Contributing Guide
 
-Thanks for your interest in contributing to **iRacing Overlays**!  
+Thanks for your interest in contributing to **Redwave Overlays**!  
 This document explains how to set up the project for development.
 
 ## 📬 Issues
@@ -10,8 +10,8 @@ Feel free to open issues for feature requests, bug reports, or questions.
 ## 🛠️ Installation
 
 ```bash
-git clone https://github.com/onesch/iracing-overlays.git
-cd iracing-overlays
+git clone https://github.com/onesch/redwave-overlays.git
+cd redwave-overlays
 
 # Python dependencies
 pip install -r requirements.txt

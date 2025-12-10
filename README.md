@@ -1,13 +1,15 @@
-# iRacing Overlays
 
-**iRacing Overlays** is a lightweight desktop application designed to ***display live iRacing telemetry***. Powered by ***FastAPI*** & ***Electron***.
+<img width="200" alt="image" src="frontend/static/images/logo.png" />
 
-![coverage](https://img.shields.io/badge/Version-v1.0.0_dev-blue)
+lightweight desktop application designed to ***display live iRacing telemetry***. Powered by ***FastAPI*** & ***Electron***.
+
+![project](https://img.shields.io/badge/Version-v1.0.0_dev-orange)
 ![coverage](https://img.shields.io/badge/Coverage-97%25-green)
-![version](https://img.shields.io/badge/CodeClimate-А-cyan)
-![version](https://img.shields.io/badge/Python-3.12.0-blue)
-![version](https://img.shields.io/badge/Node.js-18+-blue)
-![version](https://img.shields.io/badge/Electron-28.1.0-blue)
+![codeclimane](https://img.shields.io/badge/CodeClimate-А-cyan)
+![python](https://img.shields.io/badge/Python-3.12.0-blue)
+![nodejs](https://img.shields.io/badge/Node.js-18^-blue)
+![electron](https://img.shields.io/badge/Electron-28.1.0-blue)
+![fastapi](https://img.shields.io/badge/FastAPI-0.115.14-blue)
 
 ## 🖼️ Screenshots
 
@@ -15,7 +17,7 @@
 
 ## 🛠️ Installation
 
-1. Go to the [Latest Release](https://github.com/onesch/iracing-overlays/releases/tag/publish).
+1. Go to the [Latest Release](https://github.com/onesch/redwave-overlays/releases/tag/publish).
 2. Download the latest installer.
 3. Run it and launch the app.
 
