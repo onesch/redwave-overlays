@@ -1,12 +1,12 @@
 const { app } = require('electron');
 const { createMainWindow } = require('./windows/mainWindow');
-const registerRadarEvents = require('./ipc/radarEvents');
-const registerControlsEvents = require('./ipc/controlsEvents');
+const registerRadarEvents = require('./ipc/RadarEvents');
+const registerLeaderboardEvents = require('./ipc/leaderboardEvents');
 
 app.whenReady().then(() => {
   createMainWindow();
   registerRadarEvents();
-  registerControlsEvents();
+  registerLeaderboardEvents();
 });
 
 app.on('window-all-closed', () => {

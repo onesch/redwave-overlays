@@ -50,31 +50,29 @@ coverage report -m
 │   │
 │   ├── routers/                     # API and views.
 │   │   ├── apis.py                  # JSON endpoints.
-│   │   └── views.py                 # HTML routes.
+│   │   └── views/                   # HTML routes.
 │   │
 │   ├── services/                    # Business logic modules.
 │   │   ├── irsdk/                   # iRacing SDK service.
 │   │   │  ├── schemas.py            # Pydantic models (used for validation).
 │   │   │  ├── service.py            # Connection logic.
 │   │   │  └── parser.py             # Telemetry parsing.
-│   │   └── radar/                   # Radar overlay logic.
+│   │   ├── radar/                   # Radar overlay logic.
+│   │   └── leaderboard/             # Leaderboard overlay logic.
 │   │
 │   └── database                     # Local JSON storage.
 │       ├── card_desc_database.json  # Card descriptions.
 │       ├── data_loader.py           # JSON loader utils.
 │       ├── metadata.json            # General metadata.
-│       └── overlays_settings.json   # Overlay settings.
+│       └── overlays_settings.json   # Appears when saving overlays settings.
 │
 ├── frontend/                        # Electron frontend app.
 │   ├── ipc/                         # IPC event handlers.
-│   │   ├── RadarEvents.js           # Radar window events.
-│   │   └── controlsEvents.js        # Controls window events.
 │   │
 │   ├── static/                      # Static frontend files.
 │   │   ├── css/                     # Base and specific styles.
 │   │   ├── images/                  # Project images.
-│   │   ├── js/                      # Frontend JavaScript (optional).
-│   │   └── video/                   # Project videos.
+│   │   ├── js/                      # Frontend JavaScript.
 │   │
 │   ├── templates/                   # Jinja2 HTML views.
 │   │   ├── base/                    # Base and shared components/templates.
@@ -95,6 +93,7 @@ coverage report -m
 │   └── preload.js                   # Secure preload API.
 │
 ├── tests/                           # Project test cases.
+├── docs/                           # Project docs.
 │
 ├── .gitattributes                   # LFS config.
 ├── .gitignore                       # Ignored files.

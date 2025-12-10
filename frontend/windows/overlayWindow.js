@@ -8,7 +8,7 @@ const { applySavedPosition, registerPositionHandlers, watchOverlayPosition } = r
 const overlays = {};
 let overlayCount = 0;
 
-// Загружаем обработчики
+// Loading handlers
 registerZoomHandlers(overlays);
 registerPositionHandlers(overlays);
 
@@ -37,17 +37,18 @@ function createOverlay(route, options = {}) {
     ...options.override,
   });
 
-  // По умолчанию выключаем клики/перемещение
+  // By default turn off clicks/movements and turn on AlwaysOnTop
   overlay.setIgnoreMouseEvents(true);
   overlay.setMovable(false);
+  overlay.setAlwaysOnTop(true, "screen-saver");
 
-  // Отключаем нежелательные сочетания клавиш
+  // Disable unwanted keyboard shortcuts
   protectWindowShortcuts(overlay, { allowDevTools: isDev });
   disableZoomShortcuts(overlay);
 
   overlay.loadURL(`http://localhost:8000/${route}`);
 
-  // Сохраняем пользовательские настройки
+  // Save user settings
   applySavedZoom(overlay, route);
   applySavedPosition(overlay, route);
   watchOverlayPosition(overlay, route);

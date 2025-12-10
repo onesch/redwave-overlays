@@ -30,6 +30,21 @@ def parser(mock_service):
 # --- Data tests ---
 
 
+def test_ensure_connected_starts_when_not_started(monkeypatch):
+    service = IRSDKService()
+    mock_ir = MagicMock()
+    mock_ir.is_connected = True
+    mock_ir.is_initialized = True
+    service.ir = mock_ir
+    service.started = False
+
+    connected, msg = service._ensure_connected()
+    assert connected is True
+    assert msg == ""
+    assert service.started is True
+    mock_ir.startup.assert_called_once()
+
+
 def test_is_connected_true(mock_service):
     assert mock_service.is_connected() is True
 

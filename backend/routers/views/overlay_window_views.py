@@ -14,8 +14,8 @@ async def radar_window_view(request: Request):
     )
 
 
-@router.get("/controls", response_class=HTMLResponse)
-async def controls_window_view(request: Request):
+@router.get("/leaderboard", response_class=HTMLResponse)
+async def leaderboard_window_view(request: Request):
     return templates.TemplateResponse(
-        "overlays/controls.html", {"request": request}
+        "overlays/leaderboard.html", {"request": request}
     )

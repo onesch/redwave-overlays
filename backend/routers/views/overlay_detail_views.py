@@ -21,6 +21,19 @@ async def radar_detail_view(request: Request):
         {
             "request": request,
             "card_data": card_data,
-            "radar_version": radar_version,
+            "version": radar_version,
+        },
+    )
+
+@router.get("/leaderboard", response_class=HTMLResponse)
+async def leaderboard_detail_view(request: Request):
+    card_data = get_card_data_by_title("Leaderboard")
+    leaderboard_version = get_overlay_version("leaderboard")
+    return templates.TemplateResponse(
+        "pages/card_detail/leaderboard.html",
+        {
+            "request": request,
+            "card_data": card_data,
+            "version": leaderboard_version,
         },
     )

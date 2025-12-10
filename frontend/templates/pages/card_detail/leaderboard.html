@@ -7,10 +7,10 @@
 {% block overlay_scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-    const overlay = new OverlayBase('radar');
+    const overlay = new OverlayBase('leaderboard');
     
     document.getElementById('OpenBtn').addEventListener('click', () => {
-        window.electronAPI.openRadar();
+        window.electronAPI.openLeaderboard();
     });
 });
 </script>

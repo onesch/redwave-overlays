@@ -1,11 +1,12 @@
 import re
+from typing import Any
 
 from backend.services.irsdk.service import IRSDKService
 from backend.services.radar.parser import IRadarParser
 
 
 class IRSDKParser(IRadarParser):
-    """Parse and interpret iRacing telemetry values"""
+    """Parse and interpret iRacing telemetry values."""
 
     def __init__(self, service: IRSDKService):
         self.service = service
@@ -15,7 +16,7 @@ class IRSDKParser(IRadarParser):
         return int(max(0, min(value * 100, 100)))
 
     def get_speed(self, speed_type: str) -> int | None:
-        """Get speed in specified units"""
+        """Get speed in specified units."""
         speed_ms = self.service.get_value("Speed")
         if speed_ms is None:
             return None
@@ -26,21 +27,21 @@ class IRSDKParser(IRadarParser):
         return int(round(speed_ms * factor, 1))
 
     def get_throttle(self) -> int | None:
-        """Get throttle percentage"""
+        """Get throttle percentage."""
         val = self.service.get_value("Throttle")
         if val is None:
             return None
         return self._clamp_percentage(val)
 
     def get_brake(self) -> int | None:
-        """Get brake percentage"""
+        """Get brake percentage."""
         val = self.service.get_value("BrakeRaw")
         if val is None:
             return None
         return self._clamp_percentage(val)
 
     def get_track_length_m(self, weekend_info: dict) -> float:
-        """Parse track length from weekend info"""
+        """Parse track length from weekend info."""
         if not isinstance(weekend_info, dict):
             return 0.0
         tl = weekend_info.get("TrackLength", "")
