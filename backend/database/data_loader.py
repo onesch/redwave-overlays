@@ -32,9 +32,14 @@ def _load_metadata() -> Dict[str, Any]:
     """Load application metadata from JSON file."""
     try:
         with METADATA_PATH.open("r", encoding="utf-8") as f:
-            return json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError):
-        return {}
+            data = json.load(f)
+            return data
+    except FileNotFoundError:
+        print(f"Metadata file not found at {METADATA_PATH}, using default.")
+        return default
+    except json.JSONDecodeError:
+        print(f"Metadata file at {METADATA_PATH} is invalid JSON, using default.")
+        return default
 
 
 def get_app_version() -> Optional[str]:

@@ -12,7 +12,7 @@ function loadSettings() {
   } catch (err) {
     console.error('Failed to load settings:', err);
   }
-  return {}; // пустой объект при ошибке или отсутствии файла
+  return {};
 }
 
 function saveSettings(settings) {

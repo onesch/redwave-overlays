@@ -1,7 +1,7 @@
 const { ipcMain } = require('electron');
 const { loadSettings, saveSettings } = require('./overlay_settings');
 
-// Применяет сохранённую позицию при создании окна.
+// Apply saved position when the window is created
 function applySavedPosition(overlay, route) {
   const settings = loadSettings();
   const savedPos = settings[route]?.position;
@@ -15,7 +15,7 @@ function applySavedPosition(overlay, route) {
   }
 }
 
-// Регистрирует обработчики для чтения позиции.
+// Register IPC handlers to read position
 function registerPositionHandlers() {
   ipcMain.handle('get-overlay-position', (event, overlayName) => {
     const settings = loadSettings();
@@ -23,7 +23,7 @@ function registerPositionHandlers() {
   });
 }
 
-// Подписка на событие close для сохранения позиции.
+// Subscribe to the close event to save the position
 function watchOverlayPosition(overlay, route) {
   overlay.on('close', () => {
     const bounds = overlay.getBounds();

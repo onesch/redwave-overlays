@@ -1,6 +1,6 @@
 function protectWindowShortcuts(win, { allowDevTools = false } = {}) {
   win.webContents.on('before-input-event', (event, input) => {
-    // F12
+    // F12 (devtools)
     if (input.type === 'keyDown' && input.key === 'F12') {
       if (allowDevTools) {
         win.webContents.toggleDevTools();
@@ -12,13 +12,13 @@ function protectWindowShortcuts(win, { allowDevTools = false } = {}) {
       return;
     }
 
-    // F11 (полный экран)
+    // F11 (fullscreen)
     if (input.type === 'keyDown' && input.key === 'F11') {
       event.preventDefault();
       return;
     }
 
-    // Ctrl+Shift+I
+    // Ctrl+Shift+I (devtools)
     if (input.control && input.shift && input.key.toUpperCase() === 'I') {
       event.preventDefault();
       return;
@@ -28,7 +28,7 @@ function protectWindowShortcuts(win, { allowDevTools = false } = {}) {
 
 function disableZoomShortcuts(win) {
   win.webContents.on('before-input-event', (event, input) => {
-    // Блокируем Ctrl++ / Ctrl+=, Ctrl+-, Ctrl+0
+    // Block Ctrl++ / Ctrl+=, Ctrl+- and Ctrl+0
     if (input.control || input.meta) {
       const blockedKeys = ['+', '=', '-', '0'];
       if (blockedKeys.includes(input.key)) {
@@ -47,7 +47,7 @@ function registerOverlayMoveShortcuts(app, overlays) {
 
     Object.values(overlays).forEach((win) => {
       if (!win.isDestroyed()) {
-        // если можно перемещать — клики разрешены
+        // If movable, allow mouse clicks
         win.setIgnoreMouseEvents(!isMovable);
         win.setMovable(isMovable);
       }

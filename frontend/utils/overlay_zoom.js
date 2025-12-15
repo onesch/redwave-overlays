@@ -1,7 +1,7 @@
 const { ipcMain } = require('electron');
 const { loadSettings, saveSettings } = require('../utils/overlay_settings');
 
-// Загружает масштаб и применяет к окну после загрузки
+// Load saved zoom factor and apply it to the window after it finishes loading
 function applySavedZoom(overlay, route) {
   const settings = loadSettings();
   const savedZoom = settings[route]?.zoom ?? 1;
@@ -10,7 +10,7 @@ function applySavedZoom(overlay, route) {
   });
 }
 
-// Регистрирует IPC обработчики для управления масштабом
+// Register IPC handlers to manage overlay zoom
 function registerZoomHandlers(overlays) {
   ipcMain.on('set-overlay-zoom', (event, { overlayName, zoomFactor }) => {
     const settings = loadSettings();

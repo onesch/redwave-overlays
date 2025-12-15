@@ -4,8 +4,14 @@ node_modules/
 .coverage
 .pytest_cache/
 TODOLIST.md
+main.spec
+dist/
+build/
 
-# Test file
+# Сreated by the user
+overlays_settings.json
+
+# Test files
 test.py
 test.html
 test_v2.py
@@ -17,6 +23,4 @@ video_cut_util.py
 first_radar_code.py
 irating_calculation.py
 eventresult.json
-
-# Сreated by the user
-overlays_settings.json
+backend_run/
