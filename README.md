@@ -14,7 +14,7 @@ lightweight desktop application designed to **display live iRacing telemetry**. 
 
 ## 🛠️ Installation
 
-1. Go to the [Latest Release](https://github.com/onesch/redwave-overlays/releases/tag/publish).
+1. Go to the [Latest Release](https://github.com/onesch/redwave-overlays/releases).
 2. Download the latest installer.
 3. Run it and launch the app.
 
