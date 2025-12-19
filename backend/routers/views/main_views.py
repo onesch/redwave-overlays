@@ -1,11 +1,9 @@
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
-from fastapi.templating import Jinja2Templates
 
 from backend.database.data_loader import get_app_version, load_cards_data
+from backend.utils.templates import templates
 
-
-templates = Jinja2Templates(directory="frontend/templates")
 router = APIRouter()
 
 

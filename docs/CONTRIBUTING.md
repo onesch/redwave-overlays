@@ -1,11 +1,13 @@
+[Go back to README.md](https://github.com/onesch/redwave-overlays/blob/master/README.md)
+
 # 🧑‍💻 Contributing Guide
 
-Thanks for your interest in contributing to **Redwave Overlays**!  
+Thanks for your interest in contributing to **RedWave Overlays**!  
 This document explains how to set up the project for development.
 
 ## 📬 Issues
 
-Feel free to open issues for feature requests, bug reports, or questions.
+Feel free to [open issues](https://github.com/onesch/redwave-overlays/issues) for feature requests, bug reports, or questions.
 
 ## 🛠️ Installation
 
@@ -26,7 +28,7 @@ npm install
 ```bash
 # Start both FastAPI backend and Electron app
 npm run start:dev
-
+# Production mode (required backend_run/main.exe)
 npm run start:prod
 ```
 
@@ -42,76 +44,23 @@ coverage report -m
 ```
 
 ## 🗂️ Project Structure
+Want to understand how the project is organized?
+Check out [Project structure](https://github.com/onesch/redwave-overlays/blob/master/docs/STRUCTURE.md).
 
-```shell
-.
-├── backend/                         # FastAPI backend logic.
-│   ├── main.py                      # FastAPI entrypoint.
-│   │
-│   ├── routers/                     # API and views.
-│   │   ├── apis.py                  # JSON endpoints.
-│   │   └── views/                   # HTML routes.
-│   │
-│   ├── services/                    # Business logic modules.
-│   │   ├── irsdk/                   # iRacing SDK service.
-│   │   │  ├── schemas.py            # Pydantic models (used for validation).
-│   │   │  ├── service.py            # Connection logic.
-│   │   │  └── parser.py             # Telemetry parsing.
-│   │   ├── radar/                   # Radar overlay logic.
-│   │   └── leaderboard/             # Leaderboard overlay logic.
-│   │
-│   └── database                     # Local JSON storage.
-│       ├── card_desc_database.json  # Card descriptions.
-│       ├── data_loader.py           # JSON loader utils.
-│       ├── metadata.json            # General metadata.
-│       └── overlays_settings.json   # Appears when saving overlays settings.
-│
-├── frontend/                        # Electron frontend app.
-│   ├── ipc/                         # IPC event handlers.
-│   │
-│   ├── static/                      # Static frontend files.
-│   │   ├── css/                     # Base and specific styles.
-│   │   ├── images/                  # Project images.
-│   │   ├── js/                      # Frontend JavaScript.
-│   │
-│   ├── templates/                   # Jinja2 HTML views.
-│   │   ├── base/                    # Base and shared components/templates.
-│   │   ├── overlays/                # Overlay templates.
-│   │   └── pages/                   # Page templates.
-│   │
-│   ├── utils/                       # Frontend utilities.
-│   │   ├── keyboard_protection.js   # Keyboard protection.
-│   │   ├── overlay_position.js      # Control overlay position.
-│   │   ├── overlay_settings.js      # Control Overlay settings.
-│   │   └── overlay_zoom.js          # Control Overlay zoom.
-│   │
-│   ├── windows/                     # Electron windows logic.
-│   │   ├── overlayWindow.js         # Utility to create overlay windows.
-│   │   └── mainWindow.js            # Manage main Electron window.
-│   │
-│   ├── main.js                      # Electron entrypoint.
-│   └── preload.js                   # Secure preload API.
-│
-├── tests/                           # Project test cases.
-├── docs/                           # Project docs.
-│
-├── .gitattributes                   # LFS config.
-├── .gitignore                       # Ignored files.
-├── LICENSE                          # Project license.
-├── README.md                        # Documentation.
-├── package-lock.json                # NPM lock file.
-├── package.json                     # NPM metadata.
-└── requirements.txt                 # Python dependencies (used by pip).
-```
+## ⚡ Build & Packaging
+For building the production version of RedWave overlays, see [PROJECTBUILD.md](https://github.com/onesch/redwave-overlays/blob/master/docs/PROJECTBUILD.md).
+
 
 ## ✅ Contribution Workflow
 
-1. Create a new branch from develop:
+1. Fork the repository.
+2. Create a new branch from develop:
 ```bash
 git checkout develop
 git pull
 git checkout -b feature/YOUR_TEXT_HERE
 ```
-2. Make your changes.
-3. Run tests to ensure everything works.
-4. Open a Pull Request into develop branch.
+3. Make your changes.
+4. Add tests for new functionality.
+5. Run tests to ensure everything works.
+6. Open a Pull Request into develop branch.

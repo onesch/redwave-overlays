@@ -1,12 +1,11 @@
 const { BrowserWindow } = require('electron');
 const path = require('path');
 const { protectWindowShortcuts, disableZoomShortcuts } = require('../utils/keyboard_protection');
+
 const isDev = process.env.NODE_ENV === "development";
 
-let mainWindow = null;
-
 function createMainWindow() {
-  mainWindow = new BrowserWindow({
+  const win = new BrowserWindow({
     width: 800,
     height: 600,
     autoHideMenuBar: true,
@@ -17,16 +16,12 @@ function createMainWindow() {
     },
   });
 
-  protectWindowShortcuts(mainWindow, { allowDevTools: isDev });
-  disableZoomShortcuts(mainWindow);
+  protectWindowShortcuts(win, { allowDevTools: isDev });
+  disableZoomShortcuts(win);
 
-  mainWindow.loadURL('http://localhost:8000/main');
+  win.loadURL('http://127.0.0.1:8000/main');
 
-  mainWindow.on('closed', () => {
-    mainWindow = null;
-  });
-
-  return mainWindow;
+  return win;
 }
 
 module.exports = { createMainWindow };
