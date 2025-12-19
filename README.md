@@ -5,7 +5,7 @@ lightweight desktop application designed to **display live iRacing telemetry**. 
 
 ![project](https://img.shields.io/badge/Version-v2.0.0-blue)
 ![coverage](https://img.shields.io/badge/Coverage-97%25-green)
-![codeclimane](https://img.shields.io/badge/CodeClimate-А-cyan)
+![codeclimane](https://img.shields.io/badge/CodeClimate-B-cyan)
 ![python](https://img.shields.io/badge/Python-3.12.0-blue)
 
 ## 🖼️ Screenshots
