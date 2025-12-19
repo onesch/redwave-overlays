@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <title>{% block title %}{% endblock %}</title>
-  <link rel="stylesheet" href="/static/css/overlays.css">
+  <link rel="stylesheet" href="{{ url_for('static', path='css/overlays/radar.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', path='css/overlays/leaderboard.css') }}">
 </head>
 <body>
   <div class="overlay-body">
     {% block content %}
     {% endblock %}
   </div>
-
   {% block scripts %}
   {% endblock %}
 </body>

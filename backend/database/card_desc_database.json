@@ -1,0 +1,14 @@
+[
+  {
+    "title": "Radar",
+    "desc": "Displays nearby cars, taking into account the front, left, and right sides, as well as the presence of cars on the sides.",
+    "image": "/static/images/radar_icon.png",
+    "url": "/overlays/radar"
+  },
+  {
+    "title": "Leaderboard",
+    "desc": "Displays race positions, lap times, and other stats in a live leaderboard.",
+    "image": "/static/images/leaderboard_icon.png",
+    "url": "/overlays/leaderboard"
+  }
+]

@@ -1,0 +1,435 @@
+{% extends "base/base_overlay.html" %}
+
+{% block title %}Leaderboard{% endblock %}
+
+{% block content %}
+<div class="app">
+    <section class="card">
+        <div class="thead">
+            <div>Pos</div>
+            <div>Driver</div>
+            <div>Rating</div>
+            <div>Last Lap</div>
+            <div>Gap</div>
+        </div>
+
+        <!-- Ahead Cars (up to 3) -->
+        <div id="ahead-row-1" class="row ahead" style="display: none;">
+            <div class="pos-car-badge">
+                <div class="pos">--</div>
+                <div class="car">
+                    <span class="num">--</span>
+                </div>
+            </div>
+            <div class="driver">
+                <div class="name">Loading...</div>
+                <div class="pit-flag" style="display:none;">PIT</div>
+            </div>
+            <div class="lic-column">
+                <div class="lic-container">
+                    <span class="lic">--</span>
+                    <span class="ir">--</span>
+                </div>
+            </div>
+            <div class="time">--:--.---</div>
+            <div class="gap">--</div>
+        </div>
+
+        <div id="ahead-row-2" class="row ahead" style="display: none;">
+            <div class="pos-car-badge">
+                <div class="pos">--</div>
+                <div class="car">
+                    <span class="num">--</span>
+                </div>
+            </div>
+            <div class="driver">
+                <div class="name">Loading...</div>
+                <div class="pit-flag" style="display:none;">PIT</div>
+            </div>
+            <div class="lic-column">
+                <div class="lic-container">
+                    <span class="lic">--</span>
+                    <span class="ir">--</span>
+                </div>
+            </div>
+            <div class="time">--:--.---</div>
+            <div class="gap">--</div>
+        </div>
+
+        <div id="ahead-row-3" class="row ahead" style="display: none;">
+            <div class="pos-car-badge">
+                <div class="pos">--</div>
+                <div class="car">
+                    <span class="num">--</span>
+                </div>
+            </div>
+            <div class="driver">
+                <div class="name">Loading...</div>
+                <div class="pit-flag" style="display:none;">PIT</div>
+            </div>
+            <div class="lic-column">
+                <div class="lic-container">
+                    <span class="lic">--</span>
+                    <span class="ir">--</span>
+                </div>
+            </div>
+            <div class="time">--:--.---</div>
+            <div class="gap">--</div>
+        </div>
+
+        <!-- Player Car -->
+        <div id="player-row" class="row me">
+            <div class="pos-car-badge">
+                <div class="pos me">--</div>
+                <div class="car">
+                    <span class="num">--</span>
+                </div>
+            </div>
+            <div class="driver">
+                <div class="name">Loading...</div>
+                <div class="pit-flag" style="display:none;">PIT</div>
+            </div>
+            <div class="lic-column">
+                <div class="lic-container">
+                    <span class="lic">--</span>
+                    <span class="ir">--</span>
+                </div>
+            </div>
+            <div class="time">--:--.---</div>
+            <div class="gap">0.0</div>
+        </div>
+
+        <!-- Behind Cars (up to 3) -->
+        <div id="behind-row-1" class="row behind" style="display: none;">
+            <div class="pos-car-badge">
+                <div class="pos">--</div>
+                <div class="car">
+                    <span class="num">--</span>
+                </div>
+            </div>
+            <div class="driver">
+                <div class="name">Loading...</div>
+                <div class="pit-flag" style="display:none;">PIT</div>
+            </div>
+            <div class="lic-column">
+                <div class="lic-container">
+                    <span class="lic">--</span>
+                    <span class="ir">--</span>
+                </div>
+            </div>
+            <div class="time">--:--.---</div>
+            <div class="gap">--</div>
+        </div>
+
+        <div id="behind-row-2" class="row behind" style="display: none;">
+            <div class="pos-car-badge">
+                <div class="pos">--</div>
+                <div class="car">
+                    <span class="num">--</span>
+                </div>
+            </div>
+            <div class="driver">
+                <div class="name">Loading...</div>
+                <div class="pit-flag" style="display:none;">PIT</div>
+            </div>
+            <div class="lic-column">
+                <div class="lic-container">
+                    <span class="lic">--</span>
+                    <span class="ir">--</span>
+                </div>
+            </div>
+            <div class="time">--:--.---</div>
+            <div class="gap">--</div>
+        </div>
+
+        <div id="behind-row-3" class="row behind" style="display: none;">
+            <div class="pos-car-badge">
+                <div class="pos">--</div>
+                <div class="car">
+                    <span class="num">--</span>
+                </div>
+            </div>
+            <div class="driver">
+                <div class="name">Loading...</div>
+                <div class="pit-flag" style="display:none;">PIT</div>
+            </div>
+            <div class="lic-column">
+                <div class="lic-container">
+                    <span class="lic">--</span>
+                    <span class="ir">--</span>
+                </div>
+            </div>
+            <div class="time">--:--.---</div>
+            <div class="gap">--</div>
+        </div>
+
+        <div class="tfoot">
+            <div class="race-stats">
+                <span class="label">LAPS</span>
+                <span id="laps-current" class="value">--</span>
+                <span class="sep">/</span>
+                <span id="laps-total" class="value">--</span>
+            </div>
+            <div class="race-stats">
+                <span id="time-current" class="value">--</span>
+                <span class="sep">/</span>
+                <span id="time-total" class="value">--</span>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+class LeaderboardUpdater {
+    constructor() {
+        this.updateInterval = 100;
+        this.init();
+    }
+
+    init() {
+        this.updateLeaderboard();
+        setInterval(() => this.updateLeaderboard(), this.updateInterval);
+    }
+
+    async updateLeaderboard() {
+        try {
+            const response = await fetch('/api/leaderboard');
+            const data = await response.json();
+
+            if (data.error) {
+                this.showError(data.error);
+                return;
+            }
+
+            this.renderLeaderboard(data);
+
+        } catch (error) {
+            this.showError('Failed to fetch data');
+            console.error('Error:', error);
+        }
+    }
+
+    renderLeaderboard(data) {
+        // Hide all neighbor rows first
+        for (let i = 1; i <= 3; i++) {
+            document.getElementById(`ahead-row-${i}`).style.display = 'none';
+            document.getElementById(`behind-row-${i}`).style.display = 'none';
+        }
+
+        // Render the player
+        this.renderPlayer(data.player);
+
+        const aheadCars = data.neighbors.ahead || [];
+        const behindCars = data.neighbors.behind || [];
+        const displayedAheadCars = [...aheadCars].reverse();
+        
+        // Render ahead cars - farthest ahead in row 1, then closer cars in row 2, etc.
+        for (let i = 0; i < 3; i++) {
+            const rowId = `ahead-row-${i + 1}`;
+            if (i < displayedAheadCars.length) {
+                this.renderCar(rowId, displayedAheadCars[i], true);
+            }
+        }
+
+        // Render behind cars - closest behind goes in row 1, then row 2, etc. (no reverse needed)
+        for (let i = 0; i < 3; i++) {
+            const rowId = `behind-row-${i + 1}`;
+            if (i < behindCars.length) {
+                this.renderCar(rowId, behindCars[i], false);
+            }
+        }
+
+        // Update session lap time
+        this.updateSessionLapTime(
+            data.leaderboard_data.session_laps,
+            data.leaderboard_data.session_time,
+            data.leaderboard_data.player_lap_time,
+            data.player.laps_started
+        );
+        // Update session time
+        this.updateSessionTime(
+            data.leaderboard_data.session_time_current,
+            data.leaderboard_data.session_time_formatted,
+        );
+    }
+
+    renderPlayer(player) {
+        const row = document.getElementById('player-row');
+        this.renderRow(row, player);
+
+        const posElement = row.querySelector('.pos');
+        if (posElement && !posElement.classList.contains('me')) {
+            posElement.classList.add('me');
+        }
+
+        const gapElement = row.querySelector('.gap');
+        if (gapElement) {
+            gapElement.textContent = '0.0';
+        }
+    }
+
+    renderCar(rowId, car, isAhead) {
+        const row = document.getElementById(rowId);
+        row.style.display = 'grid';
+        this.renderRow(row, car, isAhead);
+    }
+
+    intToRgb(num) {
+        const r = (num >> 16) & 255;
+        const g = (num >> 8) & 255;
+        const b = num & 255;
+        return [r, g, b];
+    }
+
+    applyGradient(numElement, rgbInt) {
+        const [r, g, b] = this.intToRgb(rgbInt);
+        numElement.style.backgroundImage = `
+            linear-gradient(to right,
+                rgba(${r},${g},${b},1),
+                rgba(${r},${g},${b},0.2),
+                rgba(${r},${g},${b},0)
+            )
+        `;
+    }
+
+    renderRow(rowElement, car, isAhead = null) {
+        this.renderPositionAndCar(rowElement, car);
+        this.renderDriver(rowElement, car);
+        this.renderLicenseAndIrating(rowElement, car);
+        this.renderGapAndLap(rowElement, car);
+    }
+
+    renderPositionAndCar(rowElement, car) {
+        const posElement = rowElement.querySelector('.pos');
+        posElement.textContent = car.pos || '--';
+        const numElement = rowElement.querySelector('.num');
+        numElement.textContent = car.car_number ? `#${car.car_number}` : '--';
+
+        if (car.car_class_color) {
+            if (car.car_class_color === 0xFFFFFF) {
+                numElement.style.backgroundImage = 'none';
+            } else {
+                this.applyGradient(numElement, car.car_class_color);
+            }
+        } else {
+            numElement.style.backgroundImage = '';
+            numElement.style.color = '';
+        }
+    }
+
+    renderDriver(rowElement, car) {
+        const nameElement = rowElement.querySelector('.driver .name');
+        const pitFlag = rowElement.querySelector('.driver .pit-flag');
+
+        nameElement.textContent = car.name || 'Unknown';
+        nameElement.classList.remove('with-flag', 'in-pit', 'gradient');
+
+        let pitLapText = car.last_pit_lap;
+        if (pitLapText === "L0 IN") {
+            pitLapText = "";
+        }
+        if (pitLapText === "L0") {
+            pitLapText = "";
+        }
+        if (pitLapText === "L0 OUT") {
+            pitLapText = "OUT";
+        }
+
+        if (car.is_in_pitroad) {
+            nameElement.classList.add('with-flag', 'in-pit', 'gradient');
+            if (pitLapText) {
+                pitFlag.textContent = pitLapText;
+                pitFlag.style.display = 'inline-flex';
+            } else {
+                pitFlag.style.display = 'none';
+            }
+        } else if (pitLapText) {
+            nameElement.classList.add('with-flag', 'gradient');
+            pitFlag.textContent = pitLapText;
+            pitFlag.style.display = 'inline-flex';
+        } else {
+            pitFlag.style.display = 'none';
+        }
+    }
+
+    renderLicenseAndIrating(rowElement, car) {
+        const licElement = rowElement.querySelector('.lic');
+        if (car.license) {
+            let licenseText = car.license;
+            if (licenseText.length > 5) {
+                licenseText = licenseText.slice(0, 5) + licenseText.slice(6);
+            }
+            licElement.textContent = licenseText;
+            licElement.className = 'lic';
+            licElement.classList.add(licenseText.charAt(0).toLowerCase());
+        } else {
+            licElement.textContent = '--';
+            licElement.className = 'lic';
+        }
+
+        const irElement = rowElement.querySelector('.ir');
+        irElement.textContent = car.irating
+            ? (Math.floor(car.irating / 100) / 10).toFixed(1) + 'k'
+            : '--';
+    }
+
+    renderGapAndLap(rowElement, car) {
+        const gapElement = rowElement.querySelector('.gap');
+        if (car.lap_status === "ahead_lap") {
+            gapElement.style.color = "#FF5C5C";
+        } else if (car.lap_status === "behind_lap") {
+            gapElement.style.color = "#6F8EEB";
+        } else {
+            gapElement.style.color = "#FFCC00";
+        }
+
+        this.updateLapTime(rowElement, car.last_lap);
+        this.updateGap(rowElement, car.gap_sec);
+    }
+
+    updateLapTime(row, lapTime) {
+        row.querySelector('.time').textContent = lapTime;
+    }
+
+    updateGap(row, gapSec) {
+        const gapElement = row.querySelector('.gap');
+        if (!gapElement) return;
+        if (gapSec === undefined || gapSec === null) {
+            gapElement.textContent = '--';
+        } else {
+            gapElement.textContent = `${gapSec.toFixed(1)}`;
+        }
+    }
+
+    updateSessionLapTime(sessionLaps, sessionTime, playerLapTime, lapsStarted) {
+        const currentElement = document.getElementById('laps-current');
+        const totalElement = document.getElementById('laps-total');
+
+        currentElement.textContent = lapsStarted;
+        if (sessionLaps !== "unlimited") {
+            totalElement.textContent = sessionLaps;
+        } else {
+            totalElement.textContent = `~${(sessionTime / playerLapTime).toFixed(1)}`;
+        }
+    }
+
+    updateSessionTime(current_time, total_time) {
+        const currentElement = document.getElementById('time-current');
+        const totalElement = document.getElementById('time-total');
+        currentElement.textContent = current_time;
+        totalElement.textContent = total_time;
+    }
+
+    showError(message) {
+        console.error('Error:', message);
+    }
+}
+
+// Initialize when page loads
+document.addEventListener('DOMContentLoaded', () => {
+    new LeaderboardUpdater();
+});
+</script>
+{% endblock %}

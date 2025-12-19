@@ -1,38 +1,27 @@
 const { BrowserWindow } = require('electron');
 const path = require('path');
+const { protectWindowShortcuts, disableZoomShortcuts } = require('../utils/keyboard_protection');
 
-let mainWindow = null;
+const isDev = process.env.NODE_ENV === "development";
 
 function createMainWindow() {
-  mainWindow = new BrowserWindow({
+  const win = new BrowserWindow({
     width: 800,
     height: 600,
     autoHideMenuBar: true,
     webPreferences: {
       contextIsolation: true,
       preload: path.join(__dirname, '../preload.js'),
+      partition: 'persist:main',
     },
   });
 
-  mainWindow.loadURL('http://localhost:8000/main');
+  protectWindowShortcuts(win, { allowDevTools: isDev });
+  disableZoomShortcuts(win);
 
-  mainWindow.on('closed', () => {
-    mainWindow = null;
-  });
+  win.loadURL('http://127.0.0.1:8000/main');
 
-  mainWindow.webContents.on('before-input-event', (event, input) => {
-    if (input.type === 'keyDown' && input.key === 'F12') {
-      mainWindow.webContents.toggleDevTools();
-
-      const show = !mainWindow.isMenuBarVisible();
-      mainWindow.setMenuBarVisibility(show);
-      mainWindow.autoHideMenuBar = !show;
-
-      event.preventDefault();
-    }
-  });
-
-  return mainWindow;
+  return win;
 }
 
 module.exports = { createMainWindow };

@@ -1,14 +1,57 @@
-const { app, ipcMain } = require('electron');
+const { app } = require('electron');
+
 const { createMainWindow } = require('./windows/mainWindow');
-const registerSpeedEvents = require('./ipc/speedEvents');
-const registerControlsEvents = require('./ipc/controlsEvents');
+const registerRadarEvents = require('./ipc/RadarEvents');
+const registerLeaderboardEvents = require('./ipc/LeaderboardEvents');
+const { startBackend, stopBackend } = require('./utils/backendManager');
 
-app.whenReady().then(() => {
-  createMainWindow();
-  registerSpeedEvents();
-  registerControlsEvents();
+let mainWindow = null;
+
+
+async function createWindow() {
+  if (mainWindow) {
+    mainWindow.focus();
+    return;
+  }
+
+  await startBackend();
+
+  mainWindow = createMainWindow();
+
+  registerRadarEvents();
+  registerLeaderboardEvents();
+
+  mainWindow.on('closed', () => {
+    mainWindow = null;
+  });
+}
+
+const gotTheLock = app.requestSingleInstanceLock();
+if (!gotTheLock) {
+  app.quit();
+  return;
+}
+
+app.whenReady().then(createWindow);
+
+app.on('activate', () => {
+  if (!mainWindow) createWindow();
 });
 
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') app.quit();
+app.on('second-instance', () => {
+  if (!mainWindow) return;
+  if (mainWindow.isMinimized()) mainWindow.restore();
+  mainWindow.focus();
 });
+
+function shutdown() {
+  stopBackend();
+}
+
+app.on('before-quit', shutdown);
+app.on('will-quit', shutdown);
+
+process.on('exit', shutdown);
+process.on('SIGINT', shutdown);
+process.on('SIGTERM', shutdown);
+process.on('uncaughtException', shutdown);

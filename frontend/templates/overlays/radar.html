@@ -1,0 +1,82 @@
+{% extends "base/base_overlay.html" %}
+{% block title %}radar{% endblock %}
+
+{% block content %}
+<div class="radar-container">
+  <div class="radar-line horizontal"></div>
+  <div class="radar-line vertical"></div>
+
+  <div class="my-car"></div>
+
+  <!-- front/rear lines -->
+  <div id="fb-ahead" class="fb-box ahead">
+    <div class="clipper"></div>
+  </div>
+  <div id="fb-behind" class="fb-box behind">
+    <div class="clipper"></div>
+  </div>
+
+  <!-- side -->
+  <div id="side-left"  class="side-box left"></div>
+  <div id="side-right" class="side-box right"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const MAX_DIST = 15.0;
+const RADAR_H = 260;
+const CENTER_Y = RADAR_H / 2;
+
+// Front/rear lane control
+function setFB(el, dist, severity){
+  el.classList.remove("sev-red","sev-yellow","sev-gray");
+
+  if(dist == null){
+    el.style.opacity = 0;
+    return;
+  }
+  el.style.opacity = 1;
+
+  switch(severity){
+    case "red": el.classList.add("sev-red"); break;
+    case "yellow": el.classList.add("sev-yellow"); break;
+    default: el.classList.add("sev-gray");
+  }
+}
+
+// Side indicator controls
+function setSide(el, info){
+  el.classList.remove("red","gray");
+  if(!info){
+    el.style.opacity = 0;
+    return;
+  }
+  el.style.opacity = 1;
+  el.style.top = CENTER_Y + "px";
+  // side ones are always red according to the current implementation of the service
+  el.classList.add("red");
+}
+
+async function updateRadar(){
+  try {
+    // Anti-cache
+    const r = await fetch("/api/radar?ts=" + Date.now());
+    if(!r.ok) return;
+    const data = await r.json();
+
+    setFB(document.getElementById("fb-ahead"),  data.ahead_m,  data.ahead_severity);
+    setFB(document.getElementById("fb-behind"), data.behind_m, data.behind_severity);
+
+    setSide(document.getElementById("side-left"),  data.left);
+    setSide(document.getElementById("side-right"), data.right);
+
+  } catch(e){
+    console.error("radar fetch error", e);
+  }
+}
+
+setInterval(updateRadar, 100);
+updateRadar();
+</script>
+{% endblock %}

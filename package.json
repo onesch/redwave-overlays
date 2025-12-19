@@ -1,18 +1,30 @@
 {
-  "name": "example_fastapi_electron_gui",
-  "version": "1.0.0",
+  "name": "redwave_overlays",
+  "productName": "RedWave overlays",
+  "version": "2.0.0",
   "main": "frontend/main.js",
   "scripts": {
-    "start": "electron ."
+    "build": "electron-builder",
+    "start:dev": "cross-env NODE_ENV=development concurrently \"uvicorn backend.main:app --reload --port 8000\" \"electron .\"",
+    "start:prod": "cross-env NODE_ENV=production electron ."
+  },
+  "build": {
+    "appId": "com.onesch.redwave.overlays",
+    "productName": "RedWave overlays",
+    "files": [
+      "frontend/**",
+      "backend_run/**"
+    ],
+    "win": {
+      "icon": "frontend/static/images/app_icon.ico"
+    }
   },
   "devDependencies": {
+    "concurrently": "^9.2.1",
+    "cross-env": "^10.0.0",
     "electron": "^28.1.0"
   },
-  "author": "",
-  "license": "ISC",
-  "description": "",
-  "dependencies": {
-    "dotenv": "^17.0.1",
-    "tree-kill": "^1.2.2"
-  }
+  "author": "onesch",
+  "license": "GPL-3.0",
+  "description": ""
 }

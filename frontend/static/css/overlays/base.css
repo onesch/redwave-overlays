@@ -1,0 +1,40 @@
+:root {
+    --m3-surface-top: 28, 28, 37;
+    --m3-surface-bottom: 20, 20, 30;
+    --m3-surface-gradient: linear-gradient(
+        to bottom,
+        rgba(var(--m3-surface-top), 0.6) 0%,
+        rgba(var(--m3-surface-bottom), 0.6) 100%
+    );
+
+    --m3-surface-bg: 37, 37, 46;
+    --m3-on-surface: #e0e0e0;
+    --m3-outline-variant: #1A1A1F;
+
+    --m3-radius-lg: 6px;
+    --m3-radius-pill: 6px;
+
+    --font: "Schibsted Grotesk", Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+
+    --fs-label: 12px;
+    --fs-body: 16px;
+    --pad-4: 6px;
+    --row-height: 27px;
+ }
+
+::-webkit-scrollbar {
+    display: none;
+ }
+
+* {
+    user-select: none;
+ }
+
+body {
+    margin: 0;
+    font-family: var(--font);
+    font-weight: 400;
+    color: var(--m3-on-surface);
+    -webkit-app-region: drag;
+    /* border: 2px solid green; */
+ }
