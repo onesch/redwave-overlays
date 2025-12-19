@@ -3,8 +3,12 @@ from pathlib import Path
 from typing import Optional, Dict, Any
 from functools import lru_cache
 
-DB_PATH = Path("backend/database/card_desc_database.json")
-METADATA_PATH = Path("backend/database/metadata.json")
+from backend.utils.paths import get_base_path
+
+BASE_PATH = get_base_path()
+
+DB_PATH = BASE_PATH / "backend" / "database" / "card_desc_database.json"
+METADATA_PATH = BASE_PATH / "backend" / "database" / "metadata.json"
 
 
 @lru_cache(maxsize=1)
@@ -35,11 +39,11 @@ def _load_metadata() -> Dict[str, Any]:
             data = json.load(f)
             return data
     except FileNotFoundError:
-        print(f"Metadata file not found at {METADATA_PATH}, using default.")
-        return default
+        print(f"Metadata file not found at {METADATA_PATH}.")
+        return {}
     except json.JSONDecodeError:
-        print(f"Metadata file at {METADATA_PATH} is invalid JSON, using default.")
-        return default
+        print(f"Metadata file at {METADATA_PATH} is invalid JSON.")
+        return {}
 
 
 def get_app_version() -> Optional[str]:

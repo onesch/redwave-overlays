@@ -1,15 +1,12 @@
 
-<img width="200" alt="image" src="frontend/static/images/logo.png" />
+<img width="100" alt="image" src="frontend/static/images/app_icon.png" />
 
-lightweight desktop application designed to ***display live iRacing telemetry***. Powered by ***FastAPI*** & ***Electron***.
+lightweight desktop application designed to **display live iRacing telemetry**. Powered by **FastAPI** & **Electron** and **completely free**.
 
 ![project](https://img.shields.io/badge/Version-v1.0.0_dev-orange)
 ![coverage](https://img.shields.io/badge/Coverage-97%25-green)
 ![codeclimane](https://img.shields.io/badge/CodeClimate-А-cyan)
 ![python](https://img.shields.io/badge/Python-3.12.0-blue)
-![nodejs](https://img.shields.io/badge/Node.js-18^-blue)
-![electron](https://img.shields.io/badge/Electron-28.1.0-blue)
-![fastapi](https://img.shields.io/badge/FastAPI-0.115.14-blue)
 
 ## 🖼️ Screenshots
 
@@ -25,7 +22,7 @@ lightweight desktop application designed to ***display live iRacing telemetry***
 ## 🤝 Contributing
 
 Contributions, issues, and feature requests are welcome!  
-Read our [Contributing Guide](docs/CONTRIBUTING.md) for details.
+Read our [Contributing Guide](https://github.com/onesch/redwave-overlays/blob/master/docs/CONTRIBUTING.md) for details.
 
 ## 📜 License
 

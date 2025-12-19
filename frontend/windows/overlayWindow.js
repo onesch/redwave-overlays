@@ -46,7 +46,7 @@ function createOverlay(route, options = {}) {
   protectWindowShortcuts(overlay, { allowDevTools: isDev });
   disableZoomShortcuts(overlay);
 
-  overlay.loadURL(`http://localhost:8000/${route}`);
+  overlay.loadURL(`http://127.0.0.1:8000/${route}`);
 
   // Save user settings
   applySavedZoom(overlay, route);

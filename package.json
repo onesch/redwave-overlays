@@ -1,10 +1,23 @@
 {
   "name": "redwave_overlays",
+  "productName": "RedWave overlays",
   "version": "1.0.0-dev",
   "main": "frontend/main.js",
   "scripts": {
+    "build": "electron-builder",
     "start:dev": "cross-env NODE_ENV=development concurrently \"uvicorn backend.main:app --reload --port 8000\" \"electron .\"",
-    "start:prod": "cross-env NODE_ENV=production concurrently \"uvicorn backend.main:app --port 8000\" \"electron .\""
+    "start:prod": "cross-env NODE_ENV=production electron ."
+  },
+  "build": {
+    "appId": "com.onesch.redwave.overlays",
+    "productName": "RedWave overlays",
+    "files": [
+      "frontend/**",
+      "backend_run/**"
+    ],
+    "win": {
+      "icon": "frontend/static/images/app_icon.ico"
+    }
   },
   "devDependencies": {
     "concurrently": "^9.2.1",

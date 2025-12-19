@@ -1,7 +1,11 @@
+const { app } = require('electron');
 const fs = require('fs');
 const path = require('path');
 
-const SETTINGS_PATH = path.resolve(__dirname, '..', '..', 'backend', 'database', 'overlays_settings.json');
+const SETTINGS_PATH = path.join(
+  app.getPath('userData'),
+  'overlays_settings.json'
+);
 
 function loadSettings() {
   try {
