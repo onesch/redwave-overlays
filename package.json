@@ -1,7 +1,7 @@
 {
   "name": "redwave_overlays",
   "productName": "RedWave overlays",
-  "version": "1.0.0-dev",
+  "version": "2.0.0",
   "main": "frontend/main.js",
   "scripts": {
     "build": "electron-builder",
