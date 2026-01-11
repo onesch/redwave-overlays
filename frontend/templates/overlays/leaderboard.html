@@ -327,14 +327,14 @@ class LeaderboardUpdater {
         nameElement.classList.remove('with-flag', 'in-pit', 'gradient');
 
         let pitLapText = car.last_pit_lap;
-        if (pitLapText === "L0 IN") {
-            pitLapText = "";
+        if (pitLapText === "IN L0") {
+            pitLapText = "IN PIT";
         }
         if (pitLapText === "L0") {
             pitLapText = "";
         }
-        if (pitLapText === "L0 OUT") {
-            pitLapText = "OUT";
+        if (pitLapText === "OUT L0") {
+            pitLapText = "OUT PIT";
         }
 
         if (car.is_in_pitroad) {
@@ -383,6 +383,12 @@ class LeaderboardUpdater {
             gapElement.style.color = "#6F8EEB";
         } else {
             gapElement.style.color = "#FFCC00";
+        }
+
+        if (car.is_in_pitroad) {
+            gapElement.style.opacity = "0.6";
+        } else {
+            gapElement.style.opacity = "1";
         }
 
         this.updateLapTime(rowElement, car.last_lap);

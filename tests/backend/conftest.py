@@ -16,6 +16,8 @@ def irsdk_mock_factory():
         mock_ir.__getitem__.side_effect = lambda key: values.get(key)
         mock_ir.get_value = lambda key: values.get(key)
 
+        mock_ir._ensure_connected = lambda: True
+
         return mock_ir
 
     return _factory
@@ -46,7 +48,7 @@ def mock_service(irsdk_mock_factory):
 
 @pytest.fixture
 def parser(mock_service):
-    return IRSDKParser(mock_service)
+    return IRSDKParser(mock_service().ir)
 
 @pytest.fixture
 def mock_irsdk_leaderboard(irsdk_mock_factory):
@@ -55,6 +57,7 @@ def mock_irsdk_leaderboard(irsdk_mock_factory):
         "CarIdxClassPosition": [0, 1, 2],
         "CarIdxLap": [5, 5, 4],
         "CarIdxLastLapTime": [80.0, 81.5, 82.2],
+        "CarIdxBestLapTime": [11.1, 22.2, None],
         "CarIdxLapDistPct": [0.6, 0.3, 0.9],
         "CarIdxOnPitRoad": [False, False, False],
         "PlayerCarIdx": 0,
@@ -96,7 +99,7 @@ def mock_irsdk_leaderboard(irsdk_mock_factory):
             "Sessions": [
                 {
                     "SessionType": "Lone Qualify",
-                    "SessionLaps": "2",
+                    "SessionLaps": 2,
                     "SessionTime": "20 sec",
                     "ResultsFastestLap": [
                         {"CarIdx": 0, "FastestTime": 88.8},
@@ -109,7 +112,7 @@ def mock_irsdk_leaderboard(irsdk_mock_factory):
                 },
                 {
                     "SessionType": "Race",
-                    "SessionLaps": "10",
+                    "SessionLaps": 10,
                     "SessionTime": "100 sec",
                     "ResultsFastestLap": [
                         {"CarIdx": 0, "FastestTime": 79.8},
@@ -127,12 +130,11 @@ def mock_irsdk_leaderboard(irsdk_mock_factory):
     return irsdk_mock_factory(values)
 
 
-
 @pytest.fixture
 def mock_irsdk_leaderboard_multiclass(irsdk_mock_factory):
     drivers = [
-        {"UserName": "Driver1", "CarClassID": 1},
-        {"UserName": "Driver2", "CarClassID": 2},
+        {"UserName": "Driver1", "CarClassID": 1, "CarClassEstLapTime": 74.0},
+        {"UserName": "Driver2", "CarClassID": 2, "CarClassEstLapTime": 77.0},
     ]
     values = {
         "DriverInfo": {"Drivers": drivers},
@@ -141,8 +143,17 @@ def mock_irsdk_leaderboard_multiclass(irsdk_mock_factory):
         "CarIdxPosition": [1, 2],
         "CarIdxClassPosition": [0, 0],
         "CarIdxLastLapTime": [74.0, 77.0],
+        "CarIdxBestLapTime": [11.1, None],
         "CarIdxLap": [5, 5],
         "CarIdxLapDistPct": [0.2, 0.1],
-        "SessionInfo": {"Sessions": []},
+        "SessionInfo": {
+            "Sessions": [
+                    {
+                        "SessionType": "Lone Qualify",
+                        "SessionLaps": 2,
+                        "SessionTime": "20 sec",
+                },
+            ],
+        },
     }
     return irsdk_mock_factory(values)
