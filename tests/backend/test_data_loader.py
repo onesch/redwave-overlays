@@ -55,11 +55,6 @@ def test_get_app_version(fake_metadata_file):
     assert data_loader.get_app_version() == "1.0.0"
 
 
-def test_get_overlay_version(fake_metadata_file):
-    assert data_loader.get_overlay_version("overlay1") == "v1"
-    assert data_loader.get_overlay_version("overlay2") is None
-
-
 # --- Error tests ---
 
 

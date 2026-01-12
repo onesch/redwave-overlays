@@ -41,12 +41,6 @@ h1 {
   flex-wrap: wrap;
 }
 
-.version-text {
-  font-size: 16px;
-  color: #888;
-  font-weight: normal;
-}
-
 .card-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;

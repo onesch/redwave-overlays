@@ -24,7 +24,7 @@ class LeaderboardContext:
     drivers: list
     positions: list[int]
     class_positions: list[int]
-    last_lap_times: list
+    last_lap_times: list[float]
     laps_started: list
     lap_dist_pct: list[float]
     is_pitroad: list
@@ -69,7 +69,7 @@ class TimeFormatter:
         )
 
 
-class CarDataBuilder:  # ! tests other than the latest 2F
+class CarDataBuilder:
     """Responsible for constructing car data entries."""
 
     def __init__(self, irsdk_service):
@@ -121,11 +121,11 @@ class CarDataBuilder:  # ! tests other than the latest 2F
         return driver.get("UserName", "").upper() == "PACE CAR"
 
     def _get_first_name(self, driver: dict) -> str:
-        return (driver.get("UserName", "").strip().split())[0]
+        names = driver.get("UserName", "").strip().split()
+        return names[0] if names else ""
 
     def _format_lap_dist(self, idx: int, ctx: LeaderboardContext) -> float:
         dist: float = ctx.lap_dist_pct[idx]
-
         return round(dist, 3) if isinstance(dist, float) and dist >= 0 else None
 
     def _resolve_position(self, idx: int, ctx: LeaderboardContext) -> int | None:
@@ -297,7 +297,15 @@ class Leaderboard:
         driver_info: list[dict[str, Any]] = self.irsdk.get_value("DriverInfo") or {}
         drivers: list[dict[str, Any]] = driver_info.get("Drivers", []) or {}
         if not drivers:
-            return {"message": "Iracing is not started."}
+            return {
+                "status": "waiting",
+                "player": None,
+                "cars": [],
+                "neighbors": {"ahead": [], "behind": []},
+                "leaderboard_data": None,
+                "multiclass": False,
+                "timestamp": int(time.time()),
+            }
 
         player_idx: int = self.irsdk.get_value("PlayerCarIdx")
         raw_laps: list[int] = self.irsdk.get_value("CarIdxLap") or []

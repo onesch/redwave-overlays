@@ -4,6 +4,12 @@ from unittest.mock import MagicMock
 from backend.services.irsdk.service import IRSDKService
 from backend.services.irsdk.parser import IRSDKParser
 from backend.services.radar.service import RadarService
+from backend.services.leaderboard.service import (
+    Leaderboard,
+    LeaderboardContext,
+    CarDataBuilder,
+    NeighborsService,
+)
 
 
 @pytest.fixture
@@ -43,12 +49,54 @@ def mock_service(irsdk_mock_factory):
 
         parser = IRSDKParser(irsdk_service)
         return RadarService(irsdk_service, parser)
+
     return _factory
 
 
 @pytest.fixture
 def parser(mock_service):
     return IRSDKParser(mock_service().ir)
+
+
+@pytest.fixture
+def ctx_from_mock(mock_irsdk_leaderboard):
+    """
+    Returns the LeaderboardContext constructor
+    function with the ability to override.
+    """
+    
+    defaults = {
+        "drivers": mock_irsdk_leaderboard.get_value("DriverInfo")["Drivers"],
+        "positions": mock_irsdk_leaderboard.get_value("CarIdxPosition"),
+        "class_positions": mock_irsdk_leaderboard.get_value("CarIdxClassPosition"),
+        "last_lap_times": mock_irsdk_leaderboard.get_value("CarIdxLastLapTime"),
+        "laps_started": mock_irsdk_leaderboard.get_value("CarIdxLap"),
+        "lap_dist_pct": mock_irsdk_leaderboard.get_value("CarIdxLapDistPct"),
+        "is_pitroad": mock_irsdk_leaderboard.get_value("CarIdxOnPitRoad"),
+        "multiclass": False,
+    }
+
+    def _make_ctx(**overrides):
+        data = {**defaults, **overrides}
+        return LeaderboardContext(**data)
+
+    return _make_ctx
+
+
+@pytest.fixture
+def leaderboard(mock_irsdk_leaderboard):
+    return Leaderboard(mock_irsdk_leaderboard)
+
+
+@pytest.fixture
+def builder(mock_irsdk_leaderboard):
+    return CarDataBuilder(mock_irsdk_leaderboard)
+
+
+@pytest.fixture
+def neighbors(builder):
+    return NeighborsService(builder)
+
 
 @pytest.fixture
 def mock_irsdk_leaderboard(irsdk_mock_factory):
@@ -148,10 +196,10 @@ def mock_irsdk_leaderboard_multiclass(irsdk_mock_factory):
         "CarIdxLapDistPct": [0.2, 0.1],
         "SessionInfo": {
             "Sessions": [
-                    {
-                        "SessionType": "Lone Qualify",
-                        "SessionLaps": 2,
-                        "SessionTime": "20 sec",
+                {
+                    "SessionType": "Lone Qualify",
+                    "SessionLaps": 2,
+                    "SessionTime": "20 sec",
                 },
             ],
         },
