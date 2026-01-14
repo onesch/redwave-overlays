@@ -33,7 +33,7 @@ def test_collect_candidates_basic(neighbors, builder, ctx_from_mock):
         laps_started=[5, 5, 5],
     )
 
-    ahead, behind = neighbors.collect_candidates(player_idx=0, ctx=ctx)
+    ahead, behind = neighbors._collect_candidates(player_idx=0, ctx=ctx)
     # ahead: dist > my_dist и gap_pct <= 0.5 -> idx 1
     # behind: dist < my_dist -> gap_pct > 0.5 -> idx 2
     assert len(ahead) == 1
@@ -47,7 +47,7 @@ def test_sort_candidates(neighbors):
     # behind is sorted in descending order by gap_pct
     ahead = [{"gap_pct": 0.3}, {"gap_pct": 0.1}, {"gap_pct": 0.2}]
     behind = [{"gap_pct": -0.3}, {"gap_pct": -0.1}, {"gap_pct": -0.2}]
-    sorted_ahead, sorted_behind = neighbors.sort_candidates(ahead, behind)
+    sorted_ahead, sorted_behind = neighbors._sort_candidates(ahead, behind)
     assert [c["gap_pct"] for c in sorted_ahead] == [0.1, 0.2, 0.3]
     assert [c["gap_pct"] for c in sorted_behind] == [-0.1, -0.2, -0.3]
 
@@ -61,7 +61,7 @@ def test_format_neighbors_rounding(neighbors, ctx_from_mock):
     behind = [
         {"car": {"name": "Driver3"}, "gap_pct": -0.98765, "gap_sec": -98.765}
     ]
-    formatted = neighbors.format_neighbors(ahead, behind, limit=1)
+    formatted = neighbors._format_neighbors(ahead, behind, limit=1)
     assert formatted["ahead"][0]["gap_pct"] == 0.123
     assert formatted["ahead"][0]["gap_sec"] == 12.35
     assert formatted["behind"][0]["gap_pct"] == 0.988

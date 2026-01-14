@@ -169,3 +169,44 @@ def test_get_last_pit_lap_behavior(builder):
     builder._pit_exit_times[1] -= 6
     result_after = builder._get_last_pit_lap(1, laps_started, [False, False])
     assert result_after == "L6"
+
+
+def test_build_all_returns_all_cars_except_excluded(builder, ctx_from_mock):
+    ctx = ctx_from_mock()
+
+    cars = builder.build_all(ctx, exclude_idx=0)
+
+    assert isinstance(cars, list)
+    assert len(cars) == 2
+    assert all(car["car_idx"] != 0 for car in cars)
+
+
+def test_build_all_without_exclude_returns_all(builder, ctx_from_mock):
+    ctx = ctx_from_mock()
+
+    cars = builder.build_all(ctx)
+
+    assert len(cars) == len(ctx.drivers)
+
+
+def test_build_all_filters_pace_car(builder, ctx_from_mock):
+    ctx = ctx_from_mock(
+        drivers=[
+            {"UserName": "PACE CAR"},
+            {"UserName": "Driver1"},
+        ],
+    )
+
+    cars = builder.build_all(ctx)
+
+    assert len(cars) == 1
+    assert cars[0]["name"] == "Driver1"
+
+
+def test_build_all_sorted_by_position(builder, ctx_from_mock):
+    ctx = ctx_from_mock(positions=[3, 1, 2])
+
+    cars = builder.build_all(ctx)
+
+    positions = [car["pos"] for car in cars]
+    assert positions == sorted(positions)
