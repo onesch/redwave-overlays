@@ -48,7 +48,3 @@ def _load_metadata() -> Dict[str, Any]:
 
 def get_app_version() -> Optional[str]:
     return _load_metadata().get("app_version")
-
-
-def get_overlay_version(name: str) -> Optional[str]:
-    return _load_metadata().get("overlays", {}).get(name)

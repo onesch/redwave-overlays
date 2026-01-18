@@ -1,14 +1,53 @@
 import time
-from typing import Any, Dict, List, Optional
+from dataclasses import dataclass
+from typing import Any, Dict, List, Literal
 
-from backend.services.leaderboard.constants import LAP_RACE_API_PLACEHOLDER
+
+@dataclass
+class LeaderboardContext:
+    """
+    Container for leaderboard telemetry data for a racing session.
+
+    Attributes:
+        drivers (list[dict]):
+            List of dictionaries with info for each driver.
+        positions (list[int]):
+            Overall track positions of the cars.
+        class_positions (list[int]):
+            Positions within each car class
+            (for multiclass races).
+        last_lap_times (list[float]):
+            Last lap time of each driver in seconds.
+        laps_started (list[int]):
+            Number of laps started by each driver.
+        lap_dist_pct (list[float]):
+            Fraction of current lap completed
+            by each driver (0.0–1.0).
+        is_pitroad (list[bool]):
+            Flags indicating if a car is currently
+            on the pit road.
+        multiclass (bool):
+            True if the race has multiple car classes.
+
+    Used by NeighborsService, CarDataBuilder and Leaderboard to construct
+    and sort leaderboard telemetry data.
+    """
+
+    drivers: list[dict]
+    positions: list[int]
+    class_positions: list[int]
+    last_lap_times: list[float]
+    laps_started: list[int]
+    lap_dist_pct: list[float]
+    is_pitroad: list[bool]
+    multiclass: bool
 
 
 class TimeFormatter:
-    """Utility for formatting lap times."""
+    """Utility for formatting lap and session times."""
 
     @staticmethod
-    def format_lap_time(seconds: float | None) -> str:
+    def format_lap_time(seconds: float) -> str:
         """Convert lap time in seconds to '--:--.---' format."""
         if seconds is None or seconds <= 0:
             return "--:--.---"
@@ -20,23 +59,27 @@ class TimeFormatter:
         return f"{m:02d}:{s:02d}.{ms_remain:03d}"
 
     @staticmethod
-    def format_session_time(secs: float, is_seconds: bool) -> str:
-        """Format session time from seconds to 'HH:MM:SS' or 'MM:SS' format."""
-        if secs is None or secs < 0:
+    def format_session_time(seconds: float, is_seconds: bool) -> str:
+        """
+        Format session time from seconds
+        to 'HH:MM:SS' or 'MM:SS' format.
+        """
+        if seconds is None or seconds < 0:
             return "--:--.---"
 
-        hrs = int(secs // 3600)
-        mins = int((secs % 3600) // 60)
-        secs_remain = int(secs % 60)
+        hrs = int(seconds // 3600)
+        mins = int((seconds % 3600) // 60)
+        secs_remain = int(seconds % 60)
 
         if is_seconds:
-            if hrs > 0:
-                return f"{hrs:02d}:{mins:02d}:{secs_remain:02d}h"
-            return f"{mins:02d}:{secs_remain:02d}m"
-        else:
-            if hrs > 0:
-                return f"{hrs:02d}:{mins:02d}h"
-            return f"{hrs:02d}:{mins:02d}m"
+            return (
+                f"{hrs:02d}:{mins:02d}:{secs_remain:02d}h"
+                if hrs > 0
+                else f"{mins:02d}:{secs_remain:02d}m"
+            )
+        return (
+            f"{hrs:02d}:{mins:02d}h" if hrs > 0 else f"{hrs:02d}:{mins:02d}m"
+        )
 
 
 class CarDataBuilder:
@@ -52,112 +95,140 @@ class CarDataBuilder:
         self._last_pit_laps.clear()
         self._pit_exit_times.clear()
 
-    def _get_last_pit_lap(
-        self, idx: int, laps_started: List[int], is_pitroad: List[bool]
-    ) -> str | None:
+    def build(
+        self, idx: int | None, ctx: LeaderboardContext
+    ) -> dict[str, Any] | None:
+        """Generates driver data for the leaderboard."""
+        driver: dict[str, Any] = ctx.drivers[idx]
+        car_number: str = driver.get("CarNumber")
+        irating: int = driver.get("IRating")
+        license_str: str = driver.get("LicString")
+        car_class_color: int = driver.get("CarClassColor")
+        last_lap: str = TimeFormatter.format_lap_time(ctx.last_lap_times[idx])
+        is_in_pitroad: bool = ctx.is_pitroad[idx]
+
+        if self._is_pace_car(driver):
+            return None
+
+        laps_started: int = ctx.laps_started[idx]
+        if laps_started < 0:
+            laps_started = 0
+
+        return {
+            "pos": self._resolve_position(idx, ctx),
+            "car_idx": idx,
+            "car_number": car_number,
+            "name": self._get_first_name(driver),
+            "laps_started": laps_started,
+            "last_lap": last_lap,
+            "irating": irating,
+            "license": license_str,
+            "car_class_color": car_class_color,
+            "lap_dist_pct": self._format_lap_dist(idx, ctx),
+            "is_in_pitroad": is_in_pitroad,
+            "last_pit_lap": self._get_last_pit_lap(
+                idx, ctx.laps_started, ctx.is_pitroad
+            ),
+        }
+
+    def build_all(
+        self, ctx: LeaderboardContext, exclude_idx: int | None = None
+    ) -> list[dict[str, Any]]:
+        """Return all cars for snapshot, optionally excluding a player."""
+        cars: list[dict[str, Any]] = [
+            car
+            for idx in range(len(ctx.drivers))
+            if idx != exclude_idx and (car := self.build(idx, ctx))
+        ]
+        return CarSorter.sort(cars)
+
+    def _is_pace_car(self, driver: dict) -> bool:
+        """Checks if a car is a pace car by name."""
+        return driver.get("UserName", "").upper() == "PACE CAR"
+
+    def _get_first_name(self, driver: dict) -> str:
+        names = driver.get("UserName", "").strip().split()
+        return names[0] if names else ""
+
+    def _format_lap_dist(self, idx: int, ctx: LeaderboardContext) -> float:
+        dist: float = ctx.lap_dist_pct[idx]
+        return (
+            round(dist, 3) if isinstance(dist, float) and dist >= 0 else None
+        )
+
+    def _resolve_position(
+        self, idx: int, ctx: LeaderboardContext
+    ) -> int | None:
         """
-        Returns the last lap the car was in pitroad.
+        Return the car's effective position,
+        using class positions if multiclass.
+        Returns None if unknown, or calculates starting position if zero.
         """
-        current_time = time.time()
+        pos_list = ctx.class_positions if ctx.multiclass else ctx.positions
+        pos = pos_list[idx]
 
-        if is_pitroad[idx]:
-            self._last_pit_laps[idx] = laps_started[idx]
-            self._pit_exit_times.pop(idx, None)
-            return f"L{self._last_pit_laps[idx]} IN"
-
-        if idx in self._last_pit_laps:
-            if idx not in self._pit_exit_times:
-                self._pit_exit_times[idx] = current_time
-                return f"L{self._last_pit_laps[idx]} OUT"
-            else:
-                if current_time - self._pit_exit_times[idx] <= 5:
-                    return f"L{self._last_pit_laps[idx]} OUT"
-                return f"L{self._last_pit_laps[idx]}"
-
-        return None
+        if pos == -1:
+            return None
+        if pos == 0:
+            return self._get_starting_position(
+                idx,
+                "ClassPosition" if ctx.multiclass else "Position",
+                1 if ctx.multiclass else 0,
+            )
+        return pos
 
     def _get_starting_position(
         self, car_idx: int, field: str, offset: int
     ) -> int:
-        """Get a starting position from qualification results."""
-        session_info = self.irsdk.get_value("SessionInfo") or {}
-        sessions = session_info.get("Sessions") or []
+        """
+        Get the car's starting position from
+        session results, adding an offset.
+        Returns 0 if not found.
+        """
+        session_info: dict[str, Any] = (
+            self.irsdk.get_value("SessionInfo") or {}
+        )
+        sessions: list[dict[str, Any]] = session_info.get("Sessions", [])
 
         for sess in sessions:
-            session_type = sess.get("SessionType")
-            if session_type in ("Warmup", "Lone Qualify", "Open Qualify"):
+            if sess.get("SessionType") in (
+                "Warmup",
+                "Lone Qualify",
+                "Open Qualify",
+            ):
                 for res in sess.get("ResultsPositions") or []:
                     if res.get("CarIdx") == car_idx:
-                        # The API returns ClassPosition from zero,
-                        # so offset=1 is needed.
                         return int(res.get(field, 0)) + offset
         return 0
 
-    def build(
-        self,
-        idx: int,
-        drivers: List[dict],
-        positions: List[int],
-        class_positions: List[int],
-        last_lap_times: List[float],
-        laps_started: List[int],
-        lap_dist_pct: List[float],
-        multiclass: bool,
-        is_pitroad: List[bool],
-    ) -> Optional[Dict[str, Any]]:
-        """Generates driver data for the leaderboard."""
-        driver = drivers[idx]
-        name = driver.get("UserName", "")
-        if name.upper() == "PACE CAR":
-            return None
+    def _get_last_pit_lap(
+        self, idx: int, laps_started: List[int], is_pitroad: List[bool]
+    ) -> str | None:
+        """Returns the last lap the car was in pitroad."""
+        now = time.time()
 
-        pos_list = class_positions if multiclass else positions
-        pos = int(pos_list[idx] or 0)
+        if is_pitroad[idx]:
+            self._last_pit_laps[idx] = laps_started[idx]
+            self._pit_exit_times.pop(idx, None)
+            return f"IN L{laps_started[idx]}"
 
-        if pos == -1:
-            pos = None
-        if pos == 0:
-            pos = self._get_starting_position(
-                car_idx=idx,
-                field="ClassPosition" if multiclass else "Position",
-                offset=1 if multiclass else 0,
-            )
+        if idx in self._last_pit_laps:
+            if idx not in self._pit_exit_times:
+                self._pit_exit_times[idx] = now
+                return f"OUT L{self._last_pit_laps[idx]}"
+            if now - self._pit_exit_times[idx] <= 5:
+                return f"OUT L{self._last_pit_laps[idx]}"
+            return f"L{self._last_pit_laps[idx]}"
 
-        last_lap = TimeFormatter.format_lap_time(last_lap_times[idx])
-        laps = int(laps_started[idx] or 0)
-        if laps < 0:
-            laps = 0
-
-        dist = lap_dist_pct[idx]
-        first_name = (name.strip().split() or [""])[0]
-
-        last_pit_lap = self._get_last_pit_lap(idx, laps_started, is_pitroad)
-
-        return {
-            "pos": pos,
-            "car_idx": idx,
-            "car_number": driver.get("CarNumber"),
-            "name": first_name,
-            "laps_started": laps,
-            "last_lap": last_lap,
-            "irating": driver.get("IRating"),
-            "license": driver.get("LicString"),
-            "car_class_color": driver.get("CarClassColor"),
-            "lap_dist_pct": (
-                round(dist, 3)
-                if isinstance(dist, (int, float)) and dist >= 0
-                else None
-            ),
-            "is_in_pitroad": is_pitroad[idx],
-            "last_pit_lap": last_pit_lap,
-        }
+        return None
 
 
 class CarSorter:
-    """Sort cars by position, keeping None or 0 at the end."""
+    """Utility class for sorting car data dictionaries."""
 
     @staticmethod
-    def sort(cars: List[Dict[str, int | None]]) -> List[Dict[str, int | None]]:
+    def sort(cars: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Sort cars by position, keeping None or 0 at the end."""
         return sorted(
             cars,
             key=lambda c: (
@@ -167,316 +238,342 @@ class CarSorter:
         )
 
 
+class NeighborsService:
+    """
+    Service responsible for finding and formatting neighboring cars
+    (ahead and behind the player) based on lap distance.
+    """
+
+    def __init__(self, builder):
+        self.builder = builder
+
+    def get_neighbors(self, player_idx, ctx) -> dict:
+        """
+        Return neighboring cars ahead and behind the player.
+        """
+        ahead, behind = self._collect_candidates(player_idx, ctx)
+        ahead, behind = self._sort_candidates(ahead, behind)
+        return self._format_neighbors(ahead, behind)
+
+    def _calc_gap(
+        self, my_dist: float, dist: float, est_lap_time: float
+    ) -> dict[str, float | None] | None:
+        """
+        Calculate the lap and time gap between the player and another car.
+        """
+        if not isinstance(dist, (int, float)) or dist < 0:
+            return None
+
+        gap_pct = (dist - my_dist) % 1.0
+        gap_sec = gap_pct * est_lap_time if est_lap_time else None
+        return {"gap_pct": gap_pct, "gap_sec": gap_sec}
+
+    def _collect_candidates(
+        self, player_idx: int, ctx: LeaderboardContext
+    ) -> tuple[list[dict], list[dict]]:
+        """Collect all potential neighboring cars around the player."""
+        my_dist: float = ctx.lap_dist_pct[player_idx]
+        my_est_lap_time: float = (
+            ctx.drivers[player_idx]
+            .get("CarClassEstLapTime")
+        )
+
+        ahead, behind = [], []
+
+        for idx, dist in enumerate(ctx.lap_dist_pct):
+            if idx == player_idx:
+                continue
+            if idx >= len(ctx.drivers):
+                continue
+            car_data = self.builder.build(idx, ctx)
+            if not car_data:
+                continue
+
+            gap = self._calc_gap(my_dist, dist, my_est_lap_time)
+            if not gap:
+                continue
+
+            lap_diff = ctx.laps_started[idx] - ctx.laps_started[player_idx]
+            car_data["lap_status"] = (
+                "ahead_lap"
+                if lap_diff > 0
+                else "behind_lap" if lap_diff < 0 else None
+            )
+
+            if 0 < gap["gap_pct"] <= 0.5:
+                ahead.append({"car": car_data, **gap})
+            elif gap["gap_pct"] > 0.5:
+                behind.append(
+                    {
+                        "car": car_data,
+                        "gap_pct": gap["gap_pct"] - 1.0,
+                        "gap_sec": (gap["gap_pct"] - 1.0) * my_est_lap_time,
+                    }
+                )
+
+        return ahead, behind
+
+    @staticmethod
+    def _sort_candidates(
+        ahead: list[dict], behind: list[dict]
+    ) -> tuple[list[dict], list[dict]]:
+        """Sort neighboring cars in-place by their distance to the player."""
+        ahead.sort(key=lambda x: x["gap_pct"])
+        behind.sort(key=lambda x: x["gap_pct"], reverse=True)
+        return ahead, behind
+
+    @staticmethod
+    def _format_neighbors(
+        ahead: list[dict], behind: list[dict], limit=3
+    ) -> dict[str, list[dict]]:
+        """
+        Format neighboring car data for external use.
+
+        Limits the number of cars returned and normalizes gap values,
+        returning a structure ready for API or UI consumption.
+        """
+
+        def fmt(c):
+            return {
+                **c["car"],
+                "gap_pct": round(abs(c["gap_pct"]), 3),
+                "gap_sec": (
+                    round(abs(c["gap_sec"]), 2) if c["gap_sec"] else None
+                ),
+            }
+
+        return {
+            "ahead": [fmt(c) for c in ahead[:limit]],
+            "behind": [fmt(c) for c in behind[:limit]],
+        }
+
+
 class Leaderboard:
     """Main service for building leaderboard telemetry data."""
 
     def __init__(self, irsdk_service):
         self.irsdk = irsdk_service
         self.builder = CarDataBuilder(irsdk_service)
-        self._last_session_num: int | None = None
+        self.neighbors = NeighborsService(self.builder)
+        self._last_session_num: int = None
 
     def _is_multiclass(self, drivers: list) -> bool:
         """Check if race contains multiple car classes."""
-        class_ids = {
-            d.get("CarClassID") for d in drivers if d.get("CarClassID")
-        }
-        return len(class_ids) > 1
+        return (
+            len({d.get("CarClassID") for d in drivers if d.get("CarClassID")})
+            > 1
+        )
 
     def get_leaderboard_snapshot(self) -> Dict[str, Any]:
         """Return a snapshot of leaderboard data with player context."""
         self.irsdk._ensure_connected()
 
-        positions = self.irsdk.get_value("CarIdxPosition") or []
-        class_positions = self.irsdk.get_value("CarIdxClassPosition") or []
-        laps_started = self.irsdk.get_value("CarIdxLap") or []
-        player_idx = self.irsdk.get_value("PlayerCarIdx")
-        last_lap_times = self.irsdk.get_value("CarIdxLastLapTime") or []
-        lap_dist_pct = self.irsdk.get_value("CarIdxLapDistPct") or []
-        drivers = (self.irsdk.get_value("DriverInfo") or {}).get("Drivers", [])
-        car_idx_on_pitroad = self.irsdk.get_value("CarIdxOnPitRoad") or []
+        ctx = self._build_context()
+        if ctx is None:
+            return self._empty_snapshot()
 
-        if not drivers or player_idx is None:
-            return {"error": "No driver/player data"}
+        player_idx: int = self.irsdk.get_value("PlayerCarIdx")
+
+        return {
+            "cars": self.builder.build_all(ctx, exclude_idx=player_idx),
+            "player": self.builder.build(player_idx, ctx),
+            "neighbors": self.neighbors.get_neighbors(player_idx, ctx),
+            "leaderboard_data": self.get_session_info(player_idx, ctx),
+            "multiclass": ctx.multiclass,
+        }
+
+    def _build_context(self) -> LeaderboardContext | None:
+        driver_info: dict[str, Any] = (
+            self.irsdk.get_value("DriverInfo") or {}
+        )
+        drivers: list[dict[str, Any]] = driver_info.get("Drivers", []) or {}
+
+        if not drivers:
+            return None
+
+        raw_laps: list[int] = self.irsdk.get_value("CarIdxLap") or []
+        laps_started = [
+            lap if isinstance(lap, int) and lap >= 0 else 0
+            for lap in raw_laps
+        ]
 
         multiclass = self._is_multiclass(drivers)
 
-        cars = [
-            car
-            for idx in range(len(drivers))
-            if idx != player_idx
-            and (
-                car := self.builder.build(
-                    idx,
-                    drivers,
-                    positions,
-                    class_positions,
-                    last_lap_times,
-                    laps_started,
-                    lap_dist_pct,
-                    multiclass,
-                    car_idx_on_pitroad,
-                )
-            )
-        ]
-
-        cars_sorted = CarSorter.sort(cars)
-        player_car = self.builder.build(
-            player_idx,
-            drivers,
-            positions,
-            class_positions,
-            last_lap_times,
-            laps_started,
-            lap_dist_pct,
-            multiclass,
-            car_idx_on_pitroad,
+        return LeaderboardContext(
+            drivers=drivers,
+            positions=self.irsdk.get_value("CarIdxPosition") or [],
+            class_positions=self.irsdk.get_value("CarIdxClassPosition") or [],
+            last_lap_times=self.irsdk.get_value("CarIdxLastLapTime") or [],
+            laps_started=laps_started,
+            lap_dist_pct=self.irsdk.get_value("CarIdxLapDistPct") or [],
+            is_pitroad=self.irsdk.get_value("CarIdxOnPitRoad") or [],
+            multiclass=multiclass,
         )
 
-        neighbors = self._get_neighbors(player_idx, drivers, lap_dist_pct)
-        leaderboard_data = self._get_session_info(player_idx)
-
+    def _empty_snapshot(self) -> dict[str, Any]:
         return {
-            "cars": cars_sorted,
-            "player": player_car,
-            "neighbors": neighbors,
-            "leaderboard_data": leaderboard_data,
-            "multiclass": multiclass,
-            "timestamp": int(time.time()),
+            "status": "waiting",
+            "player": None,
+            "cars": [],
+            "neighbors": {"ahead": [], "behind": []},
+            "leaderboard_data": None,
+            "multiclass": False,
         }
 
-    def _get_neighbors(
-        self, player_idx: int, drivers: list, lap_dist_pct: list[float]
-    ):
-        """Return 3 cars ahead and 3 behind with gap in percent and seconds."""
-        car_idx_on_pitroad = self.irsdk.get_value("CarIdxOnPitRoad") or []
-        my_dist = lap_dist_pct[player_idx]
-        if not isinstance(my_dist, (int, float)) or my_dist < 0:
-            return {"ahead": [], "behind": []}
+    def _get_estimated_lap_time(
+        self,
+        player_idx: int,
+        ctx: LeaderboardContext,
+    ) -> float | None:
+        """Return estimated lap time."""
+        driver = ctx.drivers[player_idx]
 
-        lap_times = self.irsdk.get_value("CarIdxLastLapTime") or []
-        my_lap_time = (
-            lap_times[player_idx] if player_idx < len(lap_times) else None
-        )
+        est_lap = driver.get("CarClassEstLapTime")
 
-        if not my_lap_time or my_lap_time <= 0:
-            my_lap_time = (
-                (self.irsdk.get_value("DriverInfo") or {})
-                .get("Drivers", [{}])[player_idx]
-                .get("CarClassEstLapTime")
-            )
+        if not isinstance(est_lap, (int, float)):
+            return None
 
-        is_multiclass = self._is_multiclass(drivers)
-        positions = self.irsdk.get_value("CarIdxPosition") or []
-        class_positions = self.irsdk.get_value("CarIdxClassPosition") or []
-        laps_started = self.irsdk.get_value("CarIdxLap") or []
-        candidates_ahead, candidates_behind = [], []
+        if est_lap <= 0:
+            return None
 
-        for idx, dist in enumerate(lap_dist_pct):
-            if (
-                idx == player_idx
-                or not isinstance(dist, (int, float))
-                or dist < 0
-                or idx >= len(drivers)
-            ):
-                continue
+        return est_lap
 
-            gap_pct = (dist - my_dist) % 1.0
-            gap_sec = gap_pct * my_lap_time
+    def _get_best_lap_time(
+        self,
+        player_idx: int,
+        ctx: LeaderboardContext,
+    ) -> float | None:
+        """Return best lap time."""
+        best_laps = self.irsdk.get_value("CarIdxBestLapTime")
 
-            car_data = self.builder.build(
-                idx,
-                drivers,
-                positions,
-                class_positions,
-                lap_times,
-                laps_started,
-                lap_dist_pct,
-                is_multiclass,
-                car_idx_on_pitroad,
-            )
+        best_lap = best_laps[player_idx]
 
-            if not car_data:
-                continue
-            lap_diff = laps_started[idx] - laps_started[player_idx]
+        if not isinstance(best_lap, (int, float)):
+            return None
 
-            if lap_diff > 0:
-                car_data["lap_status"] = "ahead_lap"
-            elif lap_diff < 0:
-                car_data["lap_status"] = "behind_lap"
-            else:
-                car_data["lap_status"] = None
+        if best_lap <= 0:
+            return None
 
-            if 0 < gap_pct <= 0.5:
-                candidates_ahead.append(
-                    {
-                        "car": car_data,
-                        "gap_pct": gap_pct,
-                        "gap_sec": gap_sec,
-                        "lap_status": car_data["lap_status"],
-                    }
-                )
-            elif gap_pct > 0.5:
-                candidates_behind.append(
-                    {
-                        "car": car_data,
-                        "gap_pct": gap_pct - 1.0,
-                        "gap_sec": (gap_pct - 1.0) * my_lap_time,
-                        "lap_status": car_data["lap_status"],
-                    }
-                )
+        return best_lap
 
-        candidates_ahead.sort(key=lambda x: x["gap_pct"])
-        candidates_behind.sort(key=lambda x: x["gap_pct"], reverse=True)
+    def get_car_lap_time(
+        self,
+        player_idx: int,
+        ctx: LeaderboardContext,
+    ) -> float:
+        """Returns best or estimated lap time."""
 
-        ahead = [
-            {
-                **c["car"],
-                "gap_pct": round(c["gap_pct"], 3),
-                "gap_sec": round(abs(c["gap_sec"]), 2),
-            }
-            for c in candidates_ahead[:3]
-        ]
-        behind = [
-            {
-                **c["car"],
-                "gap_pct": round(abs(c["gap_pct"]), 3),
-                "gap_sec": round(abs(c["gap_sec"]), 2),
-            }
-            for c in candidates_behind[:3]
-        ]
+        best_lap = self._get_best_lap_time(player_idx, ctx)
+        if best_lap is not None:
+            return best_lap
 
-        return {"ahead": ahead, "behind": behind}
+        est_lap = self._get_estimated_lap_time(player_idx, ctx)
+        if est_lap is not None:
+            return est_lap
 
-    def _is_lap_race(self, session_time: str | float | None) -> bool:
-        """
-        Determine if the session is a lap-based race.
-        Checks numeric session time, 'unlimited', or placeholder values.
-        """
-        if session_time is None:
-            return False
-
-        try:
-            val = float(session_time)
-            if val >= LAP_RACE_API_PLACEHOLDER:
-                return True
-        except (ValueError, TypeError):
-            s = str(session_time).lower()
-            if "unlimited" in s:
-                return True
-            if "sec" in s:
-                try:
-                    val_sec = float(s.split()[0])
-                    if val_sec == LAP_RACE_API_PLACEHOLDER:
-                        return True
-                except ValueError:
-                    return False
-        return False
-
-    def _get_player_lap_time(
-        self, player_idx: int, sessions: list
-    ) -> Optional[float]:
-        """
-        Return the fastest lap time of the player from session results.
-        If no fastest lap is recorded, return the car class estimated lap time.
-        """
-        fastest_time = None
-
-        for sess in sessions:
-            for record in sess.get("ResultsFastestLap", []) or []:
-                if (
-                    record.get("CarIdx") == player_idx
-                    and record.get("FastestTime", -1) > 0
-                ):
-                    fastest_time = record["FastestTime"]
-
-        driver = (self.irsdk.get_value("DriverInfo") or {}).get("Drivers", [])[
-            player_idx
-        ]
-        est_lap_time = driver.get("CarClassEstLapTime")
-
-        return fastest_time if fastest_time is not None else est_lap_time
-
-    def _resolve_session_time(
+    def get_session_time(
         self,
         current_session: dict,
         player_lap_time: float,
-        session_time_str: str | float,
-        format: bool = True,
-    ) -> str | float | None:
+        is_format: bool = True,
+    ) -> str | float:
         """
-        Resolve session time. Returns formatted string by default or
-        float seconds if format=False.
+        Public method to get the session time.
+
+        Calculates the session duration using lap-based timing if available,
+        otherwise falls back to total session time.
+        Returns a formatted string if requested.
         """
-        session_type = current_session.get("SessionType", "").upper()
-        approx = False
-        result: float | str | None = None
+        session_time_total: float = self.irsdk.get_value("SessionTimeTotal")
+        lap_calculated_time = self._calculate_session_time_based_on_laps(
+            current_session,
+            player_lap_time,
+        )
 
-        if session_type == "RACE":
-            if self._is_lap_race(session_time_str):
-                session_laps = current_session.get("SessionLaps")
-                if (
-                    isinstance(session_laps, int)
-                    and session_laps > 0
-                    and player_lap_time
-                    and player_lap_time > 0
-                ):
-                    result = session_laps * player_lap_time
-                    approx = True
-            elif (
-                isinstance(session_time_str, str) and "sec" in session_time_str
-            ):
-                result = float(session_time_str.split()[0])
-                approx = True
+        if lap_calculated_time is not None:
+            session_time = lap_calculated_time
+            is_lap_calculated_time = True
+        else:
+            session_time = session_time_total
+            is_lap_calculated_time = False
 
-        if result is None:
-            try:
-                result = float(session_time_str)
-            except (ValueError, TypeError):
-                result = None
-
-        if format and result is not None:
+        if is_format:
             formatted = TimeFormatter.format_session_time(
-                result, is_seconds=False
+                session_time,
+                is_seconds=False,
             )
-            if approx:
-                formatted = f"~{formatted}"
-            return formatted
-        return result
+            return f"~{formatted}" if is_lap_calculated_time else formatted
 
-    def _get_session_info(self, player_idx: int) -> Dict[str, Any]:
-        """Extract relevant session & timing info, considering all sessions."""
-        session_info = self.irsdk.get_value("SessionInfo") or {}
-        sessions = session_info.get("Sessions", [])
-        current_session_num = session_info.get("CurrentSessionNum", 0)
-        current = (
-            sessions[current_session_num]
-            if 0 <= current_session_num < len(sessions)
-            else {}
+        return session_time
+
+    def _calculate_session_time_based_on_laps(
+        self,
+        current_session: dict,
+        player_lap_time: float,
+    ) -> float | None:
+        """Calculates session time based on the number of laps."""
+        session_laps: int | Literal["unlimited"] = current_session.get(
+            "SessionLaps"
         )
+        session_type: str = current_session.get("SessionType", "")
 
-        session_laps = current.get("SessionLaps")
-        session_time_current = self.irsdk.get_value("SessionTime")
-        session_time_total = self.irsdk.get_value("SessionTimeTotal")
+        if session_laps != "unlimited" and session_type == "Race":
+            return session_laps * player_lap_time
+        return None
 
-        player_lap_time = self._get_player_lap_time(player_idx, sessions)
+    def get_session_info(
+        self,
+        player_idx: int,
+        ctx: LeaderboardContext,
+    ) -> Dict[str, Any]:
+        """Public method returning structured session info for a player."""
+        session_info: dict[str, Any] = (
+            self.irsdk.get_value("SessionInfo") or {}
+        )
+        current_session = self._get_current_session(session_info)
+
+        self._reset_pit_status(session_info)
+
+        session_laps: int | Literal["unlimited"] = current_session.get(
+            "SessionLaps"
+        )
+        session_time_current: float = self.irsdk.get_value("SessionTime")
+
+        player_lap_time = self.get_car_lap_time(player_idx, ctx)
+
+        session_time = self.get_session_time(
+            current_session,
+            player_lap_time,
+            is_format=False,
+        )
         resolved_session_time_current = TimeFormatter.format_session_time(
-            session_time_current, is_seconds=True
+            session_time_current,
+            is_seconds=True,
         )
-        resolved_session_time = self._resolve_session_time(
-            current, player_lap_time, session_time_total, format=False
+        session_time_formatted = self.get_session_time(
+            current_session,
+            player_lap_time,
+            is_format=True,
         )
-        resolved_session_time_formatted = self._resolve_session_time(
-            current, player_lap_time, session_time_total, format=True
-        )
-        if self._last_session_num is None:
-            self._last_session_num = current_session_num
-        elif current_session_num != self._last_session_num:
-            self.builder.reset_pit_data()
-            self._last_session_num = current_session_num
+
         return {
             "session_laps": session_laps,
             "player_lap_time": player_lap_time,
+            "session_time": session_time,
             "session_time_current": resolved_session_time_current,
-            "session_time": resolved_session_time,
-            "session_time_formatted": resolved_session_time_formatted,
+            "session_time_formatted": session_time_formatted,
         }
+
+    def _reset_pit_status(self, session_info: dict) -> None:
+        """Reset pit tracking if a new session has started."""
+        current_num = session_info.get("CurrentSessionNum", 0)
+
+        if self._last_session_num != current_num:
+            self.builder.reset_pit_data()
+            self._last_session_num = current_num
+
+    def _get_current_session(self, session_info: dict) -> dict:
+        """Return the current session dictionary from session info."""
+        sessions = session_info.get("Sessions", [])
+        current_num = session_info.get("CurrentSessionNum", 0)
+        return sessions[current_num] if current_num < len(sessions) else {}

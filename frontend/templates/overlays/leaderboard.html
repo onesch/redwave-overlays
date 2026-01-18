@@ -14,7 +14,7 @@
         </div>
 
         <!-- Ahead Cars (up to 3) -->
-        <div id="ahead-row-1" class="row ahead" style="display: none;">
+        <div id="ahead-row-1" class="row ahead slot s-3" style="display: none;">
             <div class="pos-car-badge">
                 <div class="pos">--</div>
                 <div class="car">
@@ -35,7 +35,7 @@
             <div class="gap">--</div>
         </div>
 
-        <div id="ahead-row-2" class="row ahead" style="display: none;">
+        <div id="ahead-row-2" class="row ahead slot s-2" style="display: none;">
             <div class="pos-car-badge">
                 <div class="pos">--</div>
                 <div class="car">
@@ -56,7 +56,7 @@
             <div class="gap">--</div>
         </div>
 
-        <div id="ahead-row-3" class="row ahead" style="display: none;">
+        <div id="ahead-row-3" class="row ahead slot s-1" style="display: none;">
             <div class="pos-car-badge">
                 <div class="pos">--</div>
                 <div class="car">
@@ -100,7 +100,7 @@
         </div>
 
         <!-- Behind Cars (up to 3) -->
-        <div id="behind-row-1" class="row behind" style="display: none;">
+        <div id="behind-row-1" class="row behind slot s1" style="display: none;">
             <div class="pos-car-badge">
                 <div class="pos">--</div>
                 <div class="car">
@@ -121,7 +121,7 @@
             <div class="gap">--</div>
         </div>
 
-        <div id="behind-row-2" class="row behind" style="display: none;">
+        <div id="behind-row-2" class="row behind slot s2" style="display: none;">
             <div class="pos-car-badge">
                 <div class="pos">--</div>
                 <div class="car">
@@ -142,7 +142,7 @@
             <div class="gap">--</div>
         </div>
 
-        <div id="behind-row-3" class="row behind" style="display: none;">
+        <div id="behind-row-3" class="row behind slot s3" style="display: none;">
             <div class="pos-car-badge">
                 <div class="pos">--</div>
                 <div class="car">
@@ -203,6 +203,15 @@ class LeaderboardUpdater {
                 return;
             }
 
+            if (data.status === "waiting") {
+                this.renderWaiting();
+                return;
+            }
+
+            if (!data.player) {
+                return;
+            }
+
             this.renderLeaderboard(data);
 
         } catch (error) {
@@ -211,7 +220,14 @@ class LeaderboardUpdater {
         }
     }
 
+    renderWaiting() {
+        console.log("Waiting for iRacing...");
+    }
+
     renderLeaderboard(data) {
+        if (!data || !data.player || !data.neighbors) {
+            return;
+        }
         // Hide all neighbor rows first
         for (let i = 1; i <= 3; i++) {
             document.getElementById(`ahead-row-${i}`).style.display = 'none';
@@ -223,17 +239,16 @@ class LeaderboardUpdater {
 
         const aheadCars = data.neighbors.ahead || [];
         const behindCars = data.neighbors.behind || [];
-        const displayedAheadCars = [...aheadCars].reverse();
-        
-        // Render ahead cars - farthest ahead in row 1, then closer cars in row 2, etc.
+
+        // Render ahead cars
         for (let i = 0; i < 3; i++) {
             const rowId = `ahead-row-${i + 1}`;
-            if (i < displayedAheadCars.length) {
-                this.renderCar(rowId, displayedAheadCars[i], true);
+            if (i < aheadCars.length) {
+                this.renderCar(rowId, aheadCars[i], true);
             }
         }
 
-        // Render behind cars - closest behind goes in row 1, then row 2, etc. (no reverse needed)
+        // Render behind cars
         for (let i = 0; i < 3; i++) {
             const rowId = `behind-row-${i + 1}`;
             if (i < behindCars.length) {
@@ -302,6 +317,7 @@ class LeaderboardUpdater {
     }
 
     renderPositionAndCar(rowElement, car) {
+        if (!car) return;
         const posElement = rowElement.querySelector('.pos');
         posElement.textContent = car.pos || '--';
         const numElement = rowElement.querySelector('.num');
@@ -320,6 +336,7 @@ class LeaderboardUpdater {
     }
 
     renderDriver(rowElement, car) {
+        if (!car) return;
         const nameElement = rowElement.querySelector('.driver .name');
         const pitFlag = rowElement.querySelector('.driver .pit-flag');
 
@@ -327,14 +344,14 @@ class LeaderboardUpdater {
         nameElement.classList.remove('with-flag', 'in-pit', 'gradient');
 
         let pitLapText = car.last_pit_lap;
-        if (pitLapText === "L0 IN") {
-            pitLapText = "";
+        if (pitLapText === "IN L0") {
+            pitLapText = "IN PIT";
         }
         if (pitLapText === "L0") {
             pitLapText = "";
         }
-        if (pitLapText === "L0 OUT") {
-            pitLapText = "OUT";
+        if (pitLapText === "OUT L0") {
+            pitLapText = "OUT PIT";
         }
 
         if (car.is_in_pitroad) {
@@ -355,6 +372,7 @@ class LeaderboardUpdater {
     }
 
     renderLicenseAndIrating(rowElement, car) {
+        if (!car) return;
         const licElement = rowElement.querySelector('.lic');
         if (car.license) {
             let licenseText = car.license;
@@ -376,6 +394,7 @@ class LeaderboardUpdater {
     }
 
     renderGapAndLap(rowElement, car) {
+        if (!car) return;
         const gapElement = rowElement.querySelector('.gap');
         if (car.lap_status === "ahead_lap") {
             gapElement.style.color = "#FF5C5C";
@@ -383,6 +402,12 @@ class LeaderboardUpdater {
             gapElement.style.color = "#6F8EEB";
         } else {
             gapElement.style.color = "#FFCC00";
+        }
+
+        if (car.is_in_pitroad) {
+            gapElement.style.opacity = "0.6";
+        } else {
+            gapElement.style.opacity = "1";
         }
 
         this.updateLapTime(rowElement, car.last_lap);

@@ -4,7 +4,7 @@
 lightweight desktop application designed to **display live iRacing telemetry**. Powered by **FastAPI** & **Electron** and **completely free**.
 
 ![project](https://img.shields.io/badge/Version-v2.0.0-blue)
-![coverage](https://img.shields.io/badge/Coverage-97%25-green)
+![coverage](https://img.shields.io/badge/Coverage-96%25-green)
 ![codeclimane](https://img.shields.io/badge/CodeClimate-B-cyan)
 ![python](https://img.shields.io/badge/Python-3.12.0-blue)
 
