@@ -15,4 +15,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.send('set-overlay-position', { overlayName, x, y }),
   getOverlayPosition: (overlayName) =>
     ipcRenderer.invoke('get-overlay-position', overlayName),
+
+  // Opacity
+  setCardBgOpacity: (overlayName, value) =>
+      ipcRenderer.send('set-card-bg-opacity', { overlayName, value }),
+  getCardBgOpacity: (overlayName) =>
+      ipcRenderer.invoke('get-card-bg-opacity', overlayName)
 });

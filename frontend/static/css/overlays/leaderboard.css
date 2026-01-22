@@ -12,7 +12,11 @@
   height: calc(18px + (var(--row-height) * 7) + 18px);
   display: grid;
   grid-template-rows: 18px repeat(7, var(--row-height)) 18px;
-  background: var(--m3-surface-gradient);
+  background: linear-gradient(
+      to bottom,
+      rgba(var(--m3-surface-top), var(--card-bg-opacity)) 0%,
+      rgba(var(--m3-surface-bottom), var(--card-bg-opacity)) 100%
+  );
 }
 
 .thead, .row {
