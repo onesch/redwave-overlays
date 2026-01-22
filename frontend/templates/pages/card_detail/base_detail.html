@@ -23,9 +23,19 @@
     <h1>
       <span class="card-detail-title">Settings</span>
     </h1>
-    <div class="zoom-control">
-      <label for="zoomRange">Zoom: <span id="zoomValue">100%</span></label>
-      <input id="zoomRange" type="range" min="50" max="200" step="10" value="100">
+    <div class="range-container">
+      <label for="zoomRange">
+        Zoom: <span id="zoomValue">100%</span>
+      </label>
+      <input
+        id="zoomRange"
+        class="range-control"
+        type="range"
+        min="50"
+        max="200"
+        step="10"
+        value="100"
+      >
     </div>
     {% block additional_settings %}{% endblock %}
   </div>

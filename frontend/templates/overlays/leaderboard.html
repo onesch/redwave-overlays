@@ -316,6 +316,14 @@ class LeaderboardUpdater {
         this.renderGapAndLap(rowElement, car);
     }
 
+    async applyCardOpacity() {
+        const opacity = await window.electronAPI.getCardBgOpacity('leaderboard');
+        const card = document.querySelector('.card');
+        if (card) {
+            card.style.setProperty('--card-bg-opacity', opacity);
+        }
+    }
+
     renderPositionAndCar(rowElement, car) {
         if (!car) return;
         const posElement = rowElement.querySelector('.pos');
@@ -453,8 +461,9 @@ class LeaderboardUpdater {
 }
 
 // Initialize when page loads
-document.addEventListener('DOMContentLoaded', () => {
-    new LeaderboardUpdater();
+document.addEventListener('DOMContentLoaded', async () => {
+    const updater = new LeaderboardUpdater();
+    await updater.applyCardOpacity();
 });
 </script>
 {% endblock %}

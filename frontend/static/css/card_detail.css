@@ -1,12 +1,32 @@
-.zoom-control {
-  display: flex;
+.range-container {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  column-gap: 16px;
   align-items: center;
-  gap: 10px;
   margin-bottom: 1rem;
 }
 
-#zoomRange {
-  flex-grow: 1;
+/* Label container */
+.range-container label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 700;
+  color: var(--accent-gray-title);
+  white-space: nowrap;
+}
+
+/* Value inside label */
+.range-container label span {
+  min-width: 40px;
+  text-align: right;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Range */
+.range-control {
+  width: 100%;
   cursor: pointer;
   -webkit-appearance: none;
   appearance: none;
@@ -16,59 +36,45 @@
   outline: none;
 }
 
-#zoomRange::-webkit-slider-runnable-track {
-  background: var(--accent-gray-bg);
+
+/* Track */
+.range-control::-webkit-slider-runnable-track {
   height: 6px;
+  background: var(--accent-gray-bg);
   border-radius: 4px;
 }
 
-#zoomRange::-moz-range-track {
-  background: var(--accent-gray-bg);
+.range-control::-moz-range-track {
   height: 6px;
+  background: var(--accent-gray-bg);
   border-radius: 4px;
 }
 
-#zoomRange::-webkit-slider-thumb {
+/* Thumb */
+.range-control::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
   width: 18px;
   height: 18px;
   background: var(--accent-gray-title);
   border-radius: 50%;
+  border: 2px solid var(--accent-gray-bg);
   cursor: pointer;
   margin-top: -6px;
-  border: 2px solid var(--accent-gray-bg);
-  transition: background-color 0.3s ease;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
-#zoomRange::-webkit-slider-thumb:hover {
+.range-control::-webkit-slider-thumb:hover {
   background: #fff;
   border-color: var(--accent-gray-title);
 }
 
-#zoomRange::-moz-range-thumb {
+.range-control::-moz-range-thumb {
   width: 18px;
   height: 18px;
   background: var(--accent-gray-title);
   border-radius: 50%;
-  cursor: pointer;
   border: 2px solid var(--accent-gray-bg);
-  transition: background-color 0.3s ease;
-}
-
-#zoomRange::-moz-range-thumb:hover {
-  background: #fff;
-  border-color: var(--accent-gray-title);
-}
-
-label {
-  font-weight: 700;
-  min-width: 80px;
-  color: var(--accent-gray-title);
-}
-
-#zoomValue {
-  font-weight: 600;
-  margin-left: 6px;
-  color: var(--accent-gray-title);
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
 }

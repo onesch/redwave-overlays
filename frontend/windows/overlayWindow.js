@@ -4,13 +4,15 @@ const isDev = process.env.NODE_ENV === "development";
 const { protectWindowShortcuts, disableZoomShortcuts, registerOverlayMoveShortcuts } = require('../utils/keyboard_protection');
 const { applySavedZoom, registerZoomHandlers } = require('../utils/overlay_zoom');
 const { applySavedPosition, registerPositionHandlers, watchOverlayPosition } = require('../utils/overlay_position');
+const { registerOverlayOpacityHandlers } = require('../utils/overlay_card_opacity');
 
 const overlays = {};
 let overlayCount = 0;
 
-// Loading handlers
+// Register handlers
 registerZoomHandlers(overlays);
 registerPositionHandlers(overlays);
+registerOverlayOpacityHandlers(overlays);
 
 function createOverlay(route, options = {}) {
   if (overlays[route] && !overlays[route].isDestroyed()) {
@@ -52,6 +54,7 @@ function createOverlay(route, options = {}) {
   applySavedZoom(overlay, route);
   applySavedPosition(overlay, route);
   watchOverlayPosition(overlay, route);
+  // opacity is handled separately by overlay_card_opacity module
 
   overlay.on('closed', () => {
     delete overlays[route];
@@ -65,4 +68,4 @@ app.whenReady().then(() => {
   registerOverlayMoveShortcuts(app, overlays);
 });
 
-module.exports = { createOverlay };
+module.exports = { createOverlay, overlays };
