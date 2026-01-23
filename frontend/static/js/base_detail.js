@@ -25,11 +25,6 @@ class OverlayBase {
         if (this.opacityRange) {
             this.opacityRange.addEventListener('input', () => this.handleOpacityChange());
         }
-        if (this.openBtn) {
-            this.openBtn.addEventListener('click', () => {
-                window.electronAPI.openLeaderboard?.();
-            });
-        }
     }
 
     async loadZoomSettings() {

@@ -48,3 +48,33 @@ def _load_metadata() -> Dict[str, Any]:
 
 def get_app_version() -> Optional[str]:
     return _load_metadata().get("app_version")
+
+
+def get_overlays_card_data(selected_overlay: str | None = None) -> tuple[list[dict], dict, dict]:
+    """
+    Returns overlays list, selected overlay info, and card data.
+    Automatically selects first overlay if selected_overlay is None.
+    """
+    cards = load_cards_data()
+    if not cards:
+        return [], None, None
+
+    overlays = [
+        {
+            "key": card["title"].lower(),
+            "title": card["title"],
+            "image": card.get("image"),
+        }
+        for card in cards
+    ]
+
+    if not selected_overlay:
+        selected_overlay = cards[0]["title"].lower()
+
+    card_data = get_card_data_by_title(selected_overlay.capitalize())
+    selected_overlay_info = {
+        "key": selected_overlay,
+        "template": f"pages/card_detail/{selected_overlay}.html",
+    }
+
+    return overlays, selected_overlay_info, card_data

@@ -1,45 +1,44 @@
-{% extends "base/base.html" %}
-
-{% block title %}Overlays - {{ card_data.title }}{% endblock %}
-
-{% block content %}
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+{% block card_detail %}
+<div class="section-header">
+  <h2>{{ card_data.title }}</h2>
+  <p>{{ card_data.desc }}</p>
+</div>
 
 <div class="card-detail-container">
   <div class="text-column">
-    <h1>
-      <span class="card-detail-title">{{ card_data.title }}</span>
-    </h1>
-    <p class="card-detail-desc">{{ card_data.desc }}</p>
-    <a id="OpenBtn" class="value nav-btn accent-red">Open</a>
+    <button id="OpenBtn" class="overlay-button active-btn">Open</button>
   </div>
   <div>
-    <img src="{{ card_data.image }}" alt="{{ card_data.title }}" class="card-detail img" width="250" height="250">
+    <img
+      src="{{ card_data.image }}"
+      alt="{{ card_data.title }}"
+      class="card-detail img"
+      width="300"
+      height="300"
+    >
   </div>
 </div>
 
-<div class="card-detail-container">
-  <div class="text-column">
-    <h1>
-      <span class="card-detail-title">Settings</span>
-    </h1>
-    <div class="range-container">
-      <label for="zoomRange">
-        Zoom: <span id="zoomValue">100%</span>
-      </label>
-      <input
-        id="zoomRange"
-        class="range-control"
-        type="range"
-        min="50"
-        max="200"
-        step="10"
-        value="100"
-      >
-    </div>
-    {% block additional_settings %}{% endblock %}
-  </div>
+<div class="section-header">
+  <h2>Settings</h2>
 </div>
+
+<div class="range-container">
+  <label for="zoomRange">
+    Zoom: <span id="zoomValue">100%</span>
+  </label>
+  <input
+    id="zoomRange"
+    class="range-control"
+    type="range"
+    min="50"
+    max="200"
+    step="10"
+    value="100"
+  >
+</div>
+
+{% block additional_settings %}{% endblock %}
 
 <script src="{{ url_for('static', path='/js/base_detail.js') }}"></script>
 {% block overlay_scripts %}{% endblock %}
