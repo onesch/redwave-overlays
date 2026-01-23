@@ -13,12 +13,7 @@ The backend is written in FastAPI and packaged as a single executable using **Py
 
 ### 1.1 Build Command
 ```bash
-pyinstaller --onefile --noconsole \
-  --icon=frontend/static/images/app_icon.ico \
-  --add-data "frontend/templates;frontend/templates" \
-  --add-data "frontend/static;frontend/static" \
-  --add-data "backend/database/*.json;backend/database" \
-  backend/main.py
+pyinstaller --onefile --noconsole --icon=frontend/static/images/app_icon.ico --add-data "frontend/templates;frontend/templates" --add-data "frontend/static;frontend/static" --add-data "backend/database/*.json;backend/database" backend/main.py
 ```
 Explanation:
 - `--onefile` → creates a single .exe file.
