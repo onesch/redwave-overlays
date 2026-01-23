@@ -6,7 +6,7 @@ from backend.utils.paths import get_base_path
 from backend.database.data_loader import (
     get_app_version,
     get_overlays_card_data,
-    get_changelog_images, 
+    get_changelog_images,
 )
 
 router = APIRouter()

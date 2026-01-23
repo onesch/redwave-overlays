@@ -65,8 +65,10 @@ def test_get_app_version(fake_metadata_file):
 
 
 def test_get_overlays_card_data_with_selection(fake_cards_file):
-    overlays, selected_info, card_data = data_loader.get_overlays_card_data("card2")
-    
+    overlays, selected_info, card_data = data_loader.get_overlays_card_data(
+        "card2"
+    )
+
     assert len(overlays) == 2
     assert overlays[0]["key"] == "card1"
     assert overlays[1]["key"] == "card2"
@@ -94,8 +96,10 @@ def test_get_changelog_images_success(fake_changelog_img_path):
 
 
 def test_get_overlays_card_data_no_selection(fake_cards_file):
-    overlays, selected_info, card_data = data_loader.get_overlays_card_data(None)
-    
+    overlays, selected_info, card_data = data_loader.get_overlays_card_data(
+        None
+    )
+
     assert selected_info["key"] == "card1"
     assert selected_info["template"] == "pages/card_detail/card1.html"
 
@@ -109,7 +113,9 @@ def test_get_overlays_card_data_empty_list(tmp_path):
     data_loader.DB_PATH = file
     data_loader._load_cards.cache_clear()
 
-    overlays, selected_info, card_data = data_loader.get_overlays_card_data(None)
+    overlays, selected_info, card_data = data_loader.get_overlays_card_data(
+        None
+    )
     assert overlays == []
     assert selected_info is None
     assert card_data is None

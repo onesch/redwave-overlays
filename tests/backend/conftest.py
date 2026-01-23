@@ -64,12 +64,16 @@ def ctx_from_mock(mock_irsdk_leaderboard):
     Returns the LeaderboardContext constructor
     function with the ability to override.
     """
-    
+
     defaults = {
         "drivers": mock_irsdk_leaderboard.get_value("DriverInfo")["Drivers"],
         "positions": mock_irsdk_leaderboard.get_value("CarIdxPosition"),
-        "class_positions": mock_irsdk_leaderboard.get_value("CarIdxClassPosition"),
-        "last_lap_times": mock_irsdk_leaderboard.get_value("CarIdxLastLapTime"),
+        "class_positions": mock_irsdk_leaderboard.get_value(
+            "CarIdxClassPosition"
+        ),
+        "last_lap_times": mock_irsdk_leaderboard.get_value(
+            "CarIdxLastLapTime"
+        ),
         "laps_started": mock_irsdk_leaderboard.get_value("CarIdxLap"),
         "lap_dist_pct": mock_irsdk_leaderboard.get_value("CarIdxLapDistPct"),
         "is_pitroad": mock_irsdk_leaderboard.get_value("CarIdxOnPitRoad"),

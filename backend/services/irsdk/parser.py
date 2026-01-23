@@ -1,5 +1,4 @@
 import re
-from typing import Any
 
 from backend.services.irsdk.service import IRSDKService
 from backend.services.radar.parser import IRadarParser

@@ -1,11 +1,6 @@
 import pytest
-from unittest.mock import MagicMock
 
-from backend.services.leaderboard.service import LeaderboardContext
-from backend.services.leaderboard.service import (
-    Leaderboard,
-    CarDataBuilder,
-)
+from backend.services.leaderboard.service import CarDataBuilder
 
 
 # --- CarDataBuilder tests ---
@@ -79,7 +74,7 @@ def test_resolve_position_multiclass_zero_and_negative(builder, ctx_from_mock):
     zero_pos = builder._resolve_position(idx=0, ctx=ctx)
     negative_pos = builder._resolve_position(idx=1, ctx=ctx)
     assert zero_pos == 1
-    assert negative_pos == None
+    assert negative_pos is None
 
 
 def test_resolve_position_normal_and_negative(builder, ctx_from_mock):
@@ -129,15 +124,6 @@ def test_builder_negative_lap_dist_pct_to_none(builder, ctx_from_mock):
 
 
 def test_builder_returns_valid_data(builder, ctx_from_mock):
-    drivers = [
-        {
-            "UserName": "Driver1",
-            "CarNumber": "12",
-            "IRating": 2000,
-            "LicString": "A 4.99",
-            "CarClassColor": 16711680,
-        }
-    ]
     ctx = ctx_from_mock()
     result = builder.build(0, ctx)
 

@@ -1,8 +1,9 @@
-import pytest
 from unittest.mock import MagicMock
-import time
 
-from backend.services.leaderboard.service import Leaderboard, LeaderboardContext
+from backend.services.leaderboard.service import (
+    Leaderboard,
+    LeaderboardContext,
+)
 
 
 def test_get_session_info_returns_expected(
@@ -118,7 +119,8 @@ def test_calculate_session_time_unlimited_laps(leaderboard):
         "SessionType": "Race",
     }
     result = leaderboard._calculate_session_time_based_on_laps(
-        current_session, player_lap_time=80,
+        current_session,
+        player_lap_time=80,
     )
     assert result is None
 
@@ -130,7 +132,8 @@ def test_calculate_session_time_not_race_session(leaderboard):
     }
 
     result = leaderboard._calculate_session_time_based_on_laps(
-        current_session, player_lap_time=80,
+        current_session,
+        player_lap_time=80,
     )
 
     assert result is None
@@ -143,7 +146,8 @@ def test_calculate_session_time_race_session(leaderboard):
     }
 
     result = leaderboard._calculate_session_time_based_on_laps(
-        current_session, player_lap_time=80,
+        current_session,
+        player_lap_time=80,
     )
 
     assert result == 800

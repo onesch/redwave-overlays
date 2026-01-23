@@ -1,9 +1,5 @@
 import pytest
-from unittest.mock import MagicMock
 
-from backend.services.irsdk.parser import IRSDKParser
-from backend.services.irsdk.service import IRSDKService
-from backend.services.radar.service import RadarService
 from backend.services.radar.constants import CLR_LEFT, CLR_RIGHT, CLR_BOTH
 
 
