@@ -36,6 +36,15 @@ def bad_json_file(tmp_path):
     return _factory
 
 
+@pytest.fixture
+def fake_changelog_img_path(tmp_path):
+    path = tmp_path / "changelog_versions"
+    path.mkdir()
+
+    data_loader.CHANGELOG_IMG_PATH = path
+    return path
+
+
 # --- Data tests ---
 
 
@@ -67,6 +76,18 @@ def test_get_overlays_card_data_with_selection(fake_cards_file):
 
     assert card_data["title"] == "Card2"
     assert card_data["value"] == 20
+
+
+def test_get_changelog_images_success(fake_changelog_img_path):
+    (fake_changelog_img_path / "v0.0.0.png").write_text("", encoding="utf-8")
+    (fake_changelog_img_path / "v0.0.1.png").write_text("", encoding="utf-8")
+
+    images = data_loader.get_changelog_images()
+
+    assert images == [
+        "images/changelog_versions/v0.0.0.png",
+        "images/changelog_versions/v0.0.1.png",
+    ]
 
 
 # --- Error/Negative tests ---
@@ -120,3 +141,24 @@ def test_load_metadata_json_decode_error(bad_json_file):
     data_loader._load_metadata.cache_clear()
     metadata = data_loader._load_metadata()
     assert metadata == {}
+
+
+def test_get_changelog_images_dir_not_exists(tmp_path, monkeypatch):
+    non_exist_dir = tmp_path / "changelog_versions"
+    monkeypatch.setattr(data_loader, "CHANGELOG_IMG_PATH", non_exist_dir)
+
+    images = data_loader.get_changelog_images()
+    assert images == []
+
+
+def test_get_changelog_images_empty_dir(fake_changelog_img_path):
+    images = data_loader.get_changelog_images()
+    assert images == []
+
+
+def test_get_changelog_images_ignore_non_png(fake_changelog_img_path):
+    (fake_changelog_img_path / "readme.txt").write_text("test")
+    (fake_changelog_img_path / "data.jpg").write_text("test")
+
+    images = data_loader.get_changelog_images()
+    assert images == []

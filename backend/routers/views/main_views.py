@@ -1,16 +1,16 @@
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
-from fastapi.templating import Jinja2Templates
-from pathlib import Path
 
+from backend.utils.templates import templates
+from backend.utils.paths import get_base_path
 from backend.database.data_loader import (
     get_app_version,
-    load_cards_data,
     get_overlays_card_data,
+    get_changelog_images, 
 )
-from backend.utils.templates import templates
 
 router = APIRouter()
+BASE_PATH = get_base_path()
 
 
 @router.get("/main", response_class=HTMLResponse, name="main")
@@ -23,9 +23,7 @@ async def main_view(request: Request):
 
 @router.get("/changelog", response_class=HTMLResponse, name="changelog")
 async def changelog_view(request: Request):
-    images_dir = Path("frontend/static/images/changelog_versions")
-    images = [f"images/changelog_versions/{f.name}" for f in images_dir.glob("*.png")]
-    images.sort()
+    images = get_changelog_images()
     return templates.TemplateResponse(
         "pages/changelog.html", {"request": request, "images": images}
     )
@@ -33,12 +31,16 @@ async def changelog_view(request: Request):
 
 @router.get("/settings", response_class=HTMLResponse, name="settings")
 async def settings_view(request: Request):
-    return templates.TemplateResponse("pages/settings.html", {"request": request})
+    return templates.TemplateResponse(
+        "pages/settings.html", {"request": request}
+    )
 
 
 @router.get("/overlays", response_class=HTMLResponse)
 async def overlays(request: Request, overlay: str | None = None):
-    overlays_list, selected_overlay, card_data = get_overlays_card_data(overlay)
+    overlays_list, selected_overlay, card_data = get_overlays_card_data(
+        overlay
+    )
     return templates.TemplateResponse(
         "pages/overlays.html",
         {
