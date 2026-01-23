@@ -5,7 +5,6 @@ from fastapi.staticfiles import StaticFiles
 from backend.routers import apis
 from backend.routers.views import (
     main_views,
-    overlay_detail_views,
     overlay_window_views,
 )
 from backend.utils.paths import get_base_path
@@ -29,7 +28,6 @@ app.mount(
 )
 
 app.include_router(main_views.router)
-app.include_router(overlay_detail_views.router, prefix="/overlays")
 app.include_router(overlay_window_views.router)
 app.include_router(apis.router)
 

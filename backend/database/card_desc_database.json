@@ -1,13 +1,13 @@
 [
   {
     "title": "Radar",
-    "desc": "Displays nearby cars, taking into account the front, left, and right sides, as well as the presence of cars on the sides.",
+    "desc": "Shows nearby cars around your vehicle with color alerts for close or dangerous positions on all sides.",
     "image": "/static/images/radar_icon.png",
     "url": "/overlays/radar"
   },
   {
     "title": "Leaderboard",
-    "desc": "Displays race positions, lap times, and other stats in a live leaderboard.",
+    "desc": "Displays live race positions, lap times, session time, and car details relative to your vehicle during the race.",
     "image": "/static/images/leaderboard_icon.png",
     "url": "/overlays/leaderboard"
   }

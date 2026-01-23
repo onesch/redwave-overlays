@@ -1,27 +1,31 @@
+@import url('main.css');
+
 .range-container {
   display: grid;
   grid-template-columns: 140px 1fr;
   column-gap: 16px;
   align-items: center;
-  margin-bottom: 1rem;
+  margin-bottom: var(--spacing-lg);
+  width: 300px;
 }
 
 /* Label container */
 .range-container label {
   display: flex;
   align-items: center;
+  color: var(--text-primary);
   justify-content: space-between;
-  font-weight: 700;
-  color: var(--accent-gray-title);
   white-space: nowrap;
+  font-size: 0.875rem;
 }
 
 /* Value inside label */
 .range-container label span {
   min-width: 40px;
+  color: var(--text-primary);
   text-align: right;
-  font-weight: 600;
   font-variant-numeric: tabular-nums;
+  font-weight: 500;
 }
 
 /* Range */
@@ -30,51 +34,44 @@
   cursor: pointer;
   -webkit-appearance: none;
   appearance: none;
-  height: 6px;
-  background: var(--accent-gray-bg);
-  border-radius: 4px;
-  outline: none;
+  height: 8px;
+  border-radius: var(--border-radius-sm);
+  background: #444;
+  transition: background 0.3s;
 }
 
+/* Hover effect on track */
+.range-control:hover {
+  background: #555;
+}
 
-/* Track */
+/* Webkit Track */
 .range-control::-webkit-slider-runnable-track {
-  height: 6px;
-  background: var(--accent-gray-bg);
-  border-radius: 4px;
+  height: 8px;
+  border-radius: var(--border-radius-sm);
 }
 
-.range-control::-moz-range-track {
-  height: 6px;
-  background: var(--accent-gray-bg);
-  border-radius: 4px;
-}
-
-/* Thumb */
+/* Webkit Thumb */
 .range-control::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 18px;
-  height: 18px;
-  background: var(--accent-gray-title);
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
-  border: 2px solid var(--accent-gray-bg);
+  background: var(--accent);
+  border: 2px solid #555;
   cursor: pointer;
   margin-top: -6px;
-  transition: background-color 0.2s ease, border-color 0.2s ease;
+  transition: background var(--transition), transform var(--transition);
 }
 
+/* Hover/Active Thumb */
 .range-control::-webkit-slider-thumb:hover {
-  background: #fff;
-  border-color: var(--accent-gray-title);
+  background: #e5e5e5;
+  transform: scale(1.2);
 }
 
-.range-control::-moz-range-thumb {
-  width: 18px;
-  height: 18px;
-  background: var(--accent-gray-title);
-  border-radius: 50%;
-  border: 2px solid var(--accent-gray-bg);
-  cursor: pointer;
-  transition: background-color 0.2s ease, border-color 0.2s ease;
+/* Optional: Hide default outline on focus */
+.range-control:focus {
+  outline: none;
 }

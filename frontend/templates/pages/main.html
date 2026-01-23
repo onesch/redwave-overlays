@@ -1,35 +1,57 @@
 {% extends "base/base.html" %}
-
+{% block body_class %}no-scroll{% endblock %}
 {% block title %}Main{% endblock %}
 
 {% block content %}
-<h1>RedWave Overlays</h1>
-
-<div class="card-grid">
-  <a href="/changelog" class="card accent-yellow">
-    <div class="card-header">
-      <div class="value">What's new in the app?</div>
-      <span class="material-symbols-outlined card-icon">commit</span>
-    </div>
-    <div class="title">Changelog</div>
-  </a>
-
-  <a href="/overlays" class="card accent-red">
-    <div class="card-header">
-      <div class="value">Choose your overlays</div>
-      <span class="material-symbols-outlined card-icon">dynamic_feed</span>
-    </div>
-    <div class="title">See Overlays</div>
-  </a>
-
-  <a href="/settings" class="card accent-gray">
-    <div class="card-header">
-      <div class="value">Application preferences</div>
-      <span class="material-symbols-outlined card-icon">category</span>
-    </div>
-    <div class="title">Settings</div>
-  </a>
+<div class="header" style="display: flex; align-items: center; gap: 1rem;">
+  <img
+    src="{{ url_for('static', path='images/app_icon.png') }}"
+    alt="App Icon"
+    style="width: 64px; height: 64px; object-fit: contain;">
+  <div>
+    <h1>RedWave Overlays</h1>
+    <p>v{{ app_version }} - latest</p>
+  </div>
 </div>
 
-<div class="app-version">v{{ app_version }}</div>
+<div>
+  <div class="menu-grid">
+    <a href="{{ url_for('overlays') }}" class="menu-link">
+      <div class="menu-card">
+        <div class="menu-icon">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <rect x="3" y="3" width="7" height="7" stroke-width="2"/> <rect x="14" y="3" width="7" height="7" stroke-width="2"/> <rect x="3" y="14" width="7" height="7" stroke-width="2"/> <rect x="14" y="14" width="7" height="7" stroke-width="2"/>
+          </svg>
+        </div>
+        <h3>Overlays</h3>
+        <p>Manage and configure your overlays</p>
+      </div>
+    </a>
+
+    <a href="{{ url_for('changelog') }}" class="menu-link">
+      <div class="menu-card">
+        <div class="menu-icon">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+        </div>
+        <h3>Changelog</h3>
+        <p>View recent updates and version history</p>
+      </div>
+    </a>
+
+    <a href="{{ url_for('settings') }}" class="menu-link">
+      <div class="menu-card">
+        <div class="menu-icon">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
+        </div>
+        <h3>Settings</h3>
+        <p>Configure application preferences</p>
+      </div>
+    </a>
+  </div>
+</div>
 {% endblock %}
