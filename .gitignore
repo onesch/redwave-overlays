@@ -1,20 +1,21 @@
 # System files
 __pycache__/
+.vscode/
 node_modules/
 .coverage
 .pytest_cache/
-TODOLIST.md
 main.spec
 dist/
 build/
+backend_run/
 
 # Сreated by the user
 overlays_settings.json
 
 # Test files
+TODOLIST.md
 test.py
 test.html
 print_tree.py
 irating_calculation.py
 eventresult.json
-backend_run/
