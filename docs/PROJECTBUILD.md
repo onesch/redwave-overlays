@@ -39,7 +39,7 @@ Explanation:
 Notes & Tips:
 1. Create a backend build **before** running the `npm run start:prod`.
 2. If you need to rebuild Electron, you need to **delete** the `dist/` folder.
-3. Installation path for users (default on Windows): ```C:\Users\<User>\AppData\Local\Programs\RedWave overlays```
+3. Installation path for users (default on Windows): ```C:\Users\user\AppData\Local\Programs```
 
 ---
 
