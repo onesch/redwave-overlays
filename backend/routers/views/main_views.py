@@ -6,7 +6,7 @@ from pathlib import Path
 from backend.database.data_loader import (
     get_app_version,
     load_cards_data,
-    get_overlays_db_data,
+    get_overlays_card_data,
 )
 from backend.utils.templates import templates
 
