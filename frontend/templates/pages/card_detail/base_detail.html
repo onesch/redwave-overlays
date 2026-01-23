@@ -4,7 +4,7 @@
   <p>{{ card_data.desc }}</p>
 </div>
 
-<div class="card-detail-container">
+<div>
   <div class="text-column">
     <button id="OpenBtn" class="overlay-button active-btn">Open</button>
   </div>
@@ -12,10 +12,9 @@
     <img
       src="{{ card_data.image }}"
       alt="{{ card_data.title }}"
-      class="card-detail img"
       width="300"
       height="300"
-      style="object-fit: contain;"
+      style="object-fit: contain; pointer-events: none; display: block;"
     >
   </div>
 </div>
