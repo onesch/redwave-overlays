@@ -3,34 +3,25 @@
 {% block title %}Changelog{% endblock %}
 
 {% block content %}
-<h1>Changelog</h1>
-<p>Discover the latest updates and improvements.</p>
-<main class="changelog container" style="max-width: 900px; margin: 24px auto; padding: 12px;">
-  <header style="display:flex;align-items:center;gap:12px;">
-    <h1 style="margin:0; font-size:1.75rem;">✨ News <small style="font-weight:600;">v2.0.0</small></h1>
-  </header>
-  <section style="background:var(--card-bg); padding:16px; border-radius:8px; margin-top:16px;">
-    <ol style="margin:0 0 0 1.2rem; padding:0;">
-      <li style="margin:8px 0;">
-        Added new overlays: Radar and Leaderboard.
-      </li>
-      <li style="margin:8px 0;">
-        Introduced an Overlays catalog
-      </li>
-      <li style="margin:8px 0;">
-        Added a dedicated page for each overlay to:
-        <ul style="margin:6px 0 0 1.1rem;">
-          <li>launch and configure the overlay</li>
-        </ul>
-      </li>
-      <li style="margin:8px 0;">
-        New overlay control options:
-        <ul style="margin:6px 0 0 1.1rem;">
-          <li>scale adjustment via a slider on the overlay page</li>
-          <li>Ctrl+P shortcut to move/lock the overlay window</li>
-        </ul>
-      </li>
-    </ol>
-  </section>
-</main>
+<a href="{{ url_for('main') }}" class="menu-link">
+  <button class="back-button">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+    </svg>
+    Back
+  </button>
+</a>
+
+<div class="section-header">
+  <h2>Recent Changes</h2>
+</div>
+
+<div class="changelog-list" id="changelog-list">
+  {% for img_path in images %}
+  <div class="changelog-item">
+    <img src="{{ url_for('static', path=img_path) }}"
+    alt="Changelog {{ loop.index }}">
+  </div>
+  {% endfor %}
+</div>
 {% endblock %}

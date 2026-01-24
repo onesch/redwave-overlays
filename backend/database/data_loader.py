@@ -1,5 +1,4 @@
 import json
-from pathlib import Path
 from typing import Optional, Dict, Any
 from functools import lru_cache
 
@@ -9,6 +8,9 @@ BASE_PATH = get_base_path()
 
 DB_PATH = BASE_PATH / "backend" / "database" / "card_desc_database.json"
 METADATA_PATH = BASE_PATH / "backend" / "database" / "metadata.json"
+CHANGELOG_IMG_PATH = (
+    BASE_PATH / "frontend" / "static" / "images" / "changelog_versions"
+)
 
 
 @lru_cache(maxsize=1)
@@ -50,5 +52,48 @@ def get_app_version() -> Optional[str]:
     return _load_metadata().get("app_version")
 
 
-def get_overlay_version(name: str) -> Optional[str]:
-    return _load_metadata().get("overlays", {}).get(name)
+def get_overlays_card_data(
+    selected_overlay: str | None = None,
+) -> tuple[list[dict], dict, dict]:
+    """
+    Returns overlays list, selected overlay info, and card data.
+    Automatically selects first overlay if selected_overlay is None.
+    """
+    cards = load_cards_data()
+    if not cards:
+        return [], None, None
+
+    overlays = [
+        {
+            "key": card["title"].lower(),
+            "title": card["title"],
+            "image": card.get("image"),
+        }
+        for card in cards
+    ]
+
+    if not selected_overlay:
+        selected_overlay = cards[0]["title"].lower()
+
+    card_data = get_card_data_by_title(selected_overlay.capitalize())
+    selected_overlay_info = {
+        "key": selected_overlay,
+        "template": f"pages/card_detail/{selected_overlay}.html",
+    }
+
+    return overlays, selected_overlay_info, card_data
+
+
+def get_changelog_images() -> list[str]:
+    """
+    Return a sorted list of changelog image paths.
+    """
+    if not CHANGELOG_IMG_PATH.exists():
+        return []
+
+    images = [
+        f"images/changelog_versions/{file.name}"
+        for file in CHANGELOG_IMG_PATH.glob("*.png")
+    ]
+    images.sort(reverse=True)
+    return images

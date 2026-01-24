@@ -14,7 +14,7 @@ function loadSettings() {
       return JSON.parse(data);
     }
   } catch (err) {
-    console.error('Failed to load settings:', err);
+    console.error('[settings] Failed to load settings:', err);
   }
   return {};
 }
@@ -23,8 +23,18 @@ function saveSettings(settings) {
   try {
     fs.writeFileSync(SETTINGS_PATH, JSON.stringify(settings, null, 2), 'utf-8');
   } catch (err) {
-    console.error('Failed to save settings:', err);
+    console.error('[settings] Failed to save settings:', err);
   }
 }
 
-module.exports = { loadSettings, saveSettings };
+function resetSettings() {
+  try {
+    if (fs.existsSync(SETTINGS_PATH)) {
+      fs.unlinkSync(SETTINGS_PATH);
+    }
+  } catch (err) {
+    console.error('[settings] Failed to reset settings:', err);
+  }
+}
+
+module.exports = { loadSettings, saveSettings, resetSettings };

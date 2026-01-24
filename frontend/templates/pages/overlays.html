@@ -3,15 +3,34 @@
 {% block title %}Overlays{% endblock %}
 
 {% block content %}
-  <h1>Overlays</h1>
-  <p>Choose and customize the overlays.</p>
+<a href="{{ url_for('main') }}" class="menu-link">
+  <button class="back-button">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+    </svg>
+    Back
+  </button>
+</a>
 
-  <div class="overlay-catalog-grid">
-      {% for card in cards %}
-        <a href="{{ card.url }}" class="overlay-catalog-card">
-          <img src="{{ card.image }}" alt="{{ card.title }}">
-          <div class="overlay-catalog-card-text">{{ card.title }}</div>
-        </a>
-      {% endfor %}
-  </div>
+<div class="overlays-layout">
+  <aside class="overlays-sidebar">
+    {% for o in overlays %}
+      <a
+        href="{{ url_for('overlays') }}?overlay={{ o.key }}"
+        class="overlay-list-item {% if selected_overlay and selected_overlay.key == o.key %}active{% endif %}"
+      >
+        <div class="overlay-thumb">
+          <img src="{{ o.image }}" alt="{{ o.title }}">
+        </div>
+        <span class="overlay-title">{{ o.title }}</span>
+      </a>
+    {% endfor %}
+  </aside>
+
+  <section class="overlays-detail">
+    {% if selected_overlay %}
+      {% include selected_overlay.template %}
+    {% endif %}
+  </section>
+</div>
 {% endblock %}

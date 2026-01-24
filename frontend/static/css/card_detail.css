@@ -1,74 +1,77 @@
-.zoom-control {
+@import url('main.css');
+
+.range-container {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  column-gap: 16px;
+  align-items: center;
+  margin-bottom: var(--spacing-lg);
+  width: 300px;
+}
+
+/* Label container */
+.range-container label {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 1rem;
+  color: var(--text-primary);
+  justify-content: space-between;
+  white-space: nowrap;
+  font-size: 0.875rem;
 }
 
-#zoomRange {
-  flex-grow: 1;
+/* Value inside label */
+.range-container label span {
+  min-width: 40px;
+  color: var(--text-primary);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+}
+
+/* Range */
+.range-control {
+  width: 100%;
   cursor: pointer;
   -webkit-appearance: none;
   appearance: none;
-  height: 6px;
-  background: var(--accent-gray-bg);
-  border-radius: 4px;
-  outline: none;
+  height: 8px;
+  border-radius: var(--border-radius-sm);
+  background: #444;
+  transition: background 0.3s;
 }
 
-#zoomRange::-webkit-slider-runnable-track {
-  background: var(--accent-gray-bg);
-  height: 6px;
-  border-radius: 4px;
+/* Hover effect on track */
+.range-control:hover {
+  background: #555;
 }
 
-#zoomRange::-moz-range-track {
-  background: var(--accent-gray-bg);
-  height: 6px;
-  border-radius: 4px;
+/* Webkit Track */
+.range-control::-webkit-slider-runnable-track {
+  height: 8px;
+  border-radius: var(--border-radius-sm);
 }
 
-#zoomRange::-webkit-slider-thumb {
+/* Webkit Thumb */
+.range-control::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 18px;
-  height: 18px;
-  background: var(--accent-gray-title);
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid #555;
   cursor: pointer;
   margin-top: -6px;
-  border: 2px solid var(--accent-gray-bg);
-  transition: background-color 0.3s ease;
+  transition: background var(--transition), transform var(--transition);
 }
 
-#zoomRange::-webkit-slider-thumb:hover {
-  background: #fff;
-  border-color: var(--accent-gray-title);
+/* Hover/Active Thumb */
+.range-control::-webkit-slider-thumb:hover {
+  background: #e5e5e5;
+  transform: scale(1.2);
 }
 
-#zoomRange::-moz-range-thumb {
-  width: 18px;
-  height: 18px;
-  background: var(--accent-gray-title);
-  border-radius: 50%;
-  cursor: pointer;
-  border: 2px solid var(--accent-gray-bg);
-  transition: background-color 0.3s ease;
-}
-
-#zoomRange::-moz-range-thumb:hover {
-  background: #fff;
-  border-color: var(--accent-gray-title);
-}
-
-label {
-  font-weight: 700;
-  min-width: 80px;
-  color: var(--accent-gray-title);
-}
-
-#zoomValue {
-  font-weight: 600;
-  margin-left: 6px;
-  color: var(--accent-gray-title);
+/* Optional: Hide default outline on focus */
+.range-control:focus {
+  outline: none;
 }

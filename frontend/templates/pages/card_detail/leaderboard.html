@@ -1,14 +1,29 @@
 {% extends "pages/card_detail/base_detail.html" %}
+
 {% block title %}Overlays - {{ card_data.title }}{% endblock %}
 
 {% block additional_settings %}
+<div class="range-container">
+  <label for="opacityRange">
+    Opacity: <span id="opacityValue">1.0</span>
+  </label>
+  <input
+    id="opacityRange"
+    class="range-control"
+    type="range"
+    min="0"
+    max="1"
+    step="0.05"
+    value="1"
+  >
+</div>
 {% endblock %}
 
 {% block overlay_scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     const overlay = new OverlayBase('leaderboard');
-    
+
     document.getElementById('OpenBtn').addEventListener('click', () => {
         window.electronAPI.openLeaderboard();
     });

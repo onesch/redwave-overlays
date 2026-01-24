@@ -3,6 +3,36 @@
 {% block title %}Settings{% endblock %}
 
 {% block content %}
-<h1>Settings</h1>
-<p>Manage and personalize your application preferences.</p>
+<a href="{{ url_for('main') }}" class="menu-link">
+<button class="back-button">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+    </svg>
+    Back
+</button>
+</a>
+
+<div class="section-header">
+  <h2>Configure Settings</h2>
+</div>
+
+<div class="settings-list">
+  <div class="setting-item">
+    <span class="setting-name">Reset overlays settings</span>
+    <button id="reset-overlay-settings" class="button primary-btn" style="width: auto;">Reset</button>
+</div>
+
+<script>
+  document
+    .getElementById('reset-overlay-settings')
+    .addEventListener('click', () => {
+      if (!confirm('Reset all overlay settings?')) {
+        return;
+      }
+
+      window.electronAPI.resetOverlaySettings();
+
+      alert('Overlay settings have been reset');
+    });
+</script>
 {% endblock %}

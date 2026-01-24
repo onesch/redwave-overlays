@@ -13,12 +13,7 @@ The backend is written in FastAPI and packaged as a single executable using **Py
 
 ### 1.1 Build Command
 ```bash
-pyinstaller --onefile --noconsole \
-  --icon=frontend/static/images/app_icon.ico \
-  --add-data "frontend/templates;frontend/templates" \
-  --add-data "frontend/static;frontend/static" \
-  --add-data "backend/database/*.json;backend/database" \
-  backend/main.py
+pyinstaller --onefile --noconsole --icon=frontend/static/images/app_icon.ico --add-data "frontend/templates;frontend/templates" --add-data "frontend/static;frontend/static" --add-data "backend/database/*.json;backend/database" backend/main.py
 ```
 Explanation:
 - `--onefile` → creates a single .exe file.
@@ -44,7 +39,7 @@ Explanation:
 Notes & Tips:
 1. Create a backend build **before** running the `npm run start:prod`.
 2. If you need to rebuild Electron, you need to **delete** the `dist/` folder.
-3. Installation path for users (default on Windows): ```C:\Users\<User>\AppData\Local\Programs\RedWave overlays```
+3. Installation path for users (default on Windows): ```C:\Users\user\AppData\Local\Programs```
 
 ---
 
