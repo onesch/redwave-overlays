@@ -18,10 +18,21 @@
 
 <div class="settings-list">
   <div class="setting-item">
-    <span class="setting-name">there's nothing here yet</span>
-    <div class="toggle">
-      <div class="toggle-knob"></div>
-    </div>
+    <span class="setting-name">Reset overlays settings</span>
+    <button id="reset-overlay-settings" class="overlay-button active-btn">Reset</button>
 </div>
 
+<script>
+  document
+    .getElementById('reset-overlay-settings')
+    .addEventListener('click', () => {
+      if (!confirm('Reset all overlay settings?')) {
+        return;
+      }
+
+      window.electronAPI.resetOverlaySettings();
+
+      alert('Overlay settings have been reset');
+    });
+</script>
 {% endblock %}
