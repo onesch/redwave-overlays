@@ -81,14 +81,14 @@ def test_get_overlays_card_data_with_selection(fake_cards_file):
 
 
 def test_get_changelog_images_success(fake_changelog_img_path):
-    (fake_changelog_img_path / "v0.0.0.png").write_text("", encoding="utf-8")
     (fake_changelog_img_path / "v0.0.1.png").write_text("", encoding="utf-8")
+    (fake_changelog_img_path / "v0.0.0.png").write_text("", encoding="utf-8")
 
     images = data_loader.get_changelog_images()
 
     assert images == [
-        "images/changelog_versions/v0.0.0.png",
         "images/changelog_versions/v0.0.1.png",
+        "images/changelog_versions/v0.0.0.png",
     ]
 
 
