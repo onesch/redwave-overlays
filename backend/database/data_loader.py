@@ -95,5 +95,5 @@ def get_changelog_images() -> list[str]:
         f"images/changelog_versions/{file.name}"
         for file in CHANGELOG_IMG_PATH.glob("*.png")
     ]
-    images.sort()
+    images.sort(reverse=True)
     return images
