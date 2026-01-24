@@ -27,4 +27,14 @@ function saveSettings(settings) {
   }
 }
 
-module.exports = { loadSettings, saveSettings };
+function resetSettings() {
+  try {
+    if (fs.existsSync(SETTINGS_PATH)) {
+      fs.unlinkSync(SETTINGS_PATH);
+    }
+  } catch (err) {
+    console.error('[settings] Failed to reset settings:', err);
+  }
+}
+
+module.exports = { loadSettings, saveSettings, resetSettings };

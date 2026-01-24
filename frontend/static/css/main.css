@@ -72,6 +72,12 @@ body.no-scroll {
   gap: var(--spacing-lg);
 }
 
+.menu-grid > a:last-child .menu-card {
+  height: 120px;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
 .menu-card {
   background-color: var(--bg-secondary);
   border: 1px solid var(--border-primary);
@@ -228,27 +234,6 @@ body.no-scroll {
   text-align: center;
 }
 
-.overlay-button {
-  width: 100%;
-  padding: var(--spacing-sm) var(--spacing-lg);
-  border-radius: var(--border-radius-md);
-  border: none;
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all var(--transition);
-  width: 300px;
-}
-
-.overlay-button.active-btn {
-  background-color: var(--accent);
-  color: var(--bg-primary);
-}
-
-.overlay-button.active-btn:hover {
-  background-color: #e5e5e5;
-}
-
 /* Changelog View */
 .changelog-list {
   display: flex;
@@ -299,41 +284,29 @@ body.no-scroll {
   font-weight: 300;
 }
 
-.toggle {
-  width: 48px;
-  height: 24px;
-  background-color: var(--border-hover);
-  border-radius: var(--border-radius-lg);
-  position: relative;
+/* Buttons */
+.button {
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border-radius: var(--border-radius-md);
+  border: none;
+  font-size: 0.875rem;
+  font-weight: 500;
   cursor: pointer;
-  transition: background-color var(--transition);
+  transition: all var(--transition);
+  width: 300px;
 }
 
-.toggle.active {
+.button.primary-btn {
   background-color: var(--accent);
+  color: var(--bg-primary);
 }
 
-.toggle-knob {
-  width: 20px;
-  height: 20px;
-  background-color: var(--bg-primary);
-  border-radius: 50%;
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  transition: left var(--transition);
+.button.primary-btn:hover {
+  background-color: #e5e5e5;
 }
 
-.toggle.active .toggle-knob {
-  left: 26px;
-}
-
-.menu-grid > a:last-child .menu-card {
-  height: 120px;
-  border-bottom-left-radius: 0;
-  border-bottom-right-radius: 0;
-}
-
+/* Detail View */
 .overlays-layout {
   display: grid;
   grid-template-columns: 220px 1fr;
