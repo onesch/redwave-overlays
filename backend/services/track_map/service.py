@@ -86,7 +86,7 @@ class TrackMapService(BaseService):
                         drivers=ctx.drivers,
                         player_idx=player_idx,
                         multiclass=ctx.multiclass,
-                ),
+                    ),
                 }
             )
 
