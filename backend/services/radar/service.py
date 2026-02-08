@@ -17,7 +17,22 @@ from backend.services.radar.constants import (
 @dataclass
 class RadarContext:
     """
-    Context container for radar data.
+    Immutable container with radar-related telemetry data.
+
+    Attributes:
+        dist_ahead (float | None):
+            Distance to the car ahead in meters.
+            None if not available or suppressed.
+        dist_behind (float | None):
+            Distance to the car behind in meters.
+            None if not available or suppressed.
+        car_left_right (int):
+            Indicator of cars on the left or right sides.
+            Used to determine side alerts
+            (e.g., CLR_LEFT, CLR_RIGHT, CLR_BOTH).
+
+    Used by RadarService to pass pre-fetched, consistent telemetry data
+    into snapshot builders.
     """
     dist_ahead: float | None
     dist_behind: float | None
