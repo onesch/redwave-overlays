@@ -2,7 +2,6 @@ import pytest
 from unittest.mock import MagicMock
 
 from backend.services.irsdk.service import IRSDKService
-from backend.services.irsdk.parser import IRSDKParser
 from backend.services.radar.service import RadarService
 from backend.services.leaderboard.service import (
     Leaderboard,
@@ -14,48 +13,51 @@ from backend.services.leaderboard.service import (
 
 @pytest.fixture
 def irsdk_mock_factory():
-    def _factory(values: dict, connected=True):
-        mock_ir = MagicMock()
-        mock_ir.is_initialized = True
-        mock_ir.is_connected = connected
-
-        mock_ir.__getitem__.side_effect = lambda key: values.get(key)
-        mock_ir.get_value = lambda key: values.get(key)
-
-        mock_ir._ensure_connected = lambda: True
-
-        return mock_ir
-
-    return _factory
-
-
-@pytest.fixture
-def mock_service(irsdk_mock_factory):
-    def _factory(values=None, connected=True):
+    """IRSDK mock factory with custom values."""
+    def _factory(values: dict = None, is_connected=True):
         base_values = {
             "Speed": 10.0,
             "Throttle": 0.7,
             "BrakeRaw": 0.2,
-            "WeekendInfo": {"TrackLength": "3000 m"},
+            "CarLeftRight": 0,
+            "CarDistAhead": 5.0,
+            "CarDistBehind": 6.0,
+            "WeekendInfo": {"TrackLength": "3.5 km"},
         }
         if values:
             base_values.update(values)
 
-        mock_ir = irsdk_mock_factory(base_values, connected=connected)
+        mock_ir = MagicMock()
+        mock_ir.is_initialized = True
+        mock_ir.is_connected = is_connected
+        mock_ir.__getitem__.side_effect = lambda key: base_values.get(key)
+        mock_ir.get_value = lambda key: base_values.get(key)
+        mock_ir._ensure_connected = lambda: (is_connected, "")
 
-        irsdk_service = IRSDKService()
-        irsdk_service.ir = mock_ir
-        irsdk_service.started = True
+        mock_ir.startup = MagicMock()
 
-        parser = IRSDKParser(irsdk_service)
-        return RadarService(irsdk_service, parser)
-
+        return mock_ir
     return _factory
 
 
 @pytest.fixture
-def parser(mock_service):
-    return IRSDKParser(mock_service().ir)
+def mock_irsdk_service(irsdk_mock_factory):
+    """Creates IRSDKService with mocked ir."""
+    service = IRSDKService()
+    service.ir = irsdk_mock_factory()
+    service.started = True
+    return service
+
+
+@pytest.fixture
+def mock_irsdk_radar(irsdk_mock_factory):
+    """Creates a RadarService based on mocked IRSDKService."""
+    def _factory(values=None, is_connected=True):
+        irsdk_service = IRSDKService()
+        irsdk_service.ir = irsdk_mock_factory(values, is_connected)
+        irsdk_service.started = True
+        return RadarService(irsdk_service)
+    return _factory
 
 
 @pytest.fixture
