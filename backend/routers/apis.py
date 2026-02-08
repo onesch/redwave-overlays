@@ -1,6 +1,5 @@
 from fastapi import APIRouter
 
-from backend.services.irsdk.parser import IRSDKParser
 from backend.services.irsdk.service import IRSDKService
 from backend.services.radar.service import RadarService
 from backend.services.leaderboard.service import Leaderboard
