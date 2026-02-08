@@ -1,6 +1,7 @@
-from typing import Optional, Tuple
+from dataclasses import dataclass
+from typing import Any
 
-from backend.services.radar.parser import IRadarParser
+from backend.services.session_state.service import BaseService
 from backend.services.radar.constants import (
     RED_M,
     YEL_M,
@@ -13,18 +14,28 @@ from backend.services.radar.constants import (
 )
 
 
+@dataclass
+class RadarContext:
+    """
+    Context container for radar data.
+    """
+    dist_ahead: float | None
+    dist_behind: float | None
+    car_left_right: int
+
+
 class DistanceSeverity:
-    """Encapsulates logic to calculate severity for distances."""
+    """Utility class responsible for classifying distance severity."""
 
     @staticmethod
-    def _sanitize_distance(dist: Optional[float]) -> Optional[float]:
+    def _sanitize_distance(dist: float | None) -> float | None:
         """Ignore distances outside valid range."""
         if dist is None or not (0 <= dist <= MAX_SHOW_DIST):
             return None
         return dist
 
     @staticmethod
-    def for_distance(dist: Optional[float]) -> str:
+    def for_distance(dist: float | None) -> str:
         """Return severity level for a given distance."""
         if dist is None:
             return "none"
@@ -35,50 +46,61 @@ class DistanceSeverity:
         return "ok"
 
     @staticmethod
-    def format_meta(dist: Optional[float]) -> Tuple[Optional[float], str]:
+    def format_meta(dist: float | None) -> tuple[float | None, str]:
         """Return sanitized distance with severity."""
         sanitized_dist = DistanceSeverity._sanitize_distance(dist)
         return (sanitized_dist, DistanceSeverity.for_distance(sanitized_dist))
 
 
-class RadarService:
+class RadarService(BaseService):
     """Business logic service working with radar data."""
 
-    def __init__(self, irsdk_service, parser: IRadarParser):
-        self.irsdk_service = irsdk_service
-        self.irsdk_parser = parser
+    def __init__(self, irsdk_service):
+        super().__init__(irsdk_service, builder=None)
 
-    def get_radar_json(self) -> dict:
-        """Build radar telemetry JSON response."""
-        connected, reason = self.irsdk_service._ensure_connected()
-        if not connected:
-            return {"reason": reason}
+    def _build_context(self) -> RadarContext | None:
+        """
+        Returns RadarContext with up-to-date radar telemetry.
+        Overridden method from BaseService.
+        """
+        self.irsdk._ensure_connected()
 
-        dist_ahead_raw = self.irsdk_service.get_value("CarDistAhead")
-        dist_behind_raw = self.irsdk_service.get_value("CarDistBehind")
-        clr = self.irsdk_service.get_value("CarLeftRight")
-        weekend_info = self.irsdk_service.get_value("WeekendInfo")
+        car_left_right = self.irsdk.get_value("CarLeftRight")
+        if car_left_right is None:
+            return None
 
-        track_len_m = self.irsdk_parser.get_track_length_m(weekend_info)
-        if track_len_m <= 0:
-            return {"reason": "track_len=0"}
+        return RadarContext(
+            dist_ahead=self.irsdk.get_value("CarDistAhead"),
+            dist_behind=self.irsdk.get_value("CarDistBehind"),
+            car_left_right=car_left_right,
+        )
 
-        left_present = clr in (CLR_LEFT, CLR_TWO_LEFT, CLR_BOTH)
-        right_present = clr in (CLR_RIGHT, CLR_TWO_RIGHT, CLR_BOTH)
+    def _build_snapshot(self, ctx: RadarContext) -> dict[str, Any]:
+        """
+        Generates the snapshot for the API.
+        Overridden method from BaseService.
+        """
+        left_present = ctx.car_left_right in (
+            CLR_LEFT, CLR_TWO_LEFT, CLR_BOTH
+        )
+        right_present = ctx.car_left_right in (
+            CLR_RIGHT, CLR_TWO_RIGHT, CLR_BOTH
+        )
+
         suppress_ahead = left_present or right_present
 
-        dist_ahead = None if suppress_ahead else dist_ahead_raw
-        dist_behind = None if suppress_ahead else dist_behind_raw
+        dist_ahead = None if suppress_ahead else ctx.dist_ahead
+        dist_behind = None if suppress_ahead else ctx.dist_behind
 
         ahead_val, ahead_sev = DistanceSeverity.format_meta(dist_ahead)
         behind_val, behind_sev = DistanceSeverity.format_meta(dist_behind)
 
         return {
+            "status": "ok",
             "ahead_m": ahead_val,
             "ahead_severity": ahead_sev,
             "behind_m": behind_val,
             "behind_severity": behind_sev,
             "left": {"severity": "red"} if left_present else None,
             "right": {"severity": "red"} if right_present else None,
-            "reason": "",
         }

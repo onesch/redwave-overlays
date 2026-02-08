@@ -199,35 +199,31 @@ class LeaderboardUpdater {
             const data = await response.json();
 
             if (data.error) {
-                this.showError(data.error);
+                console.error('Error:', data.error);
                 return;
             }
 
             if (data.status === "waiting") {
-                this.renderWaiting();
+                console.log("Log:", "Waiting for iRacing...");
                 return;
             }
 
-            if (!data.player) {
+            if (!data) {
                 return;
             }
 
             this.renderLeaderboard(data);
 
         } catch (error) {
-            this.showError('Failed to fetch data');
             console.error('Error:', error);
         }
     }
 
-    renderWaiting() {
-        console.log("Waiting for iRacing...");
-    }
-
     renderLeaderboard(data) {
-        if (!data || !data.player || !data.neighbors) {
+        if (!data.player || !data.neighbors) {
             return;
         }
+
         // Hide all neighbor rows first
         for (let i = 1; i <= 3; i++) {
             document.getElementById(`ahead-row-${i}`).style.display = 'none';
@@ -453,10 +449,6 @@ class LeaderboardUpdater {
         const totalElement = document.getElementById('time-total');
         currentElement.textContent = current_time;
         totalElement.textContent = total_time;
-    }
-
-    showError(message) {
-        console.error('Error:', message);
     }
 }
 

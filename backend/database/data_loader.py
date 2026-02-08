@@ -15,22 +15,28 @@ CHANGELOG_IMG_PATH = (
 
 @lru_cache(maxsize=1)
 def _load_cards() -> tuple[list[dict], Dict[str, dict]]:
-    """Loading card and creating index by title"""
+    """
+    Load cards from JSON file and create
+    an index by key for safe frontend usage.
+    """
     try:
         with DB_PATH.open("r", encoding="utf-8") as f:
             cards_data = json.load(f)
     except (FileNotFoundError, json.JSONDecodeError):
         cards_data = []
-    cards_index = {card.get("title"): card for card in cards_data}
+
+    cards_index = {card["key"]: card for card in cards_data}
     return cards_data, cards_index
 
 
 def load_cards_data() -> list[dict]:
+    """Return list of all cards."""
     return _load_cards()[0]
 
 
-def get_card_data_by_title(title: str) -> Optional[dict]:
-    return _load_cards()[1].get(title)
+def get_card_data_by_key(key: str) -> Optional[dict]:
+    """Get card by key (safe for URLs/templates)."""
+    return _load_cards()[1].get(key)
 
 
 @lru_cache(maxsize=1)
@@ -40,11 +46,8 @@ def _load_metadata() -> Dict[str, Any]:
         with METADATA_PATH.open("r", encoding="utf-8") as f:
             data = json.load(f)
             return data
-    except FileNotFoundError:
-        print(f"Metadata file not found at {METADATA_PATH}.")
-        return {}
-    except json.JSONDecodeError:
-        print(f"Metadata file at {METADATA_PATH} is invalid JSON.")
+    except (FileNotFoundError, json.JSONDecodeError):
+        print(f"Invalid {METADATA_PATH}.")
         return {}
 
 
@@ -53,7 +56,7 @@ def get_app_version() -> Optional[str]:
 
 
 def get_overlays_card_data(
-    selected_overlay: str | None = None,
+    selected_key: str | None = None,
 ) -> tuple[list[dict], dict, dict]:
     """
     Returns overlays list, selected overlay info, and card data.
@@ -65,20 +68,20 @@ def get_overlays_card_data(
 
     overlays = [
         {
-            "key": card["title"].lower(),
+            "key": card["key"],
             "title": card["title"],
             "image": card.get("image"),
         }
         for card in cards
     ]
 
-    if not selected_overlay:
-        selected_overlay = cards[0]["title"].lower()
+    if not selected_key:
+        selected_key = overlays[0]["key"]
 
-    card_data = get_card_data_by_title(selected_overlay.capitalize())
+    card_data = get_card_data_by_key(selected_key)
     selected_overlay_info = {
-        "key": selected_overlay,
-        "template": f"pages/card_detail/{selected_overlay}.html",
+        "key": selected_key,
+        "template": f"pages/card_detail/{selected_key}.html",
     }
 
     return overlays, selected_overlay_info, card_data

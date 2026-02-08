@@ -1,0 +1,18 @@
+{% extends "pages/card_detail/base_detail.html" %}
+
+{% block title %}Overlays - {{ card_data.title }}{% endblock %}
+
+{% block additional_settings %}
+{% endblock %}
+
+{% block overlay_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const overlay = new OverlayBase('track-map');
+
+    document.getElementById('OpenBtn').addEventListener('click', () => {
+        window.electronAPI.openTrackMap();
+    });
+});
+</script>
+{% endblock %}

@@ -3,6 +3,7 @@ const { app } = require('electron');
 const { createMainWindow } = require('./windows/mainWindow');
 const registerRadarEvents = require('./ipc/RadarEvents');
 const registerLeaderboardEvents = require('./ipc/LeaderboardEvents');
+const registerTrackMapEvents = require('./ipc/TrackMapEvents');
 const registerSettingsEvents = require('./ipc/SettingsEvents');
 const { startBackend, stopBackend } = require('./utils/backendManager');
 
@@ -22,6 +23,7 @@ async function createWindow() {
   registerRadarEvents();
   registerLeaderboardEvents();
   registerSettingsEvents();
+  registerTrackMapEvents();
 
   mainWindow.on('closed', () => {
     mainWindow = null;

@@ -1,0 +1,104 @@
+{% extends "base/base_overlay.html" %}
+
+{% block title %}Track Map{% endblock %}
+
+{% block content %}
+<div id="track-container">
+    <div id="track-line"></div>
+</div>
+
+<script>
+class TrackMapUpdater {
+    constructor() {
+        this.updateInterval = 100;
+        this.trackWidth = document.getElementById('track-container').offsetWidth;
+        this.cars = {}; // key: player_id, value: div
+        this.init();
+    }
+
+    init() {
+        this.updateTrackMap();
+        setInterval(() => this.updateTrackMap(), this.updateInterval);
+    }
+
+    async updateTrackMap() {
+        try {
+            const response = await fetch('/api/track-map');
+            const data = await response.json();
+
+            if (data.error) {
+                console.error('Error:', data.error);
+                return;
+            }
+
+            if (data.status === "waiting") {
+                console.log("Log:", "Waiting for iRacing...");
+                return;
+            }
+
+            if (!data) {
+                return;
+            }
+
+            this.renderTrackMap(data.cars, data.player_id);
+
+            } catch (error) {
+            console.error('Error:', error);
+            }
+        }
+
+    renderTrackMap(cars, playerId) {
+        // Iterate over all cars in the snapshot
+        cars.forEach(car => {
+        // Get existing div or create a new one
+        let carDiv = this.cars[car.player_id] || this.createCarDiv(car);
+
+        // Update visual appearance: player highlight, z-index
+        this.updateCarAppearance(carDiv, car, playerId);
+
+        // Update horizontal position on track based on lap distance
+        this.updateCarPosition(carDiv, car.lap_dist_pct);
+        });
+    }
+
+    createCarDiv(car) {
+        const carDiv = document.createElement('div');
+        carDiv.classList.add('track-map-car');
+        carDiv.innerText = car.car_number;
+        carDiv.style.setProperty('--car-color', car.color);
+        document.getElementById('track-container').appendChild(carDiv);
+        this.cars[car.player_id] = carDiv;
+        carDiv.style.transition = 'none';
+        return carDiv;
+    }
+
+    updateCarAppearance(carDiv, car, playerId) {
+        if (car.player_id === playerId) {
+            carDiv.classList.add('player');
+            carDiv.style.zIndex = '999';
+        } else {
+            carDiv.classList.remove('player');
+            carDiv.style.zIndex = '1';
+        }
+    }
+
+    updateCarPosition(carDiv, lapDistPct) {
+        const newLeft = lapDistPct * 100;
+        const oldLeft = parseFloat(carDiv.style.left) || newLeft;
+
+        // Prevent sudden jump if car wraps around the track
+        if (Math.abs(newLeft - oldLeft) > 50) {
+            carDiv.style.transition = 'none';
+        } else {
+            carDiv.style.transition = 'left 0.1s linear';
+        }
+
+        carDiv.style.left = `${newLeft}%`;
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    new TrackMapUpdater();
+});
+</script>
+{% endblock %}

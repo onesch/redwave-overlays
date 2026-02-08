@@ -1,14 +1,23 @@
 [
   {
+    "key": "radar",
     "title": "Radar",
     "desc": "Shows nearby cars around your vehicle with color alerts for close or dangerous positions on all sides.",
     "image": "/static/images/radar_icon.png",
     "url": "/overlays/radar"
   },
   {
+    "key": "leaderboard",
     "title": "Leaderboard",
     "desc": "Displays live race positions, lap times, session time, and car details relative to your vehicle during the race.",
     "image": "/static/images/leaderboard_icon.png",
     "url": "/overlays/leaderboard"
+  },
+  {
+    "key": "track_map",
+    "title": "Track map",
+    "desc": "Displays in real time a linear track of where all cars are currently located.",
+    "image": "/static/images/track_map_icon.png",
+    "url": "/overlays/track_map"
   }
 ]

@@ -1,0 +1,50 @@
+@import url('base.css');
+
+#track-container {
+  position: relative;
+  width: 800px;
+  height: 40px;
+  margin: 40px auto;
+  background: transparent;
+}
+
+#track-line {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  border: 1.4px solid #0a0a0a;
+  width: 100%;
+  height: 4px;
+  background: #ffffff;
+  transform: translateY(-50%);
+  border-radius: 10px;
+}
+
+.track-map-car {
+  --car-color: #999;
+
+  position: absolute;
+  top: 50%;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  text-align: center;
+  line-height: 24px;
+  color: #fff;
+  font-size: 12px;
+  transform: translate(-50%, -50%);
+  transition: left 0.1s linear;
+  background-color: color-mix(in srgb, var(--car-color) 80%, black);
+}
+
+
+.track-map-car.player::after {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 8px solid #fff;
+}
