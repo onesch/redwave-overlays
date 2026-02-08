@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Any
 
-from backend.services.session_state.service import BaseService
+from backend.services.base import BaseService
 from backend.services.radar.constants import (
     RED_M,
     YEL_M,

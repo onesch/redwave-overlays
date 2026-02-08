@@ -1,7 +1,7 @@
 from typing import Any
 from dataclasses import dataclass
 
-from backend.services.session_state.service import (
+from backend.services.base import (
     BaseService,
     BaseCarBuilder,
     SessionStateContext,
