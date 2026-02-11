@@ -5,6 +5,7 @@ const { protectWindowShortcuts, disableZoomShortcuts, registerOverlayMoveShortcu
 const { applySavedZoom, registerZoomHandlers } = require('../utils/overlay_zoom');
 const { applySavedPosition, registerPositionHandlers, watchOverlayPosition } = require('../utils/overlay_position');
 const { registerOverlayOpacityHandlers } = require('../utils/overlay_card_opacity');
+const { registerOverlayTrackTypeHandlers } = require('../utils/overlay_track_type');
 
 const overlays = {};
 let overlayCount = 0;
@@ -13,6 +14,7 @@ let overlayCount = 0;
 registerZoomHandlers(overlays);
 registerPositionHandlers(overlays);
 registerOverlayOpacityHandlers(overlays);
+registerOverlayTrackTypeHandlers(overlays);
 
 function createOverlay(route, options = {}) {
   if (overlays[route] && !overlays[route].isDestroyed()) {

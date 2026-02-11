@@ -23,6 +23,16 @@ contextBridge.exposeInMainWorld('electronAPI', {
       ipcRenderer.send('set-card-bg-opacity', { overlayName, value }),
   getCardBgOpacity: (overlayName) =>
       ipcRenderer.invoke('get-card-bg-opacity', overlayName),
+  onCardBgOpacityUpdate: (callback) =>
+    ipcRenderer.on('update-card-opacity', (_, value) => callback(value)),
+
+  // Track type
+  setTrackType: (overlayName, value) =>
+    ipcRenderer.send('set-track-map-type', { overlayName, value }),
+  getTrackType: (overlayName) =>
+    ipcRenderer.invoke('get-track-map-type', overlayName),
+  onTrackTypeUpdate: (callback) =>
+    ipcRenderer.on('update-track-map-type', (_, type) => callback(type)),
 
   // Reset overlay settings
   resetOverlaySettings: () =>

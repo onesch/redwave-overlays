@@ -10,11 +10,14 @@
   </div>
   <div>
     <img
+      id="trackImage"
       src="{{ card_data.image }}"
       alt="{{ card_data.title }}"
       width="300"
       height="300"
       style="object-fit: contain; pointer-events: none; display: block;"
+      data-linear="{{ url_for('static', path='images/track_map_icon.png') }}"
+      data-circle="{{ url_for('static', path='images/track_map_circle.png') }}"
     >
   </div>
 </div>

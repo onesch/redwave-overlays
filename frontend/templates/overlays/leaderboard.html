@@ -455,7 +455,15 @@ class LeaderboardUpdater {
 // Initialize when page loads
 document.addEventListener('DOMContentLoaded', async () => {
     const updater = new LeaderboardUpdater();
+
     await updater.applyCardOpacity();
+
+    window.electronAPI.onCardBgOpacityUpdate((value) => {
+        const card = document.querySelector('.card');
+        if (card) {
+            card.style.setProperty('--card-bg-opacity', value);
+        }
+    });
 });
 </script>
 {% endblock %}

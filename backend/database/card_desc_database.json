@@ -16,7 +16,7 @@
   {
     "key": "track_map",
     "title": "Track map",
-    "desc": "Displays in real time a linear track of where all cars are currently located.",
+    "desc": "Shows in real time the current positions of all cars on the track, displayed as either a linear or circle track.",
     "image": "/static/images/track_map_icon.png",
     "url": "/overlays/track_map"
   }

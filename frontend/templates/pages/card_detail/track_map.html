@@ -3,16 +3,53 @@
 {% block title %}Overlays - {{ card_data.title }}{% endblock %}
 
 {% block additional_settings %}
+<div class="setting-container">
+  <div class="setting-label">Type:</div>
+  <div class="setting-value button-section">
+    <button id="linearBtn" class="active">linear</button>
+    <button id="circleBtn">circle</button>
+  </div>
+</div>
 {% endblock %}
 
 {% block overlay_scripts %}
 <script>
-document.addEventListener('DOMContentLoaded', () => {
-    const overlay = new OverlayBase('track-map');
+document.addEventListener('DOMContentLoaded', async () => {
+    const overlayName = 'track-map';
+    const overlay = new OverlayBase(overlayName);
 
-    document.getElementById('OpenBtn').addEventListener('click', () => {
+    const linearBtn = document.getElementById('linearBtn');
+    const circleBtn = document.getElementById('circleBtn');
+    const trackImg = document.getElementById('trackImage');
+
+    document.getElementById('OpenBtn')?.addEventListener('click', () => {
         window.electronAPI.openTrackMap();
     });
+
+    const savedTrackType = await window.electronAPI.getTrackType(overlayName);
+    applyTrackType(savedTrackType || 'linear');
+
+    circleBtn.addEventListener('click', () => {
+        window.electronAPI.setTrackType(overlayName, 'circle');
+        applyTrackType('circle');
+    });
+
+    linearBtn.addEventListener('click', () => {
+        window.electronAPI.setTrackType(overlayName, 'linear');
+        applyTrackType('linear');
+    });
+
+    function applyTrackType(type) {
+        document.body.dataset.TrackType = type;
+        linearBtn.classList.toggle('active', type === 'linear');
+        circleBtn.classList.toggle('active', type === 'circle');
+
+        if (type === 'linear') {
+            trackImg.src = trackImg.dataset.linear;
+        } else if (type === 'circle') {
+            trackImg.src = trackImg.dataset.circle;
+        }
+    }
 });
 </script>
 {% endblock %}
