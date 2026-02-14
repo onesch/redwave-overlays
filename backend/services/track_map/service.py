@@ -1,6 +1,7 @@
 from typing import Any
 from dataclasses import dataclass
 
+from backend.services.session_tracker import SessionKey, SessionTracker
 from backend.services.base import (
     BaseService,
     BaseCarBuilder,
@@ -13,6 +14,7 @@ class TrackMapContext(SessionStateContext):
     """
     Context container for track-map related data.
     """
+
     pass
 
 
@@ -20,6 +22,7 @@ class TrackMapCarBuilder(BaseCarBuilder):
     """
     Car builder for track-map visualization.
     """
+
     def build(self, idx: int, ctx: TrackMapContext) -> dict | None:
         """
         Extends base car data with class-specific data.
@@ -36,6 +39,7 @@ class TrackMapService(BaseService):
     """Business logic service working with track-map data."""
 
     def __init__(self, irsdk_service):
+        self.session_tracker = SessionTracker()
         super().__init__(irsdk_service, TrackMapCarBuilder())
 
     def _build_context(self) -> TrackMapContext | None:
@@ -69,9 +73,17 @@ class TrackMapService(BaseService):
         Generates the snapshot for the API.
         Overridden method from BaseService.
         """
-        player_idx = self.irsdk.get_value("PlayerCarIdx")
-        cars = []
+        player_idx: int = self.irsdk.get_value("PlayerCarIdx")
+        weekend_info: dict[str, Any] = (
+            self.irsdk.get_value("WeekendInfo") or {}
+        )
+        session_key = SessionKey(
+            session_id=weekend_info.get("SessionID"),
+            session_num=self.irsdk.get_value("SessionNum"),
+        )
+        is_session_changed = self.session_tracker.is_changed(session_key)
 
+        cars = []
         for idx in range(len(ctx.drivers)):
             car = self.builder.build(idx, ctx)
             if not car:
@@ -93,5 +105,6 @@ class TrackMapService(BaseService):
         return {
             "status": "ok",
             "player_id": player_idx,
+            "is_session_changed": is_session_changed,
             "cars": cars,
         }

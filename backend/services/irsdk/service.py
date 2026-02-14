@@ -51,7 +51,7 @@ class IRSDKService():
         if idx >= len(drivers):
             return "#1b2a3a"
 
-        if multiclass and idx == player_idx:
+        if idx == player_idx:
             return "#1e6cff"
 
         rgb = drivers[idx].get("CarClassColor")
