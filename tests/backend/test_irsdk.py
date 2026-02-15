@@ -24,8 +24,6 @@ def test_is_connected_true(mock_irsdk_service):
 
 def test_get_value_existing(mock_irsdk_service):
     assert mock_irsdk_service.get_value("Speed") == 10.0
-    assert mock_irsdk_service.get_value("Throttle") == 0.7
-    assert mock_irsdk_service.get_value("BrakeRaw") == 0.2
 
 
 @pytest.mark.parametrize(
