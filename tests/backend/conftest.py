@@ -2,25 +2,16 @@ import pytest
 from unittest.mock import MagicMock
 
 from backend.services.irsdk.service import IRSDKService
-from backend.services.leaderboard.service import (
-    Leaderboard,
-    LeaderboardContext,
-    CarDataBuilder,
-    NeighborsService,
-)
 
 
 @pytest.fixture
 def irsdk_mock_factory():
-    """IRSDK mock factory with custom values."""
+    """
+    IRSDK mock factory with custom values.
+    """
+
     def _factory(values: dict = None, is_connected=True):
-        base_values = {
-            "Speed": 10.0,
-            "CarLeftRight": 0,
-            "CarDistAhead": 5.0,
-            "CarDistBehind": 6.0,
-            "WeekendInfo": {"TrackLength": "3.5 km"},
-        }
+        base_values = {"Speed": 10.0}
         if values:
             base_values.update(values)
 
@@ -34,166 +25,16 @@ def irsdk_mock_factory():
         mock_ir.startup = MagicMock()
 
         return mock_ir
+
     return _factory
 
 
 @pytest.fixture
 def mock_irsdk_service(irsdk_mock_factory):
-    """Creates IRSDKService with mocked irsdk."""
+    """
+    Returns the IRSDKService initialized with mock irsdk.
+    """
     irsdk = IRSDKService()
     irsdk.ir = irsdk_mock_factory()
     irsdk.started = True
     return irsdk
-
-
-@pytest.fixture
-def ctx_from_mock(mock_irsdk_leaderboard):
-    """
-    Returns the LeaderboardContext constructor
-    function with the ability to override.
-    """
-
-    defaults = {
-        "drivers": mock_irsdk_leaderboard.get_value("DriverInfo")["Drivers"],
-        "positions": mock_irsdk_leaderboard.get_value("CarIdxPosition"),
-        "class_positions": mock_irsdk_leaderboard.get_value(
-            "CarIdxClassPosition"
-        ),
-        "last_lap_times": mock_irsdk_leaderboard.get_value(
-            "CarIdxLastLapTime"
-        ),
-        "laps_started": mock_irsdk_leaderboard.get_value("CarIdxLap"),
-        "lap_dist_pct": mock_irsdk_leaderboard.get_value("CarIdxLapDistPct"),
-        "is_pitroad": mock_irsdk_leaderboard.get_value("CarIdxOnPitRoad"),
-        "multiclass": False,
-    }
-
-    def _make_ctx(**overrides):
-        data = {**defaults, **overrides}
-        return LeaderboardContext(**data)
-
-    return _make_ctx
-
-
-@pytest.fixture
-def leaderboard(mock_irsdk_leaderboard):
-    return Leaderboard(mock_irsdk_leaderboard)
-
-
-@pytest.fixture
-def builder(mock_irsdk_leaderboard):
-    return CarDataBuilder(mock_irsdk_leaderboard)
-
-
-@pytest.fixture
-def neighbors(builder):
-    return NeighborsService(builder)
-
-
-@pytest.fixture
-def mock_irsdk_leaderboard(irsdk_mock_factory):
-    values = {
-        "CarIdxPosition": [1, 2, 3],
-        "CarIdxClassPosition": [0, 1, 2],
-        "CarIdxLap": [5, 5, 4],
-        "CarIdxLastLapTime": [80.0, 81.5, 82.2],
-        "CarIdxBestLapTime": [11.1, 22.2, None],
-        "CarIdxLapDistPct": [0.6, 0.3, 0.9],
-        "CarIdxOnPitRoad": [False, False, False],
-        "PlayerCarIdx": 0,
-        "SessionTime": 100.0,
-        "SessionTimeTotal": 100.0,
-        "DriverInfo": {
-            "Drivers": [
-                {
-                    "UserName": "Driver1",
-                    "IRating": 2000,
-                    "LicString": "A 4.99",
-                    "CarNumber": "12",
-                    "CarClassColor": 16711680,
-                    "CarClassID": 1,
-                    "CarClassEstLapTime": 80.0,
-                },
-                {
-                    "UserName": "Driver2",
-                    "IRating": 1800,
-                    "LicString": "B 3.12",
-                    "CarNumber": "8",
-                    "CarClassColor": 16711680,
-                    "CarClassID": 1,
-                    "CarClassEstLapTime": 80.0,
-                },
-                {
-                    "UserName": "Driver3",
-                    "IRating": 1700,
-                    "LicString": "C 2.50",
-                    "CarNumber": "99",
-                    "CarClassColor": 16711680,
-                    "CarClassID": 1,
-                    "CarClassEstLapTime": 80.0,
-                },
-            ]
-        },
-        "SessionInfo": {
-            "CurrentSessionNum": 1,
-            "Sessions": [
-                {
-                    "SessionType": "Lone Qualify",
-                    "SessionLaps": 2,
-                    "SessionTime": "20 sec",
-                    "ResultsFastestLap": [
-                        {"CarIdx": 0, "FastestTime": 88.8},
-                        {"CarIdx": 1, "FastestTime": 89.1},
-                    ],
-                    "ResultsPositions": [
-                        {"CarIdx": 0, "Position": 1},
-                        {"CarIdx": 1, "Position": 2},
-                    ],
-                },
-                {
-                    "SessionType": "Race",
-                    "SessionLaps": 10,
-                    "SessionTime": "100 sec",
-                    "ResultsFastestLap": [
-                        {"CarIdx": 0, "FastestTime": 79.8},
-                        {"CarIdx": 1, "FastestTime": 81.0},
-                        {"CarIdx": 2, "FastestTime": 99.1},
-                    ],
-                    "ResultsPositions": [
-                        {"CarIdx": 0, "Position": 1},
-                        {"CarIdx": 2, "Position": 3},
-                    ],
-                },
-            ],
-        },
-    }
-    return irsdk_mock_factory(values)
-
-
-@pytest.fixture
-def mock_irsdk_leaderboard_multiclass(irsdk_mock_factory):
-    drivers = [
-        {"UserName": "Driver1", "CarClassID": 1, "CarClassEstLapTime": 74.0},
-        {"UserName": "Driver2", "CarClassID": 2, "CarClassEstLapTime": 77.0},
-    ]
-    values = {
-        "DriverInfo": {"Drivers": drivers},
-        "CarIdxOnPitRoad": [False, False],
-        "PlayerCarIdx": 0,
-        "CarIdxPosition": [1, 2],
-        "CarIdxClassPosition": [0, 0],
-        "CarIdxLastLapTime": [74.0, 77.0],
-        "CarIdxBestLapTime": [11.1, None],
-        "CarIdxLap": [5, 5],
-        "CarIdxLapDistPct": [0.2, 0.1],
-        "SessionInfo": {
-            "Sessions": [
-                {
-                    "SessionType": "Lone Qualify",
-                    "SessionLaps": 2,
-                    "SessionTime": "20 sec",
-                },
-            ],
-        },
-    }
-    return irsdk_mock_factory(values)
