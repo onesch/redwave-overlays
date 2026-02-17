@@ -19,7 +19,7 @@ def mock_service(mock_values: dict) -> TrackMapService:
 @pytest.fixture
 def mock_builder() -> TrackMapCarBuilder:
     """
-    Returns the TrackMapCarBuilder initialized.
+    Returns an initialized TrackMapCarBuilder object.
     """
 
     return TrackMapCarBuilder()
