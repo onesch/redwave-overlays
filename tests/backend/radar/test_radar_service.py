@@ -1,5 +1,4 @@
 import pytest
-from unittest.mock import patch
 
 from backend.services.radar.service import RadarService
 from backend.services.radar.constants import (

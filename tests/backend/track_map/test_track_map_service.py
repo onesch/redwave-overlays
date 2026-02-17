@@ -16,12 +16,12 @@ def test_get_snapshot_returns_expected_structure(mock_service):
 def test_is_session_changed_returns_true_on_session_update(mock_values):
     service1 = TrackMapService(mock_values)
     service1.get_snapshot()
-    
+
     # Changed SessionID value to get trigger
     new_values = mock_values.copy()
     new_values["WeekendInfo"]["SessionID"] = 999999999
     service2 = TrackMapService(new_values)
-    
+
     snapshot = service2.get_snapshot()
     assert snapshot["is_session_changed"] is True
 

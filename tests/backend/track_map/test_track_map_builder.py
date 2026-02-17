@@ -28,8 +28,8 @@ def test_track_map_builder_returns_none_when_base_build_none(
     ctx = mock_ctx()
 
     monkeypatch.setattr(
-        TrackMapCarBuilder, 
-        "build", 
+        TrackMapCarBuilder,
+        "build",
         lambda self, idx, ctx: None
     )
 
