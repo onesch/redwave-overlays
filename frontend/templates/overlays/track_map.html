@@ -55,13 +55,79 @@ class TrackMapUpdater {
 
     // Render track line and finish marker
     renderTrackLine() {
+        this.trackLine.innerHTML = '';
         this.trackLine.dataset.type = this.trackType;
         this.trackLine.classList.remove('circle', 'linear');
         this.trackLine.classList.add(this.trackType);
 
-        this.finishLine = document.createElement('div');
-        this.finishLine.id = 'track-finish';
-        this.trackLine.appendChild(this.finishLine);
+        const svgNS = "http://www.w3.org/2000/svg";
+        const svg = document.createElementNS(svgNS, "svg");
+        svg.style.width = "100%";
+        svg.style.height = "100%";
+
+        const createSVG = (tag, attrs = {}) => {
+            const el = document.createElementNS(svgNS, tag);
+            Object.entries(attrs).forEach(([k, v]) => el.setAttribute(k, v));
+            return el;
+        };
+
+        if (this.trackType === 'circle') {
+            svg.setAttribute("viewBox", "0 0 300 300");
+
+            svg.appendChild(
+                createSVG("circle", {
+                    class: "track outer",
+                    cx: 150,
+                    cy: 150,
+                    r: 100
+                })
+            );
+
+            svg.appendChild(
+                createSVG("circle", {
+                    class: "track surface",
+                    cx: 150,
+                    cy: 150,
+                    r: 100
+                })
+            );
+
+            svg.appendChild(
+                createSVG("rect", {
+                    class: "track finish",
+                    x: 147,
+                    y: 240,
+                    width: 6,
+                    height: 20
+                })
+            );
+        } else if (this.trackType === 'linear') {
+            svg.setAttribute("viewBox", "0 0 100 100");
+            svg.setAttribute("preserveAspectRatio", "none");
+            svg.setAttribute("overflow", "visible");
+
+            svg.appendChild(
+                createSVG("line", {
+                    class: "track outer",
+                    x1: 0,
+                    y1: 50,
+                    x2: 100,
+                    y2: 50
+                })
+            );
+
+            svg.appendChild(
+                createSVG("line", {
+                    class: "track surface",
+                    x1: 0,
+                    y1: 50,
+                    x2: 100,
+                    y2: 50
+                })
+            );
+        }
+
+        this.trackLine.appendChild(svg);
     }
 
     // Fetch track map data from backend API
@@ -151,9 +217,14 @@ class TrackMapUpdater {
     }
 
     positionCarCircle(carDiv, lapDistPct) {
-        const radius = this.trackLine.offsetWidth / 2;
-        const centerX = this.trackContainer.offsetWidth / 2;
-        const centerY = this.trackContainer.offsetHeight / 2;
+        const svg = this.trackLine.querySelector('svg');
+        if (!svg) return;
+
+        const rect = svg.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2 - this.trackContainer.getBoundingClientRect().left;
+        const centerY = rect.top + rect.height / 2 - this.trackContainer.getBoundingClientRect().top;
+        const radius = rect.width / 3;
+
         const angle = lapDistPct * 2 * Math.PI - Math.PI / 2;
 
         const x = centerX + radius * Math.cos(angle);
@@ -171,9 +242,12 @@ class TrackMapUpdater {
     }
 
     positionCarLinear(carDiv, lapDistPct) {
-        const containerWidth = this.trackContainer.offsetWidth;
-        const x = lapDistPct * containerWidth;
-        const y = this.trackContainer.offsetHeight / 2;
+        const svg = this.trackLine.querySelector('svg');
+        if (!svg) return;
+
+        const rect = svg.getBoundingClientRect();
+        const x = rect.left - this.trackContainer.getBoundingClientRect().left + lapDistPct * rect.width;
+        const y = rect.top - this.trackContainer.getBoundingClientRect().top + rect.height / 2;
 
         if (Math.abs(parseFloat(carDiv.dataset.lastLapPct || 0) - lapDistPct) > 0.5) {
             carDiv.style.transition = 'none';

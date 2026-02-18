@@ -5,52 +5,85 @@
   width: 400px;
   height: 400px;
   margin: 40px auto;
-  border-radius: 50%;
 }
 
 #track-line {
   position: absolute;
-  box-sizing: border-box;
-  outline: 1.4px solid #0a0a0a;
-  background: transparent;
-}
-
-#track-line.circle {
-  border: 4px solid #ffffff;
-  width: 200px;
-  height: 200px;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  border-radius: 50%;
 }
-
-#track-line.linear {
-  border: 2px solid #ffffff;
-  top: 50%;
-  left: 0;
+#track-line svg {
   width: 100%;
-  height: 0;
-  transform: translateY(-50%);
-  border-radius: 10px;
+  height: 100%;
 }
 
+.track.outer {
+  stroke: rgba(25, 25, 25, 0.50);
+  stroke-linecap: round;
+  fill: none;
+}
+
+.track.surface {
+  stroke: rgba(235, 235, 235, 0.8);
+  stroke-linecap: round;
+  fill: none;
+}
+
+.track.finish {
+  fill: #ff3b3b;
+}
+
+/* Circle */
+#track-line.circle {
+  width: 300px;
+  height: 300px;
+}
+
+#track-line.circle .track.outer {
+  stroke-width: 12;
+}
+
+#track-line.circle .track.surface {
+  stroke-width: 8;
+}
+
+/* Linear */
+#track-line.linear {
+  width: 300px;
+  height: 250px;
+}
+
+#track-line.linear .track.outer {
+  stroke-width: 6;
+}
+
+#track-line.linear .track.surface {
+  stroke-width: 4;
+}
+
+/* Car */
 .track-map-car {
   --car-color: #999;
 
   position: absolute;
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
-  text-align: center;
-  line-height: 24px;
+  background-color: color-mix(in srgb, var(--car-color) 85%, black);
+  border: 2px solid color-mix(in srgb, var(--car-color) 40%, black);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5), 
+              inset 0 -2px 2px rgba(0, 0, 0, 0.3);
   color: #fff;
-  font-size: 12px;
-  background-color: color-mix(in srgb, var(--car-color) 80%, black);
+  font-size: 14px;
+  font-weight: bold;
+  text-align: center;
+  line-height: 20px;
   transform: translate(-50%, -50%);
   transition: top 0.1s linear, left 0.1s linear;
 }
 
+/* Player car */
 .track-map-car.player::after {
   content: '';
   position: absolute;
@@ -60,18 +93,4 @@
   border-left: 6px solid transparent;
   border-right: 6px solid transparent;
   border-top: 8px solid #fff;
-}
-
-#track-finish {
-  position: absolute;
-  background: #ff3b3b;
-  border-radius: 2px;
-}
-
-#track-line[data-type="circle"] #track-finish {
-  bottom: -10px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 4px;
-  height: 20px;
 }
