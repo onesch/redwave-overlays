@@ -2,14 +2,11 @@
 
 #track-container {
   position: relative;
-  width: 400px;
-  height: 400px;
-  margin: 40px auto;
+  aspect-ratio: 1 / 1;
 }
 
 #track-line {
   position: absolute;
-  top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
 }
@@ -36,6 +33,7 @@
 
 /* Circle */
 #track-line.circle {
+  top: 50%;
   width: 300px;
   height: 300px;
 }
@@ -50,6 +48,7 @@
 
 /* Linear */
 #track-line.linear {
+  top: 10%;
   width: 300px;
   height: 250px;
 }
