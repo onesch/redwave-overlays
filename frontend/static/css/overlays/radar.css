@@ -52,8 +52,8 @@
   z-index: 2;
 }
 
-.side-box.left { left: 65%; }
-.side-box.right { right: 65%; }
+.side-box.right { left: 65%; }
+.side-box.left { right: 65%; }
 
 .side-box.red {
   background: rgba(255,0,0,0.55);
