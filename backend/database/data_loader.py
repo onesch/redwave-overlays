@@ -70,7 +70,7 @@ def get_overlays_card_data(
         {
             "key": card["key"],
             "title": card["title"],
-            "image": card.get("image"),
+            "icon": card.get("icon"),
         }
         for card in cards
     ]

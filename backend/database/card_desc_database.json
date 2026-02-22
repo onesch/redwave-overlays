@@ -2,22 +2,47 @@
   {
     "key": "radar",
     "title": "Radar",
-    "desc": "Shows nearby cars around your vehicle with color alerts for close or dangerous positions on all sides.",
-    "image": "/static/images/radar_icon.png",
+    "desc": "Shows nearby cars around your car with color alerts for close or dangerous positions on all sides.",
+    "icon": "/static/images/radar/icon.png",
+    "images": {
+      "main": "/static/images/radar/main.png"
+    },
+    "ui": {
+      "image_mode": "single"
+    },
     "url": "/overlays/radar"
   },
+
   {
     "key": "leaderboard",
     "title": "Leaderboard",
-    "desc": "Displays live race positions, lap times, session time, and car details relative to your vehicle during the race.",
-    "image": "/static/images/leaderboard_icon.png",
+    "desc": "Displays live race positions, lap times, session time, and car details relative to your car during the race.",
+    "icon": "/static/images/leaderboard/icon.png",
+    "images": {
+      "main": "/static/images/leaderboard/main.png",
+      "foo": "/static/images/leaderboard/foo.png"
+    },
+    "ui": {
+      "image_mode": "single"
+    },
     "url": "/overlays/leaderboard"
   },
+
   {
     "key": "track_map",
     "title": "Track map",
     "desc": "Shows in real time the current positions of all cars on the track, displayed as either a linear or circle track.",
-    "image": "/static/images/track_map_icon.png",
+    "icon": "/static/images/track_map/icon.png",
+    "images": {
+      "linear": "/static/images/track_map/linear.png",
+      "circle": "/static/images/track_map/circle.png"
+    },
+    "ui": {
+      "image_mode": "toggle",
+      "label": "Type",
+      "options": ["linear", "circle"],
+      "default": "linear"
+    },
     "url": "/overlays/track_map"
   }
 ]
