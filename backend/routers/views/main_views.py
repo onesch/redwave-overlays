@@ -39,7 +39,7 @@ async def settings_view(request: Request):
 @router.get("/overlays", response_class=HTMLResponse)
 async def overlays(request: Request, overlay: str | None = None):
     overlays_list, selected_overlay, card_data = get_overlays_card_data(
-        overlay
+        selected_key=overlay,
     )
     return templates.TemplateResponse(
         "pages/overlays.html",

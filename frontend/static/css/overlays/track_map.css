@@ -1,0 +1,95 @@
+@import url('base.css');
+
+#track-container {
+  position: relative;
+  aspect-ratio: 1 / 1;
+}
+
+#track-line {
+  position: absolute;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+#track-line svg {
+  width: 100%;
+  height: 100%;
+}
+
+.track.outer {
+  stroke: rgba(25, 25, 25, 0.50);
+  stroke-linecap: round;
+  fill: none;
+}
+
+.track.surface {
+  stroke: rgba(235, 235, 235, 0.8);
+  stroke-linecap: round;
+  fill: none;
+}
+
+.track.finish {
+  fill: #ff3b3b;
+}
+
+/* Circle */
+#track-line.circle {
+  top: 50%;
+  width: 300px;
+  height: 300px;
+}
+
+#track-line.circle .track.outer {
+  stroke-width: 12;
+}
+
+#track-line.circle .track.surface {
+  stroke-width: 8;
+}
+
+/* Linear */
+#track-line.linear {
+  top: 10%;
+  width: 300px;
+  height: 250px;
+}
+
+#track-line.linear .track.outer {
+  stroke-width: 6;
+}
+
+#track-line.linear .track.surface {
+  stroke-width: 4;
+}
+
+/* Car */
+.track-map-car {
+  --car-color: #999;
+
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: color-mix(in srgb, var(--car-color) 85%, black);
+  border: 2px solid color-mix(in srgb, var(--car-color) 40%, black);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5), 
+              inset 0 -2px 2px rgba(0, 0, 0, 0.3);
+  color: #fff;
+  font-size: 14px;
+  font-weight: bold;
+  text-align: center;
+  line-height: 20px;
+  transform: translate(-50%, -50%);
+  transition: top 0.1s linear, left 0.1s linear;
+}
+
+/* Player car */
+.track-map-car.player::after {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 8px solid #fff;
+}

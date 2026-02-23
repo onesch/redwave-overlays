@@ -11,13 +11,16 @@ function loadSettings() {
   try {
     if (fs.existsSync(SETTINGS_PATH)) {
       const data = fs.readFileSync(SETTINGS_PATH, 'utf-8');
-      return JSON.parse(data);
+      const parsed = JSON.parse(data);
+      return parsed;
+
     }
   } catch (err) {
     console.error('[settings] Failed to load settings:', err);
   }
   return {};
 }
+
 
 function saveSettings(settings) {
   try {
@@ -26,6 +29,7 @@ function saveSettings(settings) {
     console.error('[settings] Failed to save settings:', err);
   }
 }
+
 
 function resetSettings() {
   try {

@@ -1,0 +1,280 @@
+{% extends "base/base_overlay.html" %}
+
+{% block title %}Track Map{% endblock %}
+
+{% block content %}
+<div id="track-container">
+    <div id="track-line"></div>
+</div>
+
+<script>
+
+// Handles fetching data and rendering the track map overlay
+class TrackMapUpdater {
+    constructor() {
+        this.updateInterval = 100;
+        this.trackType = 'linear';
+        this.finishLine = null;
+        this.cars = {}; // key: player_id, value: div
+        this.trackContainer = document.getElementById('track-container');
+        this.trackLine = document.getElementById('track-line');
+        this.init();
+    }
+
+    init() {
+        this.updateTrackMap();
+        setInterval(() => this.updateTrackMap(), this.updateInterval);
+    }
+
+    // Change track type (circle or linear) and re-render
+    setTrackType(type) {
+        this.trackType = type;
+        document.body.dataset.trackType = type;
+        this.renderTrackLine();
+    }
+
+    // Cleaning old cars from data this.cars
+    clearCars() {
+        Object.values(this.cars).forEach(car => car.remove());
+        this.cars = {};
+    }
+
+    resetTrackMap() {
+        // Remove all car divs
+        this.clearCars();
+
+        // Reset finish marker
+        if (this.finishLine) {
+            this.finishLine.remove();
+            this.finishLine = null;
+        }
+
+        // Re-render track line
+        this.renderTrackLine();
+    }
+
+    // Render track line and finish marker
+    renderTrackLine() {
+        this.trackLine.innerHTML = '';
+        this.trackLine.dataset.type = this.trackType;
+        this.trackLine.classList.remove('circle', 'linear');
+        this.trackLine.classList.add(this.trackType);
+
+        const svgNS = "http://www.w3.org/2000/svg";
+        const svg = document.createElementNS(svgNS, "svg");
+        svg.style.width = "100%";
+        svg.style.height = "100%";
+
+        const createSVG = (tag, attrs = {}) => {
+            const el = document.createElementNS(svgNS, tag);
+            Object.entries(attrs).forEach(([k, v]) => el.setAttribute(k, v));
+            return el;
+        };
+
+        if (this.trackType === 'circle') {
+            svg.setAttribute("viewBox", "0 0 300 300");
+
+            svg.appendChild(
+                createSVG("circle", {
+                    class: "track outer",
+                    cx: 150,
+                    cy: 150,
+                    r: 100
+                })
+            );
+
+            svg.appendChild(
+                createSVG("circle", {
+                    class: "track surface",
+                    cx: 150,
+                    cy: 150,
+                    r: 100
+                })
+            );
+
+            svg.appendChild(
+                createSVG("rect", {
+                    class: "track finish",
+                    x: 147,
+                    y: 240,
+                    width: 6,
+                    height: 20
+                })
+            );
+        } else if (this.trackType === 'linear') {
+            svg.setAttribute("viewBox", "0 0 100 100");
+            svg.setAttribute("preserveAspectRatio", "none");
+            svg.setAttribute("overflow", "visible");
+
+            svg.appendChild(
+                createSVG("line", {
+                    class: "track outer",
+                    x1: 0,
+                    y1: 50,
+                    x2: 100,
+                    y2: 50
+                })
+            );
+
+            svg.appendChild(
+                createSVG("line", {
+                    class: "track surface",
+                    x1: 0,
+                    y1: 50,
+                    x2: 100,
+                    y2: 50
+                })
+            );
+        }
+
+        this.trackLine.appendChild(svg);
+    }
+
+    // Fetch track map data from backend API
+    async updateTrackMap() {
+        try {
+            const response = await fetch('/api/track-map');
+            const data = await response.json();
+
+            if (data.error) {
+                console.error('Error:', data.error);
+                return;
+            }
+
+            if (!data) return;
+
+            if (data.status === "waiting") {
+                console.log("Log:", "Waiting for iRacing...");
+                return;
+            }
+
+            if (data.status === "ok") {
+                if (data.is_session_changed) {
+                    this.resetTrackMap();
+                }
+            }
+
+            this.renderTrackMap(data.cars, data.player_id);
+
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    }
+
+    // Render all cars received from API
+    renderTrackMap(cars, playerId) {
+        const activeIds = new Set();
+
+        cars.forEach(car => {
+            if (car.lap_dist_pct === -1) {
+                // Remove a car that is no longer on the road
+                if (this.cars[car.player_id]) {
+                    this.cars[car.player_id].remove();
+                    delete this.cars[car.player_id];
+                }
+                return;
+            }
+
+            activeIds.add(car.player_id);
+
+            let carDiv = this.cars[car.player_id] || this.createCarDiv(car);
+            this.updateCarAppearance(carDiv, car, playerId);
+            this.updateCarPosition(carDiv, car.lap_dist_pct);
+        });
+    }
+
+    // Create new car DOM element
+    createCarDiv(car) {
+        const carDiv = document.createElement('div');
+        carDiv.classList.add('track-map-car');
+        carDiv.innerText = car.car_number;
+        carDiv.style.setProperty('--car-color', car.color);
+        this.trackContainer.appendChild(carDiv);
+        this.cars[car.player_id] = carDiv;
+
+        carDiv.style.transition = 'top 0.1s linear, left 0.1s linear';
+        return carDiv;
+    }
+
+    // Highlight player car and adjust z-index
+    updateCarAppearance(carDiv, car, playerId) {
+        if (car.player_id === playerId) {
+            carDiv.classList.add('player');
+            carDiv.style.zIndex = '999';
+        } else {
+            carDiv.classList.remove('player');
+            carDiv.style.zIndex = '1';
+        }
+    }
+
+    // Update car position based on current track type
+    updateCarPosition(carDiv, lapDistPct) {
+        if (this.trackType === 'circle') {
+            this.positionCarCircle(carDiv, lapDistPct);
+        } else if (this.trackType === 'linear') {
+            this.positionCarLinear(carDiv, lapDistPct);
+        }
+    }
+
+    positionCarCircle(carDiv, lapDistPct) {
+        const svg = this.trackLine.querySelector('svg');
+        if (!svg) return;
+
+        const rect = svg.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2 - this.trackContainer.getBoundingClientRect().left;
+        const centerY = rect.top + rect.height / 2 - this.trackContainer.getBoundingClientRect().top;
+        const radius = rect.width / 3;
+
+        const angle = lapDistPct * 2 * Math.PI - Math.PI / 2;
+
+        const x = centerX + radius * Math.cos(angle);
+        const y = centerY - radius * Math.sin(angle);
+
+        if (Math.abs(parseFloat(carDiv.dataset.lastLapPct || 0) - lapDistPct) > 0.5) {
+            carDiv.style.transition = 'none';
+        } else {
+            carDiv.style.transition = 'top 0.1s linear, left 0.1s linear';
+        }
+
+        carDiv.style.left = `${x}px`;
+        carDiv.style.top = `${y}px`;
+        carDiv.dataset.lastLapPct = lapDistPct;
+    }
+
+    positionCarLinear(carDiv, lapDistPct) {
+        const svg = this.trackLine.querySelector('svg');
+        if (!svg) return;
+
+        const rect = svg.getBoundingClientRect();
+        const x = rect.left - this.trackContainer.getBoundingClientRect().left + lapDistPct * rect.width;
+        const y = rect.top - this.trackContainer.getBoundingClientRect().top + rect.height / 2;
+
+        if (Math.abs(parseFloat(carDiv.dataset.lastLapPct || 0) - lapDistPct) > 0.5) {
+            carDiv.style.transition = 'none';
+        } else {
+            carDiv.style.transition = 'top 0.1s linear, left 0.1s linear';
+        }
+
+        carDiv.style.left = `${x}px`;
+        carDiv.style.top = `${y}px`;
+        carDiv.dataset.lastLapPct = lapDistPct;
+    }
+
+}
+
+// Initialize when page loads
+document.addEventListener('DOMContentLoaded', async () => {
+    const overlayName = 'track-map';
+    const updater = new TrackMapUpdater();
+
+    // Get saved track type from Electron main process
+    const type = await window.electronAPI.getTrackType(overlayName);
+    updater.setTrackType(type);
+
+    // Listen for runtime track type changes
+    window.electronAPI.onTrackTypeUpdate((type) => {
+        updater.setTrackType(type);
+    });
+});
+</script>
+{% endblock %}
