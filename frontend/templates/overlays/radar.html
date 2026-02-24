@@ -82,12 +82,10 @@ class RadarUpdater {
                 return;
             }
 
+            if (!data) return;
+
             if (data.status === "waiting") {
                 console.log("Log:", "Waiting for iRacing...");
-                return;
-            }
-
-            if (!data) {
                 return;
             }
 
