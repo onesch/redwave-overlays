@@ -9,18 +9,15 @@
     <button id="OpenBtn" class="button primary-btn">Open</button>
   </div>
   <div>
-    {% set images = card_data.images or {} %}
-    {% set ui = card_data.ui or {} %}
-    {% set mode = ui.default if ui.default else 'main' %}
 
     <img
       id="trackImage"
-      src="{{ images[mode] }}"
+      src="{{ card_data.images.main }}"
       alt="{{ card_data.title }}"
       width="300"
       height="300"
       style="object-fit: contain; pointer-events: none; display: block;"
-      {% for key, path in images.items() %}
+      {% for key, path in card_data.images.items() %}
         data-{{ key }}="{{ path }}"
       {% endfor %}
     >
@@ -46,26 +43,9 @@
   >
 </div>
 
-{% block additional_settings %}
-{% if ui.image_mode == "toggle" %}
-<div class="setting-container">
-  <div class="setting-label">{{ ui.label or "Mode" }}:</div>
-  <div class="setting-value button-section">
-    {% for opt in ui.options %}
-      <button
-        class="image-mode-btn {% if opt == ui.default %}active{% endif %}"
-        data-mode="{{ opt }}"
-      >
-        {{ opt }}
-      </button>
-    {% endfor %}
-  </div>
-</div>
-{% endif %}
-{% endblock %}
+{% block additional_settings %}{% endblock %}
 
 <script src="{{ url_for('static', path='/js/base_detail.js') }}"></script>
-<script src="{{ url_for('static', path='/js/card_image_mode.js') }}"></script>
 {% block overlay_scripts %}{% endblock %}
 
 <link rel="stylesheet" href="{{ url_for('static', path='/css/card_detail.css') }}">

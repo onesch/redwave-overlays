@@ -309,21 +309,27 @@ body.no-scroll {
 /* Button Section */
 .button-section {
   display: flex;
-  gap: 12px;
-  width: 300px;
+  flex-wrap: nowrap;
+  gap: 6px;
+  justify-content: flex-end;
 }
 
 .button-section button {
-  padding: var(--spacing-sm) var(--spacing-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  padding: 4px 8px;
   background: transparent;
   border-radius: var(--border-radius-md);
   border: none;
   color: var(--text-secondary);
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   font-weight: 500;
   cursor: pointer;
   transition: all var(--transition);
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .button-section button:hover:not(.active) {

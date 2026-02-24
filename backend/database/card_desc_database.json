@@ -7,9 +7,6 @@
     "images": {
       "main": "/static/images/radar/main.png"
     },
-    "ui": {
-      "image_mode": "single"
-    },
     "url": "/overlays/radar"
   },
 
@@ -19,11 +16,7 @@
     "desc": "Displays live race positions, lap times, session time, and car details relative to your car during the race.",
     "icon": "/static/images/leaderboard/icon.png",
     "images": {
-      "main": "/static/images/leaderboard/main.png",
-      "foo": "/static/images/leaderboard/foo.png"
-    },
-    "ui": {
-      "image_mode": "single"
+      "main": "/static/images/leaderboard/main.png"
     },
     "url": "/overlays/leaderboard"
   },
@@ -36,12 +29,6 @@
     "images": {
       "linear": "/static/images/track_map/linear.png",
       "circle": "/static/images/track_map/circle.png"
-    },
-    "ui": {
-      "image_mode": "toggle",
-      "label": "Type",
-      "options": ["linear", "circle"],
-      "default": "linear"
     },
     "url": "/overlays/track_map"
   }
