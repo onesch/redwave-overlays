@@ -380,6 +380,7 @@ class Leaderboard:
             "neighbors": self.neighbors.get_neighbors(player_idx, ctx),
             "leaderboard_data": self.get_session_info(player_idx, ctx),
             "multiclass": ctx.multiclass,
+            "location": self.irsdk.get_car_location(),
         }
 
     def _build_context(self) -> LeaderboardContext | None:

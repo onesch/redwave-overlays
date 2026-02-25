@@ -6,24 +6,42 @@
 <div id="track-container">
     <div id="track-line"></div>
 </div>
+{% endblock %}
 
+{% block scripts %}
 <script>
-
 // Handles fetching data and rendering the track map overlay
-class TrackMapUpdater {
+class TrackMapUpdater extends BaseUpdater {
     constructor() {
-        this.updateInterval = 100;
+        super({endpoint: '/api/track-map', updateInterval: 100, overlayName: 'track-map' });
+    
         this.trackType = 'linear';
         this.finishLine = null;
         this.cars = {}; // key: player_id, value: div
+
         this.trackContainer = document.getElementById('track-container');
         this.trackLine = document.getElementById('track-line');
-        this.init();
     }
 
-    init() {
-        this.updateTrackMap();
-        setInterval(() => this.updateTrackMap(), this.updateInterval);
+    async init() {
+        await super.init();
+
+        // Set track type from the electronAPI
+        const type = await window.electronAPI.getTrackType?.('track-map');
+        if (type) this.setTrackType(type);
+
+        // Real-time track type update
+        window.electronAPI.onTrackTypeUpdate?.((type) => {
+        this.setTrackType(type);
+        });
+    }
+
+    async renderOverlay(data) {
+        if (data.status === 'ok' && data.is_session_changed) {
+        this.resetTrackMap();
+        }
+
+        this.renderTrackMap(data.cars, data.player_id);
     }
 
     // Change track type (circle or linear) and re-render
@@ -130,37 +148,6 @@ class TrackMapUpdater {
         this.trackLine.appendChild(svg);
     }
 
-    // Fetch track map data from backend API
-    async updateTrackMap() {
-        try {
-            const response = await fetch('/api/track-map');
-            const data = await response.json();
-
-            if (data.error) {
-                console.error('Error:', data.error);
-                return;
-            }
-
-            if (!data) return;
-
-            if (data.status === "waiting") {
-                console.log("Log:", "Waiting for iRacing...");
-                return;
-            }
-
-            if (data.status === "ok") {
-                if (data.is_session_changed) {
-                    this.resetTrackMap();
-                }
-            }
-
-            this.renderTrackMap(data.cars, data.player_id);
-
-        } catch (error) {
-            console.error('Error:', error);
-        }
-    }
-
     // Render all cars received from API
     renderTrackMap(cars, playerId) {
         const activeIds = new Set();
@@ -189,6 +176,7 @@ class TrackMapUpdater {
         carDiv.classList.add('track-map-car');
         carDiv.innerText = car.car_number;
         carDiv.style.setProperty('--car-color', car.color);
+
         this.trackContainer.appendChild(carDiv);
         this.cars[car.player_id] = carDiv;
 
@@ -221,8 +209,10 @@ class TrackMapUpdater {
         if (!svg) return;
 
         const rect = svg.getBoundingClientRect();
-        const centerX = rect.left + rect.width / 2 - this.trackContainer.getBoundingClientRect().left;
-        const centerY = rect.top + rect.height / 2 - this.trackContainer.getBoundingClientRect().top;
+        const containerRect = this.trackContainer.getBoundingClientRect();
+
+        const centerX = rect.left + rect.width / 2 - containerRect.left;
+        const centerY = rect.top + rect.height / 2 - containerRect.top;
         const radius = rect.width / 3;
 
         const angle = lapDistPct * 2 * Math.PI - Math.PI / 2;
@@ -246,8 +236,10 @@ class TrackMapUpdater {
         if (!svg) return;
 
         const rect = svg.getBoundingClientRect();
-        const x = rect.left - this.trackContainer.getBoundingClientRect().left + lapDistPct * rect.width;
-        const y = rect.top - this.trackContainer.getBoundingClientRect().top + rect.height / 2;
+        const containerRect = this.trackContainer.getBoundingClientRect();
+
+        const x = rect.left - containerRect.left + lapDistPct * rect.width;
+        const y = rect.top - containerRect.top + rect.height / 2;
 
         if (Math.abs(parseFloat(carDiv.dataset.lastLapPct || 0) - lapDistPct) > 0.5) {
             carDiv.style.transition = 'none';
@@ -259,22 +251,12 @@ class TrackMapUpdater {
         carDiv.style.top = `${y}px`;
         carDiv.dataset.lastLapPct = lapDistPct;
     }
-
 }
 
 // Initialize when page loads
 document.addEventListener('DOMContentLoaded', async () => {
-    const overlayName = 'track-map';
-    const updater = new TrackMapUpdater();
-
-    // Get saved track type from Electron main process
-    const type = await window.electronAPI.getTrackType(overlayName);
-    updater.setTrackType(type);
-
-    // Listen for runtime track type changes
-    window.electronAPI.onTrackTypeUpdate((type) => {
-        updater.setTrackType(type);
-    });
+  const updater = new TrackMapUpdater();
+  await updater.init();
 });
 </script>
 {% endblock %}

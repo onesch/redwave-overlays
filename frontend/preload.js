@@ -34,6 +34,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onTrackTypeUpdate: (callback) =>
     ipcRenderer.on('update-track-map-type', (_, type) => callback(type)),
 
+  // Display mode
+  setDisplayMode: (overlayName, value) =>
+    ipcRenderer.send('set-display-mode', { overlayName, value }),
+  getDisplayMode: (overlayName) =>
+    ipcRenderer.invoke('get-display-mode', overlayName),
+  onDisplayModeUpdate: (callback) =>
+    ipcRenderer.on('update-display-mode', (_, value) => callback(value)),
+
   // Reset overlay settings
   resetOverlaySettings: () =>
     ipcRenderer.send('reset-overlay-settings')
