@@ -3,11 +3,11 @@
 
 lightweight desktop application designed to **display live iRacing telemetry**. Powered by **FastAPI** & **Electron** and **completely free**.
 
-![GitHub Release](https://img.shields.io/github/v/release/onesch/redwave-overlays)
+![GitHub Release](https://img.shields.io/badge/Release-v2.1.0-blue)
 ![coverage](https://img.shields.io/badge/Coverage-98%25-green)
 ![codeclimane](https://img.shields.io/badge/CodeClimate-A-cyan)
 ![python](https://img.shields.io/badge/Python-3.12.0-blue)
-![GitHub License](https://img.shields.io/github/license/onesch/redwave-overlays)
+![GitHub License](https://img.shields.io/badge/License-GPL3.0-orange)
 
 ## 🖼️ Screenshots
 
