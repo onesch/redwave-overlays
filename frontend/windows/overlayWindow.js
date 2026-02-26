@@ -7,6 +7,7 @@ const { applySavedPosition, registerPositionHandlers, watchOverlayPosition } = r
 const { registerOverlayOpacityHandlers } = require('../utils/overlay_card_opacity');
 const { registerOverlayTrackTypeHandlers } = require('../utils/overlay_track_type');
 const { registerOverlayDisplayModeHandlers } = require('../utils/overlay_display_mode');
+const { registerOverlayAutoStartModeHandlers } = require('../utils/overlay_auto_start_mode');
 
 const overlays = {};
 let overlayCount = 0;
@@ -17,6 +18,7 @@ registerPositionHandlers(overlays);
 registerOverlayOpacityHandlers(overlays);
 registerOverlayTrackTypeHandlers(overlays);
 registerOverlayDisplayModeHandlers(overlays);
+registerOverlayAutoStartModeHandlers(overlays);
 
 function createOverlay(route, options = {}) {
   if (overlays[route] && !overlays[route].isDestroyed()) {
@@ -58,7 +60,7 @@ function createOverlay(route, options = {}) {
   applySavedZoom(overlay, route);
   applySavedPosition(overlay, route);
   watchOverlayPosition(overlay, route);
-  // opacity is handled separately by overlay_card_opacity module
+  // opacity, track-type, display-mode, auto-start-mode is handled by a separate module
 
   overlay.on('closed', () => {
     delete overlays[route];
