@@ -20,11 +20,9 @@ def get_radar_data():
 
 @router.get("/leaderboard")
 def get_leaderboard_data():
-    snapshot = leaderboard_service.get_leaderboard_snapshot()
-    return snapshot
+    return leaderboard_service.get_leaderboard_snapshot()
 
 
 @router.get("/track-map")
 def get_track_map_data():
-    snapshot = track_map_service.get_snapshot()
-    return snapshot
+    return track_map_service.get_snapshot()

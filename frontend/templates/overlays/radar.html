@@ -25,18 +25,17 @@
 
 {% block scripts %}
 <script>
-class RadarUpdater {
+// Handles fetching data and rendering the radar overlay
+class RadarUpdater extends BaseUpdater {
     constructor() {
+        super({ endpoint: '/api/radar', updateInterval: 100, overlayName: 'radar' });
         this.MAX_DIST = 15.0;
         this.RADAR_H = 260;
         this.CENTER_Y = this.RADAR_H / 2;
-        this.updateInterval = 100;
-        this.init();
     }
 
-    init() {
-        this.updateRadar();
-        setInterval(() => this.updateRadar(), this.updateInterval);
+    async renderOverlay(data) {
+        this.renderRadar(data);
     }
 
     // Front/rear lane control
@@ -72,30 +71,7 @@ class RadarUpdater {
         el.classList.add("red");
     }
 
-    async updateRadar() {
-        try {
-            const response = await fetch('/api/radar?ts=' + Date.now());
-            const data = await response.json();
-
-            if (data.error) {
-                console.error('Error:', data.error);
-                return;
-            }
-
-            if (!data) return;
-
-            if (data.status === "waiting") {
-                console.log("Log:", "Waiting for iRacing...");
-                return;
-            }
-
-            this.renderRadar(data);
-
-        } catch (error) {
-            console.error('Error:', error);
-        }
-    }
-
+    // Render DOM elements
     renderRadar(data) {
         this.setFB(document.getElementById("fb-ahead"), data.ahead_m, data.ahead_severity);
         this.setFB(document.getElementById("fb-behind"), data.behind_m, data.behind_severity);
@@ -106,8 +82,9 @@ class RadarUpdater {
 }
 
 // Initialize when page loads
-document.addEventListener('DOMContentLoaded', () => {
-    new RadarUpdater();
+document.addEventListener('DOMContentLoaded', async () => {
+    const updater = new RadarUpdater();
+    await updater.init();
 });
 </script>
 {% endblock %}

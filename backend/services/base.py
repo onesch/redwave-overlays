@@ -81,7 +81,10 @@ class BaseService:
         ctx = self._build_context()
         if not ctx:
             return self._empty_snapshot()
-        return self._build_snapshot(ctx)
+
+        snapshot = self._build_snapshot(ctx)
+        snapshot["location"] = self.irsdk.get_car_location()
+        return snapshot
 
     def _build_context(self):
         """

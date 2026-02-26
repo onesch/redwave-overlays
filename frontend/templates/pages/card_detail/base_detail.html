@@ -43,6 +43,15 @@
   >
 </div>
 
+<div class="setting-container">
+  <div class="setting-label">Display:</div>
+  <div class="setting-value button-section">
+    <button id="DisplayAllTimeBtn" class="active">All Time</button>
+    <button id="DisplayTrackBtn">Track</button>
+    <button id="DisplayGarageBtn">Garage</button>
+  </div>
+</div>
+
 {% block additional_settings %}{% endblock %}
 
 <script src="{{ url_for('static', path='/js/base_detail.js') }}"></script>
