@@ -42,6 +42,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onDisplayModeUpdate: (callback) =>
     ipcRenderer.on('update-display-mode', (_, value) => callback(value)),
 
+  // Auto-Start mode
+  setAutoStartMode: (overlayName, value) =>
+    ipcRenderer.send('set-auto-start-mode', { overlayName, value }),
+  getAutoStartMode: (overlayName) =>
+    ipcRenderer.invoke('get-auto-start-mode', overlayName),
+  onAutoStartModeUpdate: (callback) =>
+    ipcRenderer.on('update-auto-start-mode', (_, value) => callback(value)),
+
   // Reset overlay settings
   resetOverlaySettings: () =>
     ipcRenderer.send('reset-overlay-settings')

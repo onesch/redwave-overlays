@@ -1,29 +1,51 @@
 const { app } = require('electron');
 
 const { createMainWindow } = require('./windows/mainWindow');
+const { createOverlay } = require('./windows/overlayWindow');
+const { loadSettings } = require('./utils/overlay_settings');
+const overlaysConfig = require('./windows/overlays_config');
+const { startBackend, stopBackend } = require('./utils/backendManager');
+
 const registerRadarEvents = require('./ipc/RadarEvents');
 const registerLeaderboardEvents = require('./ipc/LeaderboardEvents');
 const registerTrackMapEvents = require('./ipc/TrackMapEvents');
 const registerSettingsEvents = require('./ipc/SettingsEvents');
-const { startBackend, stopBackend } = require('./utils/backendManager');
 
 let mainWindow = null;
 
+// Launches overlays that have AutoStart enabled.
+function autoStartOverlays() {
+  const settings = loadSettings();
+
+  for (const overlayName of Object.keys(overlaysConfig)) {
+    // Default to 'off' if setting is missing
+    const autoStart = settings[overlayName]?.AutoStart ?? 'off';
+    if (autoStart === 'on') {
+      createOverlay(overlayName);
+    }
+  }
+}
 
 async function createWindow() {
+  // Prevent multiple main windows
   if (mainWindow) {
     mainWindow.focus();
     return;
   }
 
+  // Wait for FastAPI backend to be ready
   await startBackend();
 
   mainWindow = createMainWindow();
 
+  // Register IPC event handlers for each overlay
   registerRadarEvents();
   registerLeaderboardEvents();
   registerSettingsEvents();
   registerTrackMapEvents();
+
+  // Open overlays marked as auto-start in settings
+  autoStartOverlays();
 
   mainWindow.on('closed', () => {
     mainWindow = null;

@@ -19,10 +19,16 @@ class OverlayBase {
             garage:   document.getElementById('DisplayGarageBtn'),
         };
 
+        this.autoStartButtons = {
+            on:  document.getElementById('AutoStartOnBtn'),
+            off: document.getElementById('AutoStartOffBtn'),
+        };
+
         this.setupEventListeners();
         this.loadZoomSettings();
         this.loadOpacitySettings();
         this.loadDisplayMode();
+        this.loadAutoStartMode();
     }
 
     setupEventListeners() {
@@ -34,6 +40,9 @@ class OverlayBase {
         }
         Object.entries(this.displayButtons).forEach(([mode, btn]) => {
             if (btn) btn.addEventListener('click', () => this.handleDisplayModeChange(mode));
+        });
+        Object.entries(this.autoStartButtons).forEach(([value, btn]) => {
+            if (btn) btn.addEventListener('click', () => this.handleAutoStartModeChange(value));
         });
     }
 
@@ -85,6 +94,22 @@ class OverlayBase {
     applyDisplayMode(mode) {
         Object.entries(this.displayButtons).forEach(([key, btn]) => {
             if (btn) btn.classList.toggle('active', key === mode);
+        });
+    }
+
+    async loadAutoStartMode() {
+        const mode = await window.electronAPI.getAutoStartMode?.(this.overlayName);
+        this.applyAutoStartMode(mode ?? 'off');
+    }
+
+    handleAutoStartModeChange(value) {
+        window.electronAPI.setAutoStartMode?.(this.overlayName, value);
+        this.applyAutoStartMode(value);
+    }
+
+    applyAutoStartMode(value) {
+        Object.entries(this.autoStartButtons).forEach(([key, btn]) => {
+            if (btn) btn.classList.toggle('active', key === value);
         });
     }
 }
