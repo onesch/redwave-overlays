@@ -33,6 +33,7 @@
   padding: 0;
   box-sizing: border-box;
   user-select: none;
+  -webkit-user-drag: none;
 }
 
 body {
@@ -221,7 +222,6 @@ body.no-scroll {
   font-size: 0.6rem;
   border-radius: var(--border-radius-sm);
   opacity: 0;
-  pointer-events: none;
   transition: var(--transition);
 }
 
@@ -298,7 +298,6 @@ body.no-scroll {
   width: 100%;
   height: auto;
   border-radius: var(--border-radius-lg);
-  pointer-events: none;
   display: block;
 }
 
