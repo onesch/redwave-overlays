@@ -7,7 +7,7 @@ lightweight desktop application designed to **display live iRacing telemetry**. 
 ![coverage](https://img.shields.io/badge/Coverage-98%25-green)
 ![codeclimane](https://img.shields.io/badge/CodeClimate-A-cyan)
 ![python](https://img.shields.io/badge/Python-3.12.0-blue)
-![GitHub License](https://img.shields.io/badge/License-GPL3.0-orange)
+![GitHub License](https://img.shields.io/github/license/onesch/redwave-overlays)
 
 ## 🖼️ Screenshots
 
