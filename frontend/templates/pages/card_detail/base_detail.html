@@ -9,18 +9,24 @@
     <button id="OpenBtn" class="button primary-btn">Open</button>
   </div>
   <div>
+
     <img
-      src="{{ card_data.image }}"
+      id="trackImage"
+      src="{{ card_data.images.main }}"
       alt="{{ card_data.title }}"
       width="300"
       height="300"
       style="object-fit: contain; pointer-events: none; display: block;"
+      {% for key, path in card_data.images.items() %}
+        data-{{ key }}="{{ path }}"
+      {% endfor %}
     >
   </div>
 </div>
 
-<div class="section-header">
+<div id="settings-header" class="section-header">
   <h2>Settings</h2>
+  <span class="info-icon" data-tooltip="use ctrl+shift+P to move overlay window"><span class="material-symbols-outlined">info</span></span>
 </div>
 
 <div class="range-container">
@@ -36,6 +42,23 @@
     step="10"
     value="100"
   >
+</div>
+
+<div class="setting-container">
+  <div class="setting-label">Display:</div>
+  <div class="setting-value button-section">
+    <button id="DisplayAllTimeBtn" class="active">All Time</button>
+    <button id="DisplayTrackBtn">Track</button>
+    <button id="DisplayGarageBtn">Garage</button>
+  </div>
+</div>
+
+<div class="setting-container">
+  <div class="setting-label">Auto-Start:</div>
+  <div class="setting-value button-section">
+    <button id="AutoStartOnBtn">On</button>
+    <button id="AutoStartOffBtn" class="active">Off</button>
+  </div>
 </div>
 
 {% block additional_settings %}{% endblock %}

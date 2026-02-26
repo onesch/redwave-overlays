@@ -36,3 +36,33 @@ class IRSDKService():
             return self.ir[field]
         except KeyError:
             return None
+
+    @staticmethod
+    def get_car_rgb(
+        *,
+        idx: int,
+        drivers: list[dict],
+        player_idx: int | None,
+        multiclass: bool,
+    ) -> str:
+        """Return the car's color as RGB string."""
+        if idx >= len(drivers):
+            return "#1b2a3a"
+
+        if idx == player_idx:
+            return "#1e6cff"
+
+        rgb = drivers[idx].get("CarClassColor")
+
+        if not multiclass or rgb in (None, 0xFFFFFF):
+            return "#1b2a3a"
+
+        r = (rgb >> 16) & 0xFF
+        g = (rgb >> 8) & 0xFF
+        b = rgb & 0xFF
+        return f"rgb({r},{g},{b})"
+
+    def get_car_location(self) -> str:
+        """Return 'track' if player is on track, 'garage' otherwise."""
+        is_on_track: bool = self.get_value("IsOnTrack")
+        return "track" if is_on_track else "garage"

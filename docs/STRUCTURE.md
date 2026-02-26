@@ -8,18 +8,14 @@ The project is structured to clearly separate frontend and backend logic, making
 ├── backend/                         # FastAPI backend logic.
 │   ├── main.py                      # FastAPI entrypoint.
 │   │
-│   ├── routers/                     # API and views.
-│   │   ├── apis.py                  # JSON endpoints.
-│   │   └── views/                   # HTML routes.
+│   ├── routers/                     # JSON endpoints and HTML routes.
 │   │
 │   ├── services/                    # Business logic modules.
-│   │   ├── irsdk/                   # iRacing SDK service.
-│   │   │  ├── schemas.py            # Pydantic models (used for validation).
-│   │   │  ├── service.py            # Connection logic.
-│   │   │  └── parser.py             # Telemetry parsing.
+│   │   ├── base.py                  # Base service implementation.
+│   │   ├── irsdk/                   # iRacing SDK Low-level service.
 │   │   ├── radar/                   # Radar overlay logic.
-│   │   └── leaderboard/             # Leaderboard overlay logic.
-│   │
+│   │   ├── leaderboard/             # Leaderboard overlay logic.
+│   │   └── track_map/               # Track map overlay logic.
 │   │
 │   ├── utils/                       # Backend utilities.
 │   │   ├── paths.py                 # Base path and project path management.
@@ -28,8 +24,7 @@ The project is structured to clearly separate frontend and backend logic, making
 │   └── database/                    # Local JSON storage.
 │       ├── card_desc_database.json  # Card descriptions.
 │       ├── data_loader.py           # JSON loader utils.
-│       ├── metadata.json            # General metadata.
-│       └── overlays_settings.json   # Appears when saving overlays settings.
+│       └── metadata.json            # General metadata.
 │
 ```
 ```shell
@@ -37,10 +32,7 @@ The project is structured to clearly separate frontend and backend logic, making
 ├── frontend/                        # Electron frontend app.
 │   ├── ipc/                         # IPC event handlers.
 │   │
-│   ├── static/                      # Static frontend files.
-│   │   ├── css/                     # Base and specific styles.
-│   │   ├── images/                  # Project images.
-│   │   ├── js/                      # Frontend JavaScript.
+│   ├── static/                      # Frontend static and JavaScript.
 │   │
 │   ├── templates/                   # Jinja2 HTML views.
 │   │   ├── base/                    # Base and shared components/templates.
@@ -48,11 +40,12 @@ The project is structured to clearly separate frontend and backend logic, making
 │   │   └── pages/                   # Page templates.
 │   │
 │   ├── utils/                       # Frontend utilities.
+│   │   ├── backendManager.js        # Manager backend process.
+│   │   ├── overlay_card_opacity.js  # Overlay opacity update logic.
 │   │   ├── keyboard_protection.js   # Keyboard protection.
 │   │   ├── overlay_position.js      # Control overlay position.
 │   │   ├── overlay_settings.js      # Control Overlay settings.
 │   │   └── overlay_zoom.js          # Control Overlay zoom.
-│   │   └── backendManager.js        # Manager backend process.
 │   │
 │   ├── windows/                     # Electron windows logic.
 │   │   ├── overlayWindow.js         # Utility to create overlay windows.
@@ -63,13 +56,13 @@ The project is structured to clearly separate frontend and backend logic, making
 │
 ```
 ```shell
+│
 ├── tests/                           # Project test cases.
-├── docs/                           # Project documentation.
+├── docs/                            # Project documentation.
 │
 ├── .gitignore                       # Ignored files.
 ├── LICENSE                          # Project license.
 ├── README.md                        # Documentation.
-├── package-lock.json                # NPM lock file.
 ├── package.json                     # NPM metadata.
 └── requirements.txt                 # Python dependencies (used by pip).
 ```

@@ -1,41 +1,57 @@
 const { ipcMain } = require('electron');
-const { loadSettings, saveSettings } = require('../utils/overlay_settings');
+const { loadSettings, saveSettings } = require('./overlay_settings');
+const { applyOverlaySize } = require('./overlay_size');
 
-// Cache of current zoom factors in memory
-// Priority: memory - file - default
+// In-memory cache of current zoom factors.
 const currentZoomFactors = {};
 
-// Apply the saved zoom when loading the overlay
-function applySavedZoom(overlay, route) {
+function getTrackType(overlayName, settings) {
+  if (overlayName !== 'track-map') return undefined;
+  return settings[overlayName]?.TrackType ?? 'linear';
+}
+
+// Apply persisted zoom settings when an overlay finishes loading.
+function applySavedZoom(overlay, overlayName) {
   overlay.webContents.on('did-finish-load', () => {
-    const zoomFactor = currentZoomFactors[route] ?? loadSettings()[route]?.zoom ?? 1;
-    overlay.webContents.setZoomFactor(zoomFactor);
-    // Update the cache
-    currentZoomFactors[route] = zoomFactor;
+    const settings = loadSettings();
+    const zoomFactor = currentZoomFactors[overlayName] ?? settings[overlayName]?.zoom ?? 1;
+    currentZoomFactors[overlayName] = zoomFactor;
+
+    applyOverlaySize(
+      overlay,
+      overlayName,
+      zoomFactor,
+      getTrackType(overlayName, settings),
+      false
+    );
   });
 }
 
-// Register IPC handlers to manage overlay zoom
+// Register IPC handlers for managing overlay zoom.
 function registerZoomHandlers(overlays) {
   ipcMain.on('set-overlay-zoom', (event, { overlayName, zoomFactor }) => {
-    // Update the live value in memory (for the current session)
     currentZoomFactors[overlayName] = zoomFactor;
-    
-    // Save to a file so that the changes remain after a restart.
+
     const settings = loadSettings();
     settings[overlayName] = settings[overlayName] || {};
     settings[overlayName].zoom = zoomFactor;
     saveSettings(settings);
 
-    // Apply to window
     const win = overlays[overlayName];
-    if (win && !win.isDestroyed()) {
-      win.webContents.setZoomFactor(zoomFactor);
-    }
+    if (!win || win.isDestroyed()) return;
+
+    applyOverlaySize(
+      win,
+      overlayName,
+      zoomFactor,
+      getTrackType(overlayName, settings),
+      true
+    );
   });
 
   ipcMain.handle('get-overlay-zoom', (event, overlayName) => {
-    return currentZoomFactors[overlayName] ?? loadSettings()[overlayName]?.zoom ?? 1;
+    const settings = loadSettings();
+    return currentZoomFactors[overlayName] ?? settings[overlayName]?.zoom ?? 1;
   });
 }
 
@@ -50,4 +66,5 @@ module.exports = {
   applySavedZoom,
   registerZoomHandlers,
   clearZoomCache,
+  currentZoomFactors,
 };

@@ -18,3 +18,10 @@ async def leaderboard_window_view(request: Request):
     return templates.TemplateResponse(
         "overlays/leaderboard.html", {"request": request}
     )
+
+
+@router.get("/track-map", response_class=HTMLResponse)
+async def track_map_window_view(request: Request):
+    return templates.TemplateResponse(
+        "overlays/track_map.html", {"request": request}
+    )

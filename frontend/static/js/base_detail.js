@@ -13,9 +13,22 @@ class OverlayBase {
 
         this.openBtn = document.getElementById('OpenBtn');
 
+        this.displayButtons = {
+            all_time: document.getElementById('DisplayAllTimeBtn'),
+            track:    document.getElementById('DisplayTrackBtn'),
+            garage:   document.getElementById('DisplayGarageBtn'),
+        };
+
+        this.autoStartButtons = {
+            on:  document.getElementById('AutoStartOnBtn'),
+            off: document.getElementById('AutoStartOffBtn'),
+        };
+
         this.setupEventListeners();
         this.loadZoomSettings();
         this.loadOpacitySettings();
+        this.loadDisplayMode();
+        this.loadAutoStartMode();
     }
 
     setupEventListeners() {
@@ -25,6 +38,12 @@ class OverlayBase {
         if (this.opacityRange) {
             this.opacityRange.addEventListener('input', () => this.handleOpacityChange());
         }
+        Object.entries(this.displayButtons).forEach(([mode, btn]) => {
+            if (btn) btn.addEventListener('click', () => this.handleDisplayModeChange(mode));
+        });
+        Object.entries(this.autoStartButtons).forEach(([value, btn]) => {
+            if (btn) btn.addEventListener('click', () => this.handleAutoStartModeChange(value));
+        });
     }
 
     async loadZoomSettings() {
@@ -60,5 +79,37 @@ class OverlayBase {
         if (this.opacityValue) this.opacityValue.textContent = value.toFixed(2);
 
         window.electronAPI.setCardBgOpacity?.(this.overlayName, value);
+    }
+
+    async loadDisplayMode() {
+        const mode = await window.electronAPI.getDisplayMode?.(this.overlayName);
+        this.applyDisplayMode(mode ?? 'all_time');
+    }
+
+    handleDisplayModeChange(mode) {
+        window.electronAPI.setDisplayMode?.(this.overlayName, mode);
+        this.applyDisplayMode(mode);
+    }
+
+    applyDisplayMode(mode) {
+        Object.entries(this.displayButtons).forEach(([key, btn]) => {
+            if (btn) btn.classList.toggle('active', key === mode);
+        });
+    }
+
+    async loadAutoStartMode() {
+        const mode = await window.electronAPI.getAutoStartMode?.(this.overlayName);
+        this.applyAutoStartMode(mode ?? 'off');
+    }
+
+    handleAutoStartModeChange(value) {
+        window.electronAPI.setAutoStartMode?.(this.overlayName, value);
+        this.applyAutoStartMode(value);
+    }
+
+    applyAutoStartMode(value) {
+        Object.entries(this.autoStartButtons).forEach(([key, btn]) => {
+            if (btn) btn.classList.toggle('active', key === value);
+        });
     }
 }

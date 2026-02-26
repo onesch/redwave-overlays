@@ -1,5 +1,30 @@
 @import url('main.css');
 
+/* Setting container styles */
+.setting-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-lg);
+  width: 300px;
+}
+
+/* Setting label */
+.setting-label {
+  color: var(--text-primary);
+  white-space: nowrap;
+  font-size: 0.875rem;
+}
+
+/* Setting value */
+.setting-value {
+  display: flex;
+  justify-content: flex-end;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+/* Range container styles */
 .range-container {
   display: grid;
   grid-template-columns: 140px 1fr;
@@ -25,6 +50,7 @@
   color: var(--text-primary);
   text-align: right;
   font-variant-numeric: tabular-nums;
+  font-size: 0.875rem;
   font-weight: 500;
 }
 

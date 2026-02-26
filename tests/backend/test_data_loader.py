@@ -7,10 +7,12 @@ from backend.database import data_loader
 @pytest.fixture
 def fake_cards_file(tmp_path):
     file = tmp_path / "cards.json"
-    cards = [{"title": "Card1", "value": 10}, {"title": "Card2", "value": 20}]
+    cards = [
+        {"key": "card1", "title": "Card 1", "value": 10},
+        {"key": "card2", "title": "Card 2", "value": 20},
+    ]
     json.dump(cards, open(file, "w", encoding="utf-8"))
     data_loader.DB_PATH = file
-
     data_loader._load_cards.cache_clear()
     return cards
 
@@ -21,7 +23,6 @@ def fake_metadata_file(tmp_path):
     metadata = {"app_version": "1.0.0", "overlays": {"overlay1": "v1"}}
     json.dump(metadata, open(file, "w", encoding="utf-8"))
     data_loader.METADATA_PATH = file
-
     data_loader._load_metadata.cache_clear()
     return metadata
 
@@ -40,7 +41,6 @@ def bad_json_file(tmp_path):
 def fake_changelog_img_path(tmp_path):
     path = tmp_path / "changelog_versions"
     path.mkdir()
-
     data_loader.CHANGELOG_IMG_PATH = path
     return path
 
@@ -51,13 +51,14 @@ def fake_changelog_img_path(tmp_path):
 def test_load_cards_data(fake_cards_file):
     cards = data_loader.load_cards_data()
     assert len(cards) == 2
-    assert cards[0]["title"] == "Card1"
+    assert cards[0]["key"] == "card1"
+    assert cards[0]["title"] == "Card 1"
 
 
-def test_get_card_data_by_title(fake_cards_file):
-    card = data_loader.get_card_data_by_title("Card1")
+def test_get_card_data_by_key(fake_cards_file):
+    card = data_loader.get_card_data_by_key("card1")
     assert card["value"] == 10
-    assert data_loader.get_card_data_by_title("NoCard") is None
+    assert data_loader.get_card_data_by_key("no_card") is None
 
 
 def test_get_app_version(fake_metadata_file):
@@ -76,7 +77,7 @@ def test_get_overlays_card_data_with_selection(fake_cards_file):
     assert selected_info["key"] == "card2"
     assert selected_info["template"] == "pages/card_detail/card2.html"
 
-    assert card_data["title"] == "Card2"
+    assert card_data["title"] == "Card 2"
     assert card_data["value"] == 20
 
 
@@ -85,7 +86,6 @@ def test_get_changelog_images_success(fake_changelog_img_path):
     (fake_changelog_img_path / "v0.0.0.png").write_text("", encoding="utf-8")
 
     images = data_loader.get_changelog_images()
-
     assert images == [
         "images/changelog_versions/v0.0.1.png",
         "images/changelog_versions/v0.0.0.png",
@@ -103,7 +103,7 @@ def test_get_overlays_card_data_no_selection(fake_cards_file):
     assert selected_info["key"] == "card1"
     assert selected_info["template"] == "pages/card_detail/card1.html"
 
-    assert card_data["title"] == "Card1"
+    assert card_data["title"] == "Card 1"
     assert card_data["value"] == 10
 
 

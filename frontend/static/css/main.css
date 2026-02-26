@@ -8,6 +8,7 @@
   --text-secondary: #666;
   --text-tertiary: #aaa;
   --accent: #ffffff;
+  --info: #3b82f6;
   --font-family: "Google Sans Flex", sans-serif;
   --border-radius-sm: 6px;
   --border-radius-md: 8px;
@@ -32,6 +33,7 @@
   padding: 0;
   box-sizing: border-box;
   user-select: none;
+  -webkit-user-drag: none;
 }
 
 body {
@@ -186,6 +188,46 @@ body.no-scroll {
   word-wrap: break-word;
 }
 
+#settings-header {
+  max-width: 300px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+#settings-header .info-icon {
+  color: var(--info);
+  cursor: pointer;
+  position: relative;
+}
+
+#settings-header .info-icon .material-symbols-outlined {
+  font-size: 1.0rem;
+  vertical-align: middle;
+  color: var(--info);
+}
+
+#settings-header .info-icon::before {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: 170%;
+  height: 30px;
+  width: 164px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: var(--bg-tertiary);
+  color: var(--text-tertiary);
+  padding: 4px 8px;
+  font-size: 0.6rem;
+  border-radius: var(--border-radius-sm);
+  opacity: 0;
+  transition: var(--transition);
+}
+
+#settings-header .info-icon:hover::before {
+  opacity: 1;
+}
 
 /* Overlays View */
 .overlay-catalog-grid {
@@ -256,7 +298,6 @@ body.no-scroll {
   width: 100%;
   height: auto;
   border-radius: var(--border-radius-lg);
-  pointer-events: none;
   display: block;
 }
 
@@ -303,6 +344,45 @@ body.no-scroll {
 }
 
 .button.primary-btn:hover {
+  background-color: #e5e5e5;
+}
+
+/* Button Section */
+.button-section {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.button-section button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  padding: 4px 8px;
+  background: transparent;
+  border-radius: var(--border-radius-md);
+  border: none;
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.button-section button:hover:not(.active) {
+  color: var(--text-primary);
+}
+
+.button-section button.active {
+  background: var(--accent);
+  color: var(--bg-primary);
+}
+
+.button-section button.active:hover {
   background-color: #e5e5e5;
 }
 

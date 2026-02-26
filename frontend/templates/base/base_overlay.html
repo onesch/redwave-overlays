@@ -9,12 +9,97 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,1,0" />
   <link rel="stylesheet" href="{{ url_for('static', path='css/overlays/radar.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', path='css/overlays/leaderboard.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', path='css/overlays/track_map.css') }}">
 </head>
 <body>
   <div class="overlay-body">
     {% block content %}
     {% endblock %}
   </div>
+  <script>
+    class BaseUpdater {
+      constructor({ endpoint, updateInterval = 100, overlayName } = {}) {
+        this.endpoint = endpoint;
+        this.updateInterval = updateInterval;
+        this.overlayName = overlayName;
+        this.displayMode = 'all_time';
+      }
+
+      async init() {
+        await this.initDisplayMode();
+        await this.update();
+
+        this.timerId = setInterval(() => {
+          this.update();
+        }, this.updateInterval);
+      }
+
+      // Fetch data from endpoint
+      async fetchData() {
+        const response = await fetch(this.endpoint);
+        return response.json();
+      }
+
+      async update() {
+        try {
+          const data = await this.fetchData();
+
+          if (!data) {
+            console.error('Error:', 'lost data');
+            return;
+          }
+          if (data.error) {
+            console.error('Error:', data.error);
+            return;
+          }
+
+          if (data.status === 'waiting' && data.location === undefined) {
+            this.onHidden?.(data);
+            return;
+          }
+
+          if (!this.isVisible(data.location)) {
+            this.onHidden?.(data);
+            return;
+          }
+
+          this.onVisible?.();
+          await this.renderOverlay(data);
+        } catch (error) {
+          console.error('Error:', error);
+        }
+      }
+
+      // Override in inherited class
+      async renderOverlay(_data) {}
+
+      // DisplayMode logic
+      async initDisplayMode() {
+        if (!this.overlayName) return;
+
+        const mode = await window.electronAPI.getDisplayMode?.(this.overlayName);
+        this.displayMode = mode ?? 'all_time';
+
+        window.electronAPI.onDisplayModeUpdate?.((value) => {
+          this.displayMode = value;
+        });
+      }
+
+      isVisible(location) {
+        if (!location) return true;
+        if (this.displayMode === 'all_time') return true;
+        return this.displayMode === location;
+      }
+
+      onVisible() {
+        document.querySelector('.overlay-body').style.visibility = 'visible';
+      }
+
+      onHidden(data) {
+        document.querySelector('.overlay-body').style.visibility = 'hidden';
+      }
+    }
+  </script>
   {% block scripts %}
   {% endblock %}
 </body>

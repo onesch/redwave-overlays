@@ -182,52 +182,41 @@
 
 {% block scripts %}
 <script>
-class LeaderboardUpdater {
+// Handles fetching data and rendering the leaderboard overlay
+class LeaderboardUpdater extends BaseUpdater {
     constructor() {
-        this.updateInterval = 100;
-        this.init();
+        super({ endpoint: '/api/leaderboard', updateInterval: 100, overlayName: 'leaderboard' });
     }
 
-    init() {
-        this.updateLeaderboard();
-        setInterval(() => this.updateLeaderboard(), this.updateInterval);
+    async init() {
+        await super.init();
+
+        // Set card transparency from the electronAPI
+        const opacity = await window.electronAPI.getCardBgOpacity?.('leaderboard');
+        if (opacity != null) this.setCardOpacity(opacity);
+
+        // Real-time transparency update
+        window.electronAPI.onCardBgOpacityUpdate?.((value) => {
+            this.setCardOpacity(value);
+        });
     }
 
-    async updateLeaderboard() {
-        try {
-            const response = await fetch('/api/leaderboard');
-            const data = await response.json();
-
-            if (data.error) {
-                this.showError(data.error);
-                return;
-            }
-
-            if (data.status === "waiting") {
-                this.renderWaiting();
-                return;
-            }
-
-            if (!data.player) {
-                return;
-            }
-
-            this.renderLeaderboard(data);
-
-        } catch (error) {
-            this.showError('Failed to fetch data');
-            console.error('Error:', error);
+    setCardOpacity(value) {
+        const card = document.querySelector('.card');
+        if (card) {
+            card.style.setProperty('--card-bg-opacity', value);
         }
     }
 
-    renderWaiting() {
-        console.log("Waiting for iRacing...");
+    async renderOverlay(data) {
+        this.renderLeaderboard(data);
     }
 
     renderLeaderboard(data) {
-        if (!data || !data.player || !data.neighbors) {
+        if (!data.player || !data.neighbors) {
             return;
         }
+
         // Hide all neighbor rows first
         for (let i = 1; i <= 3; i++) {
             document.getElementById(`ahead-row-${i}`).style.display = 'none';
@@ -244,7 +233,7 @@ class LeaderboardUpdater {
         for (let i = 0; i < 3; i++) {
             const rowId = `ahead-row-${i + 1}`;
             if (i < aheadCars.length) {
-                this.renderCar(rowId, aheadCars[i], true);
+                this.renderCar(rowId, aheadCars[i]);
             }
         }
 
@@ -252,7 +241,7 @@ class LeaderboardUpdater {
         for (let i = 0; i < 3; i++) {
             const rowId = `behind-row-${i + 1}`;
             if (i < behindCars.length) {
-                this.renderCar(rowId, behindCars[i], false);
+                this.renderCar(rowId, behindCars[i]);
             }
         }
 
@@ -285,10 +274,10 @@ class LeaderboardUpdater {
         }
     }
 
-    renderCar(rowId, car, isAhead) {
+    renderCar(rowId, car) {
         const row = document.getElementById(rowId);
         row.style.display = 'grid';
-        this.renderRow(row, car, isAhead);
+        this.renderRow(row, car);
     }
 
     intToRgb(num) {
@@ -309,7 +298,7 @@ class LeaderboardUpdater {
         `;
     }
 
-    renderRow(rowElement, car, isAhead = null) {
+    renderRow(rowElement, car) {
         this.renderPositionAndCar(rowElement, car);
         this.renderDriver(rowElement, car);
         this.renderLicenseAndIrating(rowElement, car);
@@ -454,16 +443,12 @@ class LeaderboardUpdater {
         currentElement.textContent = current_time;
         totalElement.textContent = total_time;
     }
-
-    showError(message) {
-        console.error('Error:', message);
-    }
 }
 
 // Initialize when page loads
 document.addEventListener('DOMContentLoaded', async () => {
     const updater = new LeaderboardUpdater();
-    await updater.applyCardOpacity();
+    await updater.init();
 });
 </script>
 {% endblock %}
