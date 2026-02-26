@@ -199,16 +199,20 @@ body.no-scroll {
   color: var(--info);
   cursor: pointer;
   position: relative;
-  font-size: 1.2rem;
-  bottom: -5px;
+}
+
+#settings-header .info-icon .material-symbols-outlined {
+  font-size: 1.0rem;
+  vertical-align: middle;
+  color: var(--info);
 }
 
 #settings-header .info-icon::before {
   content: attr(data-tooltip);
   position: absolute;
-  left: 100%;
+  left: 170%;
   height: 30px;
-  width: 90px;
+  width: 164px;
   top: 50%;
   transform: translateY(-50%);
   background: var(--bg-tertiary);
