@@ -442,7 +442,6 @@ class Leaderboard:
     def _get_best_lap_time(
         self,
         player_idx: int,
-        ctx: LeaderboardContext,
     ) -> float | None:
         """Return best lap time."""
         best_laps = self.irsdk.get_value("CarIdxBestLapTime")
