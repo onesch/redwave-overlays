@@ -355,7 +355,7 @@ class Leaderboard:
         self.irsdk = irsdk_service
         self.builder = CarDataBuilder(irsdk_service)
         self.neighbors = NeighborsService(self.builder)
-        self._last_session_num: int = None
+        self._last_session_num: int | None = None
 
     def _is_multiclass(self, drivers: list) -> bool:
         """Check if race contains multiple car classes."""
