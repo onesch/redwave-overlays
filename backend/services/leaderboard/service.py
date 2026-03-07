@@ -463,7 +463,7 @@ class Leaderboard:
     ) -> float:
         """Returns best or estimated lap time."""
 
-        best_lap = self._get_best_lap_time(player_idx, ctx)
+        best_lap = self._get_best_lap_time(player_idx)
         if best_lap is not None:
             return best_lap
 
