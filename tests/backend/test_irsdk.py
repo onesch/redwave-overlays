@@ -23,7 +23,7 @@ def test_is_connected_true(mock_irsdk_service):
 
 
 def test_get_value_existing(mock_irsdk_service):
-    assert mock_irsdk_service.get_value("Speed") == 10.0
+    assert mock_irsdk_service.get_value("Speed") == pytest.approx(10.0)
 
 
 @pytest.mark.parametrize(
