@@ -294,11 +294,13 @@ class NeighborsService:
                 continue
 
             lap_diff = ctx.laps_started[idx] - ctx.laps_started[player_idx]
-            car_data["lap_status"] = (
-                "ahead_lap"
-                if lap_diff > 0
-                else "behind_lap" if lap_diff < 0 else None
-            )
+
+            if lap_diff > 0:
+                car_data["lap_status"] = "ahead_lap"
+            elif lap_diff < 0:
+                car_data["lap_status"] = "behind_lap"
+            else:
+                car_data["lap_status"] = None
 
             if 0 < gap["gap_pct"] <= 0.5:
                 ahead.append({"car": car_data, **gap})
