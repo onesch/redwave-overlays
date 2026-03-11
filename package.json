@@ -22,7 +22,7 @@
   "devDependencies": {
     "concurrently": "^9.2.1",
     "cross-env": "^10.0.0",
-    "electron": "^28.1.0"
+    "electron": "^41.0.0"
   },
   "author": "onesch",
   "license": "GPL-3.0",
