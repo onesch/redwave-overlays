@@ -96,7 +96,7 @@ def test_get_changelog_images_success(fake_changelog_img_path):
 
 
 def test_get_overlays_card_data_no_selection(fake_cards_file):
-    overlays, selected_info, card_data = data_loader.get_overlays_card_data(
+    _, selected_info, card_data = data_loader.get_overlays_card_data(
         None
     )
 
