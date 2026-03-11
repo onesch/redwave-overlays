@@ -2,7 +2,7 @@ const { app } = require('electron');
 
 const { createMainWindow } = require('./windows/mainWindow');
 const { createOverlay } = require('./windows/overlayWindow');
-const { loadSettings } = require('./utils/overlay_settings');
+const { loadSettings } = require('./utils/overlays/overlay_settings');
 const overlaysConfig = require('./windows/overlays_config');
 const { startBackend, stopBackend } = require('./utils/backendManager');
 

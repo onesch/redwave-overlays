@@ -1,4 +1,4 @@
-const overlayConfig = require('../windows/overlays_config');
+const overlayConfig = require('../../windows/overlays_config');
 
 // Return base values ​​from baseSize
 function resolveBaseSize(overlayName, trackType) {
