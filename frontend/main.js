@@ -78,4 +78,7 @@ app.on('will-quit', shutdown);
 process.on('exit', shutdown);
 process.on('SIGINT', shutdown);
 process.on('SIGTERM', shutdown);
-process.on('uncaughtException', shutdown);
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught Exception:', err);
+  shutdown();
+});

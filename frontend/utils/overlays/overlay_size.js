@@ -18,6 +18,9 @@ function resolveBaseSize(overlayName, trackType) {
 function applyOverlaySize(
   win, overlayName, zoomFactor, trackType, animate = false
 ) {
+  // Dont touch the UI if there is no window.
+  if (!win || win.isDestroyed()) return;
+
   const baseSize = resolveBaseSize(overlayName, trackType);
   if (!baseSize) return;
 

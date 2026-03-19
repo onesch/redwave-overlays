@@ -2,9 +2,7 @@ const { registerOverlaySetting } = require('./base_handler');
 const { loadSettings } = require('./overlay_settings');
 const { applyOverlaySize } = require('./overlay_size');
 const { getTrackType } = require('./track_type');
-
-// In-memory cache of current zoom factors.
-const currentZoomFactors = {};
+const { currentZoomFactors } = require('./zoom_store');
 
 // Register IPC handlers for managing overlay zoom.
 function registerZoomHandlers(overlays) {
@@ -65,5 +63,4 @@ module.exports = {
   applySavedZoom,
   registerZoomHandlers,
   clearZoomCache,
-  currentZoomFactors,
 };
