@@ -1,7 +1,7 @@
 const { ipcMain } = require('electron');
-const { resetSettings } = require('../utils/overlay_settings');
+const { resetSettings } = require('../utils/overlays/overlay_settings');
 const { overlays } = require('../windows/overlayWindow');
-const { clearZoomCache } = require('../utils/overlay_zoom');
+const { clearZoomCache } = require('../utils/overlays/zoom_range');
 
 function registerSettingsEvents() {
   ipcMain.on('reset-overlay-settings', () => {

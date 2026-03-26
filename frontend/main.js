@@ -2,18 +2,16 @@ const { app } = require('electron');
 
 const { createMainWindow } = require('./windows/mainWindow');
 const { createOverlay } = require('./windows/overlayWindow');
-const { loadSettings } = require('./utils/overlay_settings');
+const { loadSettings } = require('./utils/overlays/overlay_settings');
 const overlaysConfig = require('./windows/overlays_config');
 const { startBackend, stopBackend } = require('./utils/backendManager');
 
-const registerRadarEvents = require('./ipc/RadarEvents');
-const registerLeaderboardEvents = require('./ipc/LeaderboardEvents');
-const registerTrackMapEvents = require('./ipc/TrackMapEvents');
+const { registerAllOverlayEvents } = require('./ipc/OverlayEvents');
 const registerSettingsEvents = require('./ipc/SettingsEvents');
 
 let mainWindow = null;
 
-// Launches overlays that have AutoStart enabled.
+// Launches overlays that have AutoStart enabled
 function autoStartOverlays() {
   const settings = loadSettings();
 
@@ -38,11 +36,11 @@ async function createWindow() {
 
   mainWindow = createMainWindow();
 
-  // Register IPC event handlers for each overlay
-  registerRadarEvents();
-  registerLeaderboardEvents();
+  // Registers IPC events for all overlays
+  registerAllOverlayEvents();
+
+  // Registers IPC event for reset overlay settings
   registerSettingsEvents();
-  registerTrackMapEvents();
 
   // Open overlays marked as auto-start in settings
   autoStartOverlays();
@@ -80,4 +78,7 @@ app.on('will-quit', shutdown);
 process.on('exit', shutdown);
 process.on('SIGINT', shutdown);
 process.on('SIGTERM', shutdown);
-process.on('uncaughtException', shutdown);
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught Exception:', err);
+  shutdown();
+});

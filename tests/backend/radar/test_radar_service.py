@@ -17,8 +17,8 @@ def test_snapshot_default(mock_service, mock_ctx):
     ctx = mock_ctx()
     snapshot = mock_service._build_snapshot(ctx)
     assert snapshot["status"] == "ok"
-    assert snapshot["ahead_m"] == 5.0
-    assert snapshot["behind_m"] == 6.0
+    assert snapshot["ahead_m"] == pytest.approx(5.0)
+    assert snapshot["behind_m"] == pytest.approx(6.0)
     assert snapshot["ahead_severity"] == "yellow"
     assert snapshot["behind_severity"] == "yellow"
     assert snapshot["left"] is None

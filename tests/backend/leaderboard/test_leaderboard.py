@@ -1,5 +1,7 @@
 from unittest.mock import MagicMock
 
+import pytest
+
 from backend.services.leaderboard.service import (
     Leaderboard,
     LeaderboardContext,
@@ -10,15 +12,15 @@ def test_get_session_info_returns_expected(mock_values, mock_ctx):
     lb = Leaderboard(mock_values())
     data = lb.get_session_info(player_idx=0, ctx=mock_ctx)
     assert data["session_laps"] == 10
-    assert data["player_lap_time"] == 11.1
+    assert data["player_lap_time"] == pytest.approx(11.1)
 
 
 def test_get_car_lap_time_returns_fastest_or_est(mock_values, mock_ctx):
     ctx = mock_ctx()
     lb = Leaderboard(mock_values())
-    assert lb.get_car_lap_time(0, ctx) == 11.1
-    assert lb.get_car_lap_time(1, ctx) == 22.2
-    assert lb.get_car_lap_time(2, ctx) == 80.0
+    assert lb.get_car_lap_time(0, ctx) == pytest.approx(11.1)
+    assert lb.get_car_lap_time(1, ctx) == pytest.approx(22.2)
+    assert lb.get_car_lap_time(2, ctx) == pytest.approx(80.0)
 
 
 def test_get_session_time_formats(mock_service):
@@ -66,14 +68,14 @@ def test_leaderboard_no_drivers_returns_error(irsdk_mock_factory):
     mock_service = Leaderboard(irsdk)
 
     result = mock_service.get_leaderboard_snapshot()
-    assert result == {
-        "status": "waiting",
-        "player": None,
-        "cars": [],
-        "neighbors": {"ahead": [], "behind": []},
-        "leaderboard_data": None,
-        "multiclass": False,
-    }
+
+    assert result["status"] == "waiting"
+    assert result["player"] is None
+    assert result["cars"] == []
+    assert result["neighbors"]["ahead"] == []
+    assert result["neighbors"]["behind"] == []
+    assert result["leaderboard_data"] is None
+    assert result["multiclass"] is False
 
 
 def test_is_multiclass_returns_false_for_single_class(mock_service, mock_ctx):
@@ -96,13 +98,13 @@ def test_get_estimated_lap_time_invalid_values(mock_service, mock_ctx):
     assert mock_service._get_estimated_lap_time(1, ctx) is None
 
 
-def test_get_best_lap_time_invalid_values(mock_values, mock_ctx):
+def test_get_best_lap_time_invalid_values(mock_values):
     mock_values.get_value = lambda key: [0, "abc", None]
     mock_service = Leaderboard(mock_values)
-    ctx = mock_ctx()
-    assert mock_service._get_best_lap_time(0, ctx) is None
-    assert mock_service._get_best_lap_time(1, ctx) is None
-    assert mock_service._get_best_lap_time(2, ctx) is None
+
+    assert mock_service._get_best_lap_time(player_idx=0) is None
+    assert mock_service._get_best_lap_time(player_idx=1) is None
+    assert mock_service._get_best_lap_time(player_idx=2) is None
 
 
 def test_calculate_session_time_unlimited_laps(mock_service):
@@ -184,7 +186,8 @@ def test_empty_snapshot_structure(mock_service):
     assert snapshot["status"] == "waiting"
     assert snapshot["player"] is None
     assert snapshot["cars"] == []
-    assert snapshot["neighbors"] == {"ahead": [], "behind": []}
+    assert snapshot["neighbors"]["ahead"] == []
+    assert snapshot["neighbors"]["behind"] == []
     assert snapshot["leaderboard_data"] is None
     assert snapshot["multiclass"] is False
 

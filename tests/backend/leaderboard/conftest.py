@@ -1,4 +1,5 @@
 import pytest
+from typing import Callable
 
 from backend.services.leaderboard.service import (
     CarDataBuilder,
@@ -9,16 +10,16 @@ from backend.services.leaderboard.service import (
 
 
 @pytest.fixture
-def mock_service(mock_values: dict) -> Leaderboard:
+def mock_service(mock_values: Callable) -> Leaderboard:
     """
-    Returns the TrackMapService initialized with mock values.
+    Returns the Leaderboard initialized with mock values.
     """
 
     return Leaderboard(mock_values())
 
 
 @pytest.fixture
-def mock_builder(mock_values: dict) -> CarDataBuilder:
+def mock_builder(mock_values: Callable) -> CarDataBuilder:
     """
     Returns the CarDataBuilder initialized with mock values.
     """
@@ -36,7 +37,7 @@ def mock_neighbors(mock_builder: CarDataBuilder) -> NeighborsService:
 
 
 @pytest.fixture
-def mock_ctx(mock_values: dict) -> LeaderboardContext:
+def mock_ctx(mock_values: Callable) -> LeaderboardContext:
     """
     Returns the LeaderboardContext with mocked data from mock_values fixture.
     """

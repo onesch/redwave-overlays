@@ -78,6 +78,9 @@ def mock_values(irsdk_mock_factory) -> dict:
         "WeekendInfo": {
             "SessionID": 1234567890,
             "SessionNum": 0,
+            "TrackID": 123,
+            "TrackName": "Test Track",
+            "TrackDisplayShortName": "test_track",
         }
     }
     return irsdk_mock_factory(values)

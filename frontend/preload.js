@@ -8,7 +8,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // Zoom
   setOverlayZoom: (overlayName, zoomFactor) =>
-    ipcRenderer.send('set-overlay-zoom', { overlayName, zoomFactor }),
+    ipcRenderer.send('set-overlay-zoom', { overlayName, value: zoomFactor }),
   getOverlayZoom: (overlayName) =>
     ipcRenderer.invoke('get-overlay-zoom', overlayName),
 

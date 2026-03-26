@@ -294,11 +294,13 @@ class NeighborsService:
                 continue
 
             lap_diff = ctx.laps_started[idx] - ctx.laps_started[player_idx]
-            car_data["lap_status"] = (
-                "ahead_lap"
-                if lap_diff > 0
-                else "behind_lap" if lap_diff < 0 else None
-            )
+
+            if lap_diff > 0:
+                car_data["lap_status"] = "ahead_lap"
+            elif lap_diff < 0:
+                car_data["lap_status"] = "behind_lap"
+            else:
+                car_data["lap_status"] = None
 
             if 0 < gap["gap_pct"] <= 0.5:
                 ahead.append({"car": car_data, **gap})
@@ -355,7 +357,7 @@ class Leaderboard:
         self.irsdk = irsdk_service
         self.builder = CarDataBuilder(irsdk_service)
         self.neighbors = NeighborsService(self.builder)
-        self._last_session_num: int = None
+        self._last_session_num: int | None = None
 
     def _is_multiclass(self, drivers: list) -> bool:
         """Check if race contains multiple car classes."""
@@ -442,7 +444,6 @@ class Leaderboard:
     def _get_best_lap_time(
         self,
         player_idx: int,
-        ctx: LeaderboardContext,
     ) -> float | None:
         """Return best lap time."""
         best_laps = self.irsdk.get_value("CarIdxBestLapTime")
@@ -464,7 +465,7 @@ class Leaderboard:
     ) -> float:
         """Returns best or estimated lap time."""
 
-        best_lap = self._get_best_lap_time(player_idx, ctx)
+        best_lap = self._get_best_lap_time(player_idx)
         if best_lap is not None:
             return best_lap
 

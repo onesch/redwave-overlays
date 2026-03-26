@@ -2,12 +2,12 @@ const { app, BrowserWindow } = require('electron');
 const path = require('path');
 const isDev = process.env.NODE_ENV === "development";
 const { protectWindowShortcuts, disableZoomShortcuts, registerOverlayMoveShortcuts } = require('../utils/keyboard_protection');
-const { applySavedZoom, registerZoomHandlers } = require('../utils/overlay_zoom');
-const { applySavedPosition, registerPositionHandlers, watchOverlayPosition } = require('../utils/overlay_position');
-const { registerOverlayOpacityHandlers } = require('../utils/overlay_card_opacity');
-const { registerOverlayTrackTypeHandlers } = require('../utils/overlay_track_type');
-const { registerOverlayDisplayModeHandlers } = require('../utils/overlay_display_mode');
-const { registerOverlayAutoStartModeHandlers } = require('../utils/overlay_auto_start_mode');
+const { applySavedZoom, registerZoomHandlers } = require('../utils/overlays/zoom_range');
+const { applySavedPosition, registerPositionHandlers, watchOverlayPosition } = require('../utils/overlays/overlay_position');
+const { registerOverlayOpacityHandlers } = require('../utils/overlays/card_opacity');
+const { registerOverlayTrackTypeHandlers } = require('../utils/overlays/track_type');
+const { registerOverlayDisplayModeHandlers } = require('../utils/overlays/display_mode');
+const { registerOverlayAutoStartModeHandlers } = require('../utils/overlays/auto_start_mode');
 
 const overlays = {};
 let overlayCount = 0;

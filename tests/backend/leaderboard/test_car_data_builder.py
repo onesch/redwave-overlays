@@ -59,14 +59,20 @@ def test_get_first_name_variants(mock_values, username, expected):
     [
         (0.4567, 0.457),
         (0.0, 0.0),
-        (-0.1, None),
-        (None, None),
-        ("not_float", None),
     ],
 )
-def test_format_lap_dist_variants(mock_builder, mock_ctx, lap_dist, expected):
+def test_format_lap_dist_valid(mock_builder, mock_ctx, lap_dist, expected):
     ctx = mock_ctx(lap_dist_pct=[lap_dist])
-    assert mock_builder._format_lap_dist(0, ctx) == expected
+    assert mock_builder._format_lap_dist(0, ctx) == pytest.approx(expected)
+
+
+@pytest.mark.parametrize(
+    "lap_dist",
+    [-0.1, None, "not_float"],
+)
+def test_format_lap_dist_invalid(mock_builder, mock_ctx, lap_dist):
+    ctx = mock_ctx(lap_dist_pct=[lap_dist])
+    assert mock_builder._format_lap_dist(0, ctx) is None
 
 
 def test_resolve_position_multiclass_zero_and_negative(mock_builder, mock_ctx):
@@ -138,7 +144,7 @@ def test_builder_returns_valid_data(mock_builder, mock_ctx):
     assert result["irating"] == 2000
     assert result["license"] == "A 4.99"
     assert result["car_class_color"] == 16711680
-    assert result["lap_dist_pct"] == 0.6
+    assert result["lap_dist_pct"] == pytest.approx(0.6)
 
 
 def test_get_last_pit_lap_behavior(mock_builder):

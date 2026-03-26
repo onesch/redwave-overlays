@@ -4,7 +4,8 @@ import pytest
 def test_calc_gap_basic(mock_neighbors):
     # gap_pct = (0.5 - 0.2) % 1.0 = 0.3
     result = mock_neighbors._calc_gap(my_dist=0.2, dist=0.5, est_lap_time=90.0)
-    assert result == {"gap_pct": 0.3, "gap_sec": 27.0}
+    assert result["gap_pct"] == pytest.approx(0.3)
+    assert result["gap_sec"] == pytest.approx(27.0)
 
 
 @pytest.mark.parametrize(
@@ -64,10 +65,10 @@ def test_format_neighbors_rounding(mock_neighbors):
         {"car": {"name": "Driver3"}, "gap_pct": -0.98765, "gap_sec": -98.765}
     ]
     formatted = mock_neighbors._format_neighbors(ahead, behind, limit=1)
-    assert formatted["ahead"][0]["gap_pct"] == 0.123
-    assert formatted["ahead"][0]["gap_sec"] == 12.35
-    assert formatted["behind"][0]["gap_pct"] == 0.988
-    assert formatted["behind"][0]["gap_sec"] == 98.77
+    assert formatted["ahead"][0]["gap_pct"] == pytest.approx(0.123)
+    assert formatted["ahead"][0]["gap_sec"] == pytest.approx(12.35)
+    assert formatted["behind"][0]["gap_pct"] == pytest.approx(0.988)
+    assert formatted["behind"][0]["gap_sec"] == pytest.approx(98.77)
 
 
 def test_get_neighbors_returns_expected(mock_neighbors, mock_ctx):

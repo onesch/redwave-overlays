@@ -1,3 +1,6 @@
+import pytest
+
+
 # --- Positive tests ---
 
 
@@ -6,12 +9,10 @@ def test_build_returns_car_data(mock_builder, mock_ctx):
 
     car = mock_builder.build(0, ctx)
 
-    assert car == {
-        "car_idx": 0,
-        "car_number": "12",
-        "lap_dist_pct": 0.3,
-        "is_in_pitroad": False,
-    }
+    assert car["car_idx"] == 0
+    assert car["car_number"] == "12"
+    assert car["lap_dist_pct"] == pytest.approx(0.3)
+    assert car["is_in_pitroad"] is False
 
 
 def test_is_pace_car_case_insensitive(mock_builder):
