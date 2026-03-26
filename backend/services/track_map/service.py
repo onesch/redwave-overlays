@@ -7,6 +7,11 @@ from backend.services.base import (
     BaseCarBuilder,
     SessionStateContext,
 )
+from backend.utils.track_url_generation import (
+    DIRECTION_OVERRIDES,
+    make_track_svg_url,
+    fetch_svg,
+)
 
 
 @dataclass
@@ -40,7 +45,24 @@ class TrackMapService(BaseService):
 
     def __init__(self, irsdk_service):
         self.session_tracker = SessionTracker()
+        self._cached_track_svg: str | None = None
+        self._cached_start_finish_svg: str | None = None
+        self._cached_track_id: int | None = None
         super().__init__(irsdk_service, TrackMapCarBuilder())
+
+    def _update_track_svgs(
+        self, track_id: str, track_name: str, track_short_name: str
+    ):
+        track_url = make_track_svg_url(
+            track_id, track_name, track_short_name, svg_type="active"
+        )
+        start_finish_url = make_track_svg_url(
+            track_id, track_name, track_short_name, svg_type="start-finish"
+        )
+
+        self._cached_track_svg = fetch_svg(track_url, extract_first=True)
+        self._cached_start_finish_svg = fetch_svg(start_finish_url)
+        self._cached_track_id = track_id
 
     def _build_context(self) -> TrackMapContext | None:
         """
@@ -54,10 +76,12 @@ class TrackMapService(BaseService):
         if not drivers:
             return None
 
-        multiclass = (
-            len({d.get("CarClassID") for d in drivers if d.get("CarClassID")})
-            > 1
-        )
+        class_ids: set = {
+            driver.get("CarClassID")
+            for driver in drivers
+            if driver.get("CarClassID")
+        }
+        multiclass: bool = len(class_ids) > 1
 
         return TrackMapContext(
             drivers=drivers,
@@ -102,9 +126,19 @@ class TrackMapService(BaseService):
                 }
             )
 
+        track_id = weekend_info.get("TrackID")
+        track_name = weekend_info.get("TrackName")
+        track_short_name = weekend_info.get("TrackDisplayShortName")
+
+        if is_session_changed or track_id != self._cached_track_id:
+            self._update_track_svgs(track_id, track_name, track_short_name)
+
         return {
             "status": "ok",
             "player_id": player_idx,
             "is_session_changed": is_session_changed,
             "cars": cars,
+            "track_svg": self._cached_track_svg,
+            "start_finish_svg": self._cached_start_finish_svg,
+            "direction_override": DIRECTION_OVERRIDES.get(track_id),
         }

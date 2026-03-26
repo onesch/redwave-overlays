@@ -2,7 +2,7 @@ const { registerOverlaySetting } = require('./base_handler');
 const { loadSettings } = require('./overlay_settings');
 const { applyOverlaySize } = require('./overlay_size');
 const { getTrackType } = require('./track_type');
-const { currentZoomFactors } = require('./zoom_store');
+const { currentZoomFactors, currentTrackTypes } = require('./zoom_store');
 
 // Register IPC handlers for managing overlay zoom.
 function registerZoomHandlers(overlays) {
@@ -22,13 +22,14 @@ function registerZoomHandlers(overlays) {
     afterSet: ({ overlay, overlayName, value, settings }) => {
       currentZoomFactors[overlayName] = value;
 
-      applyOverlaySize(
-        overlay,
-        overlayName,
-        value,
-        getTrackType(overlayName, settings),
-        true
-      );
+      // Resolve the current track type from in-memory cache first so
+      // we always use the live value, not a potentially stale disk read.
+      const trackType =
+        overlayName === 'track-map'
+          ? (currentTrackTypes[overlayName] ?? getTrackType(overlayName, settings))
+          : undefined;
+
+      applyOverlaySize(overlay, overlayName, value, trackType, true);
     },
   });
 }
@@ -42,13 +43,15 @@ function applySavedZoom(overlay, overlayName) {
 
     currentZoomFactors[overlayName] = zoomFactor;
 
-    applyOverlaySize(
-      overlay,
-      overlayName,
-      zoomFactor,
-      getTrackType(overlayName, settings),
-      false
-    );
+    // Also prime the track-type cache from disk on first load so that
+    // subsequent zoom changes have a valid type to work with.
+    if (overlayName === 'track-map' && !currentTrackTypes[overlayName]) {
+      currentTrackTypes[overlayName] =
+        settings[overlayName]?.TrackType ?? 'linear';
+    }
+
+    const trackType = getTrackType(overlayName, settings);
+    applyOverlaySize(overlay, overlayName, zoomFactor, trackType, false);
   });
 }
 
@@ -56,6 +59,9 @@ function applySavedZoom(overlay, overlayName) {
 function clearZoomCache() {
   for (const key in currentZoomFactors) {
     delete currentZoomFactors[key];
+  }
+  for (const key in currentTrackTypes) {
+    delete currentTrackTypes[key];
   }
 }
 

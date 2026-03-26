@@ -28,7 +28,8 @@
     "icon": "/static/images/track_map/icon.png",
     "images": {
       "linear": "/static/images/track_map/linear.png",
-      "circle": "/static/images/track_map/circle.png"
+      "circle": "/static/images/track_map/circle.png",
+      "track": "/static/images/track_map/track.png"
     },
     "url": "/overlays/track_map"
   }
