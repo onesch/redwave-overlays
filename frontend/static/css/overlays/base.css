@@ -48,5 +48,5 @@ body {
     font-weight: 400;
     color: var(--m3-on-surface);
     -webkit-app-region: drag;
-    border: 2px solid green;
+    /* border: 2px solid green; */
  }
