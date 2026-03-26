@@ -38,17 +38,18 @@ function registerOverlaySetting({
     // Persist updated settings to disk.
     saveSettings(settings);
 
+    // Optional hook for additional side effects after setting update.
+    // Run afterSet before overlay check so in-memory state (e.g. cache)
+    if (afterSet) {
+      afterSet({ overlay: overlays[overlayName], overlayName, value, settings });
+    }
+
     const overlay = overlays[overlayName];
     if (!overlay || overlay.isDestroyed()) return;
 
     // Notify renderer about the updated value if needed.
     if (updateEvent) {
       overlay.webContents.send(updateEvent, value);
-    }
-
-    // Optional hook for additional side effects after setting update.
-    if (afterSet) {
-      afterSet({ overlay, overlayName, value, settings });
     }
   });
 }

@@ -1,88 +1,125 @@
 @import url('base.css');
 
+/* ── Container ── */
 #track-container {
   position: relative;
-  aspect-ratio: 1 / 1;
+  width: 100%;
+  margin: 0 auto;
+}
+
+body[data-track-type="circle"] #track-container {
+  max-width: 300px;
+}
+
+body[data-track-type="linear"] #track-container {
+  max-width: 300px;
+}
+
+body[data-track-type="track"] #track-container {
+  max-width: 100%;
 }
 
 #track-line {
   position: absolute;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  inset: 0;
 }
+
 #track-line svg {
   width: 100%;
   height: 100%;
 }
 
-.track.outer {
-  stroke: rgba(25, 25, 25, 0.50);
-  stroke-linecap: round;
-  fill: none;
+/* Circle track line */
+#track-line.circle::before {
+  display: none;
 }
 
-.track.surface {
-  stroke: rgba(235, 235, 235, 0.8);
-  stroke-linecap: round;
-  fill: none;
+#track-line.circle::after {
+  content: '';
+  position: absolute;
+  inset: 15%;
+  border-radius: 50%;
+  border: 6px solid var(--track-surface);
+  box-shadow:
+      0 0 0 2.5px var(--track-outer),
+      inset 0 0 0 2.5px var(--track-outer);
 }
 
-.track.finish {
-  fill: #ff3b3b;
+/* Finish line */
+.track-finish-line {
+  position: absolute;
+  left: 50%;
+  bottom: 12.5%;
+  width: 3px;
+  height: 20px;
+  background: var(--track-finish);
+  border-radius: 2px;
+  z-index: 2;
 }
 
-/* Circle */
-#track-line.circle {
+/* Linear track line */
+#track-line.linear::before {
+  content: '';
+  position: absolute;
+  left: 50%;
   top: 50%;
-  width: 300px;
-  height: 300px;
+  width: 100%;
+  height: 10px;
+  transform: translate(-50%, -50%);
+  background: var(--track-linear-bg);
+  border-radius: 5px;
+}
+#track-line.linear::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 98.7%;
+  height: 6px;
+  transform: translate(-50%, -50%);
+  background: var(--track-linear-line);
+  border-radius: 3px;
 }
 
-#track-line.circle .track.outer {
-  stroke-width: 12;
+/* SVG track line */
+#track-line svg .track.outer {
+  fill: none;
+  stroke: var(--track-outer);
+  stroke-width: 45;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+#track-line svg .track.surface {
+  fill: none;
+  stroke: var(--track-surface);
+  stroke-width: 25;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
-#track-line.circle .track.surface {
-  stroke-width: 8;
-}
-
-/* Linear */
-#track-line.linear {
-  top: 10%;
-  width: 300px;
-  height: 250px;
-}
-
-#track-line.linear .track.outer {
-  stroke-width: 6;
-}
-
-#track-line.linear .track.surface {
-  stroke-width: 4;
-}
-
-/* Car */
+/* ── Car dot ── */
 .track-map-car {
   --car-color: #999;
-
   position: absolute;
   width: 20px;
   height: 20px;
   border-radius: 50%;
   background-color: color-mix(in srgb, var(--car-color) 85%, black);
   border: 2px solid color-mix(in srgb, var(--car-color) 40%, black);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5), 
-              inset 0 -2px 2px rgba(0, 0, 0, 0.3);
-  color: #fff;
+  box-shadow: 
+    0 2px 6px var(--car-shadow), 
+    inset 0 -2px 2px var(--car-shadow-inner);
+  color: var(--car-text);
   font-size: 14px;
   font-weight: bold;
   text-align: center;
   line-height: 20px;
   transform: translate(-50%, -50%);
   transition: top 0.1s linear, left 0.1s linear;
+    z-index: 3;
 }
 
-/* Player car */
+/* Player indicator arrow */
 .track-map-car.player::after {
   content: '';
   position: absolute;
@@ -92,4 +129,5 @@
   border-left: 6px solid transparent;
   border-right: 6px solid transparent;
   border-top: 8px solid #fff;
+  z-index: 3;
 }

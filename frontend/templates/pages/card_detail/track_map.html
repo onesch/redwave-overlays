@@ -8,6 +8,7 @@
   <div class="setting-value button-section">
     <button id="linearBtn" class="active">linear</button>
     <button id="circleBtn">circle</button>
+    <button id="trackBtn">track</button>
   </div>
 </div>
 {% endblock %}
@@ -20,6 +21,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const linearBtn = document.getElementById('linearBtn');
     const circleBtn = document.getElementById('circleBtn');
+    const trackBtn = document.getElementById('trackBtn');
     const trackImg = document.getElementById('trackImage');
 
     document.getElementById('OpenBtn')?.addEventListener('click', () => {
@@ -29,25 +31,33 @@ document.addEventListener('DOMContentLoaded', async () => {
     const savedTrackType = await window.electronAPI.getTrackType(overlayName);
     applyTrackType(savedTrackType || 'linear');
 
+    linearBtn.addEventListener('click', () => {
+        window.electronAPI.setTrackType(overlayName, 'linear');
+        applyTrackType('linear');
+    });
+
     circleBtn.addEventListener('click', () => {
         window.electronAPI.setTrackType(overlayName, 'circle');
         applyTrackType('circle');
     });
 
-    linearBtn.addEventListener('click', () => {
-        window.electronAPI.setTrackType(overlayName, 'linear');
-        applyTrackType('linear');
+    trackBtn.addEventListener('click', () => {
+        window.electronAPI.setTrackType(overlayName, 'track');
+        applyTrackType('track');
     });
 
     function applyTrackType(type) {
         document.body.dataset.TrackType = type;
         linearBtn.classList.toggle('active', type === 'linear');
         circleBtn.classList.toggle('active', type === 'circle');
+        trackBtn.classList.toggle('active', type === 'track');
 
         if (type === 'linear') {
             trackImg.src = trackImg.dataset.linear;
         } else if (type === 'circle') {
             trackImg.src = trackImg.dataset.circle;
+        } else if (type === 'track') {
+            trackImg.src = trackImg.dataset.track;
         }
     }
 });

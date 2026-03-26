@@ -3,8 +3,9 @@ module.exports = {
   'leaderboard': { baseSize: { width: 450, height: 300 } },
   'track-map': { 
     baseSize: {
-      circle: { width: 240, height: 240 },
       linear: { width: 350, height: 100 },
+      circle: { width: 240, height: 240 },
+      track: { width: 340, height: 340 },
     }
   },
 };
