@@ -92,9 +92,13 @@ class TrackMapUpdater extends BaseUpdater {
 
             const outer = el.cloneNode(true);
             outer.setAttribute('class', 'track outer');
+            outer.style.fill = 'none';
+            outer.style.stroke = '';
 
             const surface = el.cloneNode(true);
             surface.setAttribute('class', 'track surface');
+            surface.style.fill = 'none';
+            surface.style.stroke = '';
 
             group.appendChild(outer);
             group.appendChild(surface);
