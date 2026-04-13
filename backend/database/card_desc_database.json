@@ -24,7 +24,7 @@
   {
     "key": "track_map",
     "title": "Track map",
-    "desc": "Shows in real time the current positions of all cars on the track, displayed as either a linear or circle track.",
+    "desc": "Shows in real time the current positions of all cars on the track, displayed as either a linear, circle track or as real svg curves.",
     "icon": "/static/images/track_map/icon.png",
     "images": {
       "linear": "/static/images/track_map/linear.png",
@@ -32,5 +32,16 @@
       "track": "/static/images/track_map/track.png"
     },
     "url": "/overlays/track_map"
+  },
+
+  {
+    "key": "telemetry",
+    "title": "Telemetry",
+    "desc": "Shows live pedal input for throttle and brake in two vertical columns, which allows you to improve control and consistency.",
+    "icon": "/static/images/telemetry/icon.png",
+    "images": {
+      "main": "/static/images/telemetry/main.png"
+    },
+    "url": "/overlays/telemetry"
   }
 ]

@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const trackImg = document.getElementById('trackImage');
 
     document.getElementById('OpenBtn')?.addEventListener('click', () => {
-        window.electronAPI.openTrackMap();
+        window.electronAPI.openOverlay(overlayName);
     });
 
     const savedTrackType = await window.electronAPI.getTrackType(overlayName);

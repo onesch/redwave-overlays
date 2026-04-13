@@ -1,0 +1,173 @@
+{% extends "base/base_overlay.html" %}
+
+{% block title %}Telemetry{% endblock %}
+
+{% block content %}
+<div class="telemetry-overlay">
+  <div class="telemetry-scope">
+    <canvas id="telemetry-canvas" class="telemetry-canvas"></canvas>
+  </div>
+  <div class="telemetry-pedals">
+    <div class="telemetry-pedal-col">
+      <div class="telemetry-gauge">
+        <div class="gauge-zone zone-peak">
+          <div id="brake-fill-peak" class="telemetry-fill brk"></div>
+        </div>
+        <div class="gauge-zone zone-mid">
+          <div id="brake-fill-mid" class="telemetry-fill brk"></div>
+        </div>
+        <div class="gauge-zone zone-dead">
+          <div id="brake-fill-dead" class="telemetry-fill brk"></div>
+        </div>
+        <div id="brake-value" class="telemetry-pct brk">0</div>
+      </div>
+    </div>
+    <div class="telemetry-pedal-col">
+      <div class="telemetry-gauge">
+        <div class="gauge-zone zone-peak">
+          <div id="throttle-fill-peak" class="telemetry-fill thr"></div>
+        </div>
+        <div class="gauge-zone zone-mid">
+          <div id="throttle-fill-mid" class="telemetry-fill thr"></div>
+        </div>
+        <div class="gauge-zone zone-dead">
+          <div id="throttle-fill-dead" class="telemetry-fill thr"></div>
+        </div>
+        <div id="throttle-value" class="telemetry-pct thr">0</div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+class TelemetryUpdater extends BaseUpdater {
+  constructor() {
+    super({ endpoint: '/api/telemetry', updateInterval: 50, overlayName: 'telemetry' });
+    this.HIST = 200;
+    this.thrHistory = new Array(this.HIST).fill(0);
+    this.brkHistory = new Array(this.HIST).fill(0);
+  }
+
+  async init() {
+    await this.initScope();
+    await super.init();
+  }
+
+  async initScope() {
+    this.canvas = document.getElementById('telemetry-canvas');
+    this.ctx = this.canvas.getContext('2d');
+
+    const style = getComputedStyle(document.documentElement);
+    this.thrColor = style.getPropertyValue('--thr-color').trim() || '#31e36d';
+    this.brkColor = style.getPropertyValue('--brk-color').trim() || '#ff5a5a';
+
+    this.resizeScope = () => {
+      const r = this.canvas.parentElement.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+
+      this.scopeWidth = r.width;
+      this.scopeHeight = r.height;
+
+      this.canvas.width = Math.max(1, Math.floor(r.width * dpr));
+      this.canvas.height = Math.max(1, Math.floor(r.height * dpr));
+      this.canvas.style.width = `${r.width}px`;
+      this.canvas.style.height = `${r.height}px`;
+
+      this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      this.ctx.imageSmoothingEnabled = false;
+      this.ctx.lineCap = 'butt';
+      this.ctx.lineJoin = 'miter';
+    };
+
+    this.resizeScope();
+    window.addEventListener('resize', this.resizeScope);
+  }
+
+  async renderOverlay(data) {
+    const thr = Math.max(0, Math.min(1, Number(data.throttle) || 0));
+    const brk = Math.max(0, Math.min(1, Number(data.brake) || 0));
+
+    this.thrHistory.push(thr);
+    this.thrHistory.shift();
+    this.brkHistory.push(brk);
+    this.brkHistory.shift();
+
+    this.renderPedal('throttle', data.throttle, data.throttle_pct);
+    this.renderPedal('brake', data.brake, data.brake_pct);
+    this.drawScope();
+  }
+
+  renderPedal(type, rawValue, pctValue) {
+    const value = document.getElementById(`${type}-value`);
+    const fillPeak = document.getElementById(`${type}-fill-peak`);
+    const fillMid = document.getElementById(`${type}-fill-mid`);
+    const fillDead = document.getElementById(`${type}-fill-dead`);
+
+    const normalized = Math.max(0, Math.min(1, Number(rawValue) || 0));
+    const pct = normalized * 100;
+
+    const deadPct = (Math.min(pct, 1) / 1) * 100;
+    const midPct = pct <= 1 ? 0 : pct >= 99 ? 100 : ((pct - 1) / 98) * 100;
+    const peakPct = pct < 99 ? 0 : ((pct - 99) / 1) * 100;
+
+    fillDead.style.height = `${deadPct}%`;
+    fillMid.style.height = `${midPct}%`;
+    fillPeak.style.height = `${peakPct}%`;
+
+    const percent = Number.isFinite(pctValue) ? pctValue : pct;
+    const rounded = Math.round(percent);
+    value.textContent = (rounded === 0 || rounded === 100) ? '' : `${rounded}`;
+  }
+
+  drawScope() {
+    if (!this.canvas || !this.ctx) return;
+
+    const ctx = this.ctx;
+    const W = this.scopeWidth || this.canvas.clientWidth;
+    const H = this.scopeHeight || this.canvas.clientHeight;
+    const PAD = 2;
+    const step = W / (this.HIST - 1);
+    const px = (value) => Math.round(value) + 0.5;
+
+    ctx.clearRect(0, 0, W, H);
+
+    ctx.strokeStyle = 'rgba(255,255,255,0.10)';
+    ctx.lineWidth = 1;
+    [0.2, 0.4, 0.6, 0.8].forEach(level => {
+      const y = px(PAD + (H - PAD * 2) * (1 - level));
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(W, y);
+      ctx.stroke();
+    });
+
+    const drawTrace = (history, lineColor) => {
+      ctx.beginPath();
+      ctx.strokeStyle = lineColor;
+      ctx.lineWidth = 2;
+
+      // NOTE:
+      // Do not snap the moving trace to half-pixels.
+      // X half-pixel snapping with non-integer step introduces
+      // temporal quantization ("heat haze" shimmer) while scrolling left.
+      for (let i = 0; i < this.HIST; i++) {
+        const x = i * step;
+        const y = PAD + (H - PAD * 2) * (1 - history[i]);
+        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+    };
+
+    drawTrace(this.thrHistory, this.thrColor);
+    drawTrace(this.brkHistory, this.brkColor);
+  }
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+  const updater = new TelemetryUpdater();
+  await updater.init();
+});
+</script>
+{% endblock %}

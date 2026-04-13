@@ -2,9 +2,7 @@ const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('electronAPI', {
   // Overlays
-  openRadar: () => ipcRenderer.send('open-radar'),
-  openLeaderboard: () => ipcRenderer.send('open-leaderboard'),
-  openTrackMap: () => ipcRenderer.send('open-track-map'),
+  openOverlay: (overlayName) => ipcRenderer.send(`open-${overlayName}`),
 
   // Zoom
   setOverlayZoom: (overlayName, zoomFactor) =>
