@@ -4,36 +4,46 @@
 
 {% block content %}
 <div class="telemetry-overlay">
-  <div class="telemetry-scope">
-    <canvas id="telemetry-canvas" class="telemetry-canvas"></canvas>
+  <!-- header -->
+  <div class="telemetry-header">
+    <span id="brake-pct-header" class="header-pct brk">0</span>
+    <span id="throttle-pct-header" class="header-pct thr">0</span>
   </div>
-  <div class="telemetry-pedals">
-    <div class="telemetry-pedal-col">
-      <div class="telemetry-gauge">
-        <div class="gauge-zone zone-peak">
-          <div id="brake-fill-peak" class="telemetry-fill brk"></div>
-        </div>
-        <div class="gauge-zone zone-mid">
-          <div id="brake-fill-mid" class="telemetry-fill brk"></div>
-        </div>
-        <div class="gauge-zone zone-dead">
-          <div id="brake-fill-dead" class="telemetry-fill brk"></div>
-        </div>
-        <div id="brake-value" class="telemetry-pct brk">0</div>
-      </div>
+  <!-- body -->
+  <div class="telemetry-body">
+    <!-- pedal trace -->
+    <div class="telemetry-scope">
+      <canvas id="telemetry-canvas" class="telemetry-canvas"></canvas>
     </div>
-    <div class="telemetry-pedal-col">
-      <div class="telemetry-gauge">
-        <div class="gauge-zone zone-peak">
-          <div id="throttle-fill-peak" class="telemetry-fill thr"></div>
+    <!-- pedal col -->
+    <div class="telemetry-pedals">
+      <!-- brake -->
+      <div class="telemetry-pedal-col">
+        <div class="telemetry-gauge">
+          <div class="gauge-zone zone-peak">
+            <div id="brake-fill-peak" class="telemetry-fill brk"></div>
+          </div>
+          <div class="gauge-zone zone-mid">
+            <div id="brake-fill-mid" class="telemetry-fill brk"></div>
+          </div>
+          <div class="gauge-zone zone-dead">
+            <div id="brake-fill-dead" class="telemetry-fill brk"></div>
+          </div>
         </div>
-        <div class="gauge-zone zone-mid">
-          <div id="throttle-fill-mid" class="telemetry-fill thr"></div>
+      </div>
+      <!-- throttle -->
+      <div class="telemetry-pedal-col">
+        <div class="telemetry-gauge">
+          <div class="gauge-zone zone-peak">
+            <div id="throttle-fill-peak" class="telemetry-fill thr"></div>
+          </div>
+          <div class="gauge-zone zone-mid">
+            <div id="throttle-fill-mid" class="telemetry-fill thr"></div>
+          </div>
+          <div class="gauge-zone zone-dead">
+            <div id="throttle-fill-dead" class="telemetry-fill thr"></div>
+          </div>
         </div>
-        <div class="gauge-zone zone-dead">
-          <div id="throttle-fill-dead" class="telemetry-fill thr"></div>
-        </div>
-        <div id="throttle-value" class="telemetry-pct thr">0</div>
       </div>
     </div>
   </div>
@@ -100,7 +110,7 @@ class TelemetryUpdater extends BaseUpdater {
   }
 
   renderPedal(type, rawValue, pctValue) {
-    const value = document.getElementById(`${type}-value`);
+    const value = document.getElementById(`${type}-pct-header`);
     const fillPeak = document.getElementById(`${type}-fill-peak`);
     const fillMid = document.getElementById(`${type}-fill-mid`);
     const fillDead = document.getElementById(`${type}-fill-dead`);
@@ -118,7 +128,7 @@ class TelemetryUpdater extends BaseUpdater {
 
     const percent = Number.isFinite(pctValue) ? pctValue : pct;
     const rounded = Math.round(percent);
-    value.textContent = (rounded === 0 || rounded === 100) ? '' : `${rounded}`;
+    value.textContent = (rounded === 100) ? 'FL' : `${rounded}`;
   }
 
   drawScope() {
