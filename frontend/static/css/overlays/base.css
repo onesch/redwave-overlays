@@ -1,4 +1,7 @@
 :root {
+    /* Base colors */
+    --yellow-primary: #FFCC00;
+
     /* Leaderboard colors */
     --m3-surface-top: 28, 28, 37;
     --m3-surface-bottom: 20, 20, 30;
