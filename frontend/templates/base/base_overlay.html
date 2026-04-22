@@ -28,6 +28,7 @@
 
       async init() {
         await this.initDisplayMode();
+        await this.initBackgroundOpacity();
         await this.update();
 
         this.timerId = setInterval(() => {
@@ -73,6 +74,36 @@
 
       // Override in inherited class
       async renderOverlay(_data) {}
+
+      // Overlay container opacity logic
+      async initBackgroundOpacity() {
+        if (!this.overlayName) return;
+
+        // Set card transparency from the electronAPI
+        const opacity = await window.electronAPI.getOverlayBgOpacity?.(this.overlayName);
+        if (opacity != null) {
+          this.applyBackgroundOpacity(opacity);
+        }
+
+        // Real-time transparency update
+        window.electronAPI.onOverlayBgOpacityUpdate?.((value) => {
+          this.applyBackgroundOpacity(value);
+        });
+      }
+
+      applyBackgroundOpacity(value) {
+        const selector = this.getBackgroundOpacityTargetSelector();
+        if (!selector) return;
+
+        const target = document.querySelector(selector);
+        if (target) {
+          target.style.setProperty('--overlay-bg-opacity', value);
+        }
+      }
+
+      getBackgroundOpacityTargetSelector() {
+        return '.overlay-bg-opacity-target';
+      }
 
       // DisplayMode logic
       async initDisplayMode() {

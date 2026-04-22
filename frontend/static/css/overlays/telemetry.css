@@ -11,8 +11,8 @@
   border: 1px solid var(--m3-outline-variant);
   background: linear-gradient(
     to bottom,
-    rgba(var(--m3-surface-top), 0.8) 0%,
-    rgba(var(--m3-surface-bottom), 0.8) 100%
+    rgba(var(--m3-surface-top), var(--overlay-bg-opacity, 1)) 0%,
+    rgba(var(--m3-surface-bottom), var(--overlay-bg-opacity, 1)) 100%
   );
 }
 

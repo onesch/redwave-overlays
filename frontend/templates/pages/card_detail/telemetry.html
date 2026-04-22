@@ -3,6 +3,20 @@
 {% block title %}Overlays - {{ card_data.title }}{% endblock %}
 
 {% block additional_settings %}
+<div class="range-container">
+  <label for="opacityRange">
+    Opacity: <span id="opacityValue">1.0</span>
+  </label>
+  <input
+    id="opacityRange"
+    class="range-control"
+    type="range"
+    min="0"
+    max="1"
+    step="0.05"
+    value="1"
+  >
+</div>
 {% endblock %}
 
 {% block overlay_scripts %}
