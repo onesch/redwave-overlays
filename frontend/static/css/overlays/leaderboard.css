@@ -164,15 +164,11 @@
   align-items: center;
 }
 
-.pos-car-badge .car .class {
+.pos-car-badge .car {
   font-size: 10px;
   font-weight: 600;
   opacity: 0.9;
 }
-
-.hy { background: #ffb3b3; color: #5c2b2b; }
-.gt3 { background: #d8f2d2; color: #2b5c34; }
-.gt4 { background: #ffdd99; color: #7a4c0f; }
 
 .time {
   text-align: right;

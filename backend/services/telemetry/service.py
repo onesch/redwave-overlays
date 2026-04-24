@@ -12,6 +12,8 @@ class TelemetryContext:
 
     throttle: float
     brake: float
+    gear: int
+    speed_km: float
 
 
 class TelemetryService(BaseService):
@@ -25,13 +27,16 @@ class TelemetryService(BaseService):
 
         throttle = self.irsdk.get_value("Throttle")
         brake = self.irsdk.get_value("Brake")
-
-        if throttle is None and brake is None:
-            return None
+        speed_km = self.irsdk.get_speed_kmh()
+        gear = self.irsdk.get_value("Gear")
+        if not isinstance(gear, int):
+            gear = 0
 
         return TelemetryContext(
-            throttle=self._sanitize_value(throttle),
-            brake=self._sanitize_value(brake),
+            throttle=self._get_pedal_pct(throttle),
+            brake=self._get_pedal_pct(brake),
+            gear=gear,
+            speed_km=speed_km,
         )
 
     def _build_snapshot(self, ctx: TelemetryContext) -> dict[str, Any]:
@@ -41,10 +46,13 @@ class TelemetryService(BaseService):
             "brake": ctx.brake,
             "throttle_pct": round(ctx.throttle * 100, 1),
             "brake_pct": round(ctx.brake * 100, 1),
+            "gear": ctx.gear,
+            "speed_km": ctx.speed_km,
         }
 
     @staticmethod
-    def _sanitize_value(value: Any) -> float:
+    def _get_pedal_pct(value: Any) -> float:
+        """Return normalized pedal value in range [0.0, 1.0]."""
         if not isinstance(value, (int, float)):
             return 0.0
         return max(0.0, min(1.0, float(value)))

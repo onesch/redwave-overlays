@@ -6,6 +6,8 @@
 <div class="telemetry-overlay overlay-bg-opacity-target">
   <!-- header -->
   <div class="telemetry-header">
+    <span id="speed-header" class="header-speed">0</span>
+    <span id="gear-header" class="header-gear">N</span>
     <span id="brake-pct-header" class="header-pct brk">0</span>
     <span id="throttle-pct-header" class="header-pct thr">0</span>
   </div>
@@ -70,8 +72,8 @@ class TelemetryUpdater extends BaseUpdater {
     this.ctx = this.canvas.getContext('2d');
 
     const style = getComputedStyle(document.documentElement);
-    this.thrColor = style.getPropertyValue('--thr-color').trim() || '#31e36d';
-    this.brkColor = style.getPropertyValue('--brk-color').trim() || '#ff5a5a';
+    this.thrColor = style.getPropertyValue('--thr-color').trim();
+    this.brkColor = style.getPropertyValue('--brk-color').trim();
 
     this.resizeScope = () => {
       const r = this.canvas.parentElement.getBoundingClientRect();
@@ -106,7 +108,19 @@ class TelemetryUpdater extends BaseUpdater {
 
     this.renderPedal('throttle', data.throttle, data.throttle_pct);
     this.renderPedal('brake', data.brake, data.brake_pct);
+    this.renderGear(data.gear);
+    this.renderSpeed(data.speed_km);
     this.drawScope();
+  }
+
+  renderGear(gear) {
+    const el = document.getElementById('gear-header');
+    el.textContent = gear === -1 ? 'R' : gear === 0 ? 'N' : `${gear}`;
+  }
+
+  renderSpeed(speedKm) {
+    const el = document.getElementById('speed-header');
+    el.textContent = Math.round(speedKm ?? 0);
   }
 
   renderPedal(type, rawValue, pctValue) {
