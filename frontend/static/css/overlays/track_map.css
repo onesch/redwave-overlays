@@ -17,6 +17,7 @@ body[data-track-type="linear"] #track-container {
 
 body[data-track-type="track"] #track-container {
   max-width: 100%;
+  inset: 10px;
 }
 
 #track-line {
