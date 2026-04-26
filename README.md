@@ -27,4 +27,4 @@ Read our [Contributing Guide](https://github.com/onesch/redwave-overlays/blob/ma
 ## 📜 License
 
 Distributed under the [GPL-3.0 License](LICENSE).  
-© 2025 onesch. All rights reserved.
+© 2026 onesch. All rights reserved.
