@@ -66,3 +66,10 @@ class IRSDKService():
         """Return 'track' if player is on track, 'garage' otherwise."""
         is_on_track: bool = self.get_value("IsOnTrack")
         return "track" if is_on_track else "garage"
+
+    def get_speed_kmh(self) -> float:
+        """Get vehicle speed in km/h (converted from m/s)."""
+        speed = self.get_value("Speed")
+        if speed is None:
+            return 0.0
+        return float(speed) * 3.6

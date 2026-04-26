@@ -14,8 +14,8 @@
   grid-template-rows: 18px repeat(7, var(--row-height)) 18px;
   background: linear-gradient(
       to bottom,
-      rgba(var(--m3-surface-top), var(--card-bg-opacity)) 0%,
-      rgba(var(--m3-surface-bottom), var(--card-bg-opacity)) 100%
+      rgba(var(--m3-surface-top), var(--overlay-bg-opacity, 1)) 0%,
+      rgba(var(--m3-surface-bottom), var(--overlay-bg-opacity, 1)) 100%
   );
 }
 
@@ -93,12 +93,12 @@
 }
 
 .race-stats .label {
-  color: #FFCC00;
+  color: var(--yellow-primary);
   margin-right: 4px;
 }
 
 .race-stats .value {
-  color: #fff;
+  color: var(--m3-on-surface);
 }
 
 .race-stats .sep {
@@ -134,7 +134,7 @@
   justify-content: center;
   font-size: 14px;
   font-weight: 700;
-  color: #fff;
+  color: var(--m3-on-surface);
 }
 
 .pos-car-badge .car {
@@ -164,15 +164,11 @@
   align-items: center;
 }
 
-.pos-car-badge .car .class {
+.pos-car-badge .car {
   font-size: 10px;
   font-weight: 600;
   opacity: 0.9;
 }
-
-.hy { background: #ffb3b3; color: #5c2b2b; }
-.gt3 { background: #d8f2d2; color: #2b5c34; }
-.gt4 { background: #ffdd99; color: #7a4c0f; }
 
 .time {
   text-align: right;
@@ -222,7 +218,7 @@
   overflow: hidden;
   font-size: 13px;
   font-weight: 500;
-  color: #fff;
+  color: var(--m3-on-surface);
   white-space: nowrap;
   text-overflow: ellipsis;
 }
@@ -257,7 +253,7 @@
   border-radius: var(--m3-radius-pill);
   background: rgb(var(--m3-surface-bg), 0.6);
   font-size: 15px;
-  color: #FFCC00;
+  color: var(--yellow-primary);
   width: 40px;
 }
 
@@ -269,7 +265,7 @@
   justify-content: center;
   font-size: 13px;
   font-weight: 700;
-  color: #FFCC00;
+  color: var(--yellow-primary);
   background: rgba(var(--m3-surface-bg), 0.6);
   border-radius: var(--m3-radius-pill);
   text-transform: uppercase;

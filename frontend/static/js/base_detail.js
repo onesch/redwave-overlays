@@ -26,7 +26,7 @@ class OverlayBase {
 
         this.setupEventListeners();
         this.loadZoomSettings();
-        this.loadOpacitySettings();
+        this.loadBackgroundOpacitySettings();
         this.loadDisplayMode();
         this.loadAutoStartMode();
     }
@@ -36,7 +36,7 @@ class OverlayBase {
             this.zoomRange.addEventListener('input', () => this.handleZoomChange());
         }
         if (this.opacityRange) {
-            this.opacityRange.addEventListener('input', () => this.handleOpacityChange());
+            this.opacityRange.addEventListener('input', () => this.handleBackgroundOpacityChange());
         }
         Object.entries(this.displayButtons).forEach(([mode, btn]) => {
             if (btn) btn.addEventListener('click', () => this.handleDisplayModeChange(mode));
@@ -59,26 +59,40 @@ class OverlayBase {
         window.electronAPI.setOverlayZoom(this.overlayName, percent / 100);
     }
 
-    async loadOpacitySettings() {
+    async loadBackgroundOpacitySettings() {
         if (!this.opacityRange && !this.opacityValue) return;
 
-        const opacity = await window.electronAPI.getCardBgOpacity?.(this.overlayName);
+        const opacity = await this.getBackgroundOpacity();
         if (opacity != null) {
             if (this.opacityRange) this.opacityRange.value = opacity;
             if (this.opacityValue) this.opacityValue.textContent = opacity.toFixed(2);
 
             const card = document.querySelector('.card');
-            if (card) card.style.setProperty('--card-bg-opacity', opacity);
+            if (card) card.style.setProperty('--overlay-bg-opacity', opacity);
         }
     }
 
-    handleOpacityChange() {
+    handleBackgroundOpacityChange() {
         if (!this.opacityRange && !this.opacityValue) return;
 
         const value = parseFloat(this.opacityRange.value);
         if (this.opacityValue) this.opacityValue.textContent = value.toFixed(2);
 
-        window.electronAPI.setCardBgOpacity?.(this.overlayName, value);
+        this.setBackgroundOpacity(value);
+    }
+
+    async getBackgroundOpacity() {
+        if (window.electronAPI.getOverlayBgOpacity) {
+            return window.electronAPI.getOverlayBgOpacity(this.overlayName);
+        }
+        return window.electronAPI.getCardBgOpacity?.(this.overlayName);
+    }
+
+    setBackgroundOpacity(value) {
+        if (window.electronAPI.setOverlayBgOpacity) {
+            window.electronAPI.setOverlayBgOpacity(this.overlayName, value);
+            return;
+        }
     }
 
     async loadDisplayMode() {

@@ -25,3 +25,10 @@ async def track_map_window_view(request: Request):
     return templates.TemplateResponse(
         "overlays/track_map.html", {"request": request}
     )
+
+
+@router.get("/telemetry", response_class=HTMLResponse)
+async def telemetry_window_view(request: Request):
+    return templates.TemplateResponse(
+        "overlays/telemetry.html", {"request": request}
+    )

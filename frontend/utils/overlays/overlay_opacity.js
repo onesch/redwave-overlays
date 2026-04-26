@@ -3,11 +3,11 @@ const { registerOverlaySetting } = require('./base_handler');
 function registerOverlayOpacityHandlers(overlays) {
   registerOverlaySetting({
     overlays,
-    getChannel: 'get-card-bg-opacity',
-    setChannel: 'set-card-bg-opacity',
-    settingKey: 'cardBgOpacity',
+    getChannel: 'get-overlay-bg-opacity',
+    setChannel: 'set-overlay-bg-opacity',
+    settingKey: 'overlayBgOpacity',
     defaultValue: 1,
-    updateEvent: 'update-card-opacity',
+    updateEvent: 'update-overlay-opacity',
   });
 }
 
