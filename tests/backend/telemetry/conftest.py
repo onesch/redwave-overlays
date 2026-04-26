@@ -24,6 +24,7 @@ def mock_ctx(mock_values) -> TelemetryContext:
         "brake": mock_values.get_value("Brake"),
         "gear": mock_values.get_value("Gear"),
         "speed_km": mock_values.get_speed_kmh(),
+        "is_brake_abs": mock_values.get_value("BrakeABSactive"),
     }
 
     def _make_ctx(**overrides):
@@ -43,6 +44,7 @@ def mock_values(irsdk_mock_factory) -> dict:
         "Throttle": 0.73,
         "Brake": 0.11,
         "Gear": 4,
+        "BrakeABSactive": True,
     }
     irsdk = irsdk_mock_factory(values)
     irsdk.get_speed_kmh = lambda: 246.8

@@ -62,6 +62,7 @@ class TelemetryUpdater extends BaseUpdater {
     // sliding window buffers for pedal values
     this.thrHistory = new Array(this.HIST).fill(0);
     this.brkHistory = new Array(this.HIST).fill(0);
+    this.brkAbsHistory = new Array(this.HIST).fill(false);
   }
 
   async init() {
@@ -76,6 +77,7 @@ class TelemetryUpdater extends BaseUpdater {
     const style = getComputedStyle(document.documentElement);
     this.thrColor = style.getPropertyValue('--thr-color').trim();
     this.brkColor = style.getPropertyValue('--brk-color').trim();
+    this.absColor = style.getPropertyValue('--yellow-primary').trim();
 
     // handle canvas resize + HiDPI scaling
     this.resizeScope = () => {
@@ -113,12 +115,15 @@ class TelemetryUpdater extends BaseUpdater {
 
     const thr = Number.isFinite(thrRaw) ? thrRaw : 0;
     const brk = Number.isFinite(brkRaw) ? brkRaw : 0;
+    const absActive = Boolean(data.is_brake_abs);
 
     // update sliding history (push new, drop oldest)
     this.thrHistory.push(thr);
     this.thrHistory.shift();
     this.brkHistory.push(brk);
     this.brkHistory.shift();
+    this.brkAbsHistory.push(absActive);
+    this.brkAbsHistory.shift();
 
     // update UI elements
     this.renderPedal('throttle', data.throttle, data.throttle_pct);
@@ -132,7 +137,18 @@ class TelemetryUpdater extends BaseUpdater {
 
   renderGear(gear) {
     const el = document.getElementById('gear-header');
-    el.textContent = gear === -1 ? 'R' : gear === 0 ? 'N' : `${gear}`;
+
+    const g = Number(gear);
+
+    if (!Number.isFinite(g)) {
+      el.textContent = 'N';
+      return;
+    }
+
+    el.textContent =
+      g === -1 ? 'R' :
+      g === 0 ? 'N' :
+      String(g);
   }
 
   renderSpeed(speedKm) {
@@ -218,9 +234,27 @@ class TelemetryUpdater extends BaseUpdater {
       ctx.stroke();
     };
 
+    const drawBrakeTrace = () => {
+      ctx.lineWidth = 2;
+
+      for (let i = 1; i < this.HIST; i++) {
+        const x1 = (i - 1) * step;
+        const x2 = i * step;
+        const y1 = PAD + (H - PAD * 2) * (1 - this.brkHistory[i - 1]);
+        const y2 = PAD + (H - PAD * 2) * (1 - this.brkHistory[i]);
+        const segmentInAbs = this.brkAbsHistory[i - 1] || this.brkAbsHistory[i];
+
+        ctx.beginPath();
+        ctx.strokeStyle = segmentInAbs ? this.absColor : this.brkColor;
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
+      }
+    };
+
     // draw both pedal traces
     drawTrace(this.thrHistory, this.thrColor);
-    drawTrace(this.brkHistory, this.brkColor);
+    drawBrakeTrace();
   }
 }
 
