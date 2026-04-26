@@ -16,6 +16,7 @@ def test_snapshot_expected_structure(mock_service, mock_ctx):
     assert snapshot["brake_pct"] == pytest.approx(11.0)
     assert snapshot["gear"] == 4
     assert snapshot["speed_km"] == pytest.approx(246.8)
+    assert snapshot["is_brake_abs"] is True
 
 
 @pytest.mark.parametrize(
@@ -37,27 +38,10 @@ def test_normalize_pedal(raw, expected):
 # --- Negative tests ---
 
 
-def test_build_context_sets_gear_to_zero_for_invalid_value(irsdk_mock_factory):
-    values = {
-        "Throttle": 0.3,
-        "Brake": 0.2,
-        "Gear": "R",
-    }
-    irsdk = irsdk_mock_factory(values)
-    irsdk.get_speed_kmh = lambda: 100.0
-
-    service = TelemetryService(irsdk)
-    ctx = service._build_context()
-
-    assert ctx is not None
-    assert ctx.gear == 0
-
-
 def test_build_context_normalizes_invalid_pedals(irsdk_mock_factory):
     values = {
         "Throttle": -1,
         "Brake": 2,
-        "Gear": 3,
     }
     irsdk = irsdk_mock_factory(values)
     irsdk.get_speed_kmh = lambda: 77.7

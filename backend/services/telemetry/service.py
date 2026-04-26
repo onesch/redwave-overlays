@@ -14,6 +14,7 @@ class TelemetryContext:
     brake: float
     gear: int
     speed_km: float
+    is_brake_abs: bool
 
 
 class TelemetryService(BaseService):
@@ -25,18 +26,18 @@ class TelemetryService(BaseService):
     def _build_context(self) -> TelemetryContext | None:
         self.irsdk._ensure_connected()
 
-        throttle = self.irsdk.get_value("Throttle")
-        brake = self.irsdk.get_value("Brake")
-        speed_km = self.irsdk.get_speed_kmh()
-        gear = self.irsdk.get_value("Gear")
-        if not isinstance(gear, int):
-            gear = 0
+        throttle: float = self.irsdk.get_value("Throttle")
+        brake: float = self.irsdk.get_value("Brake")
+        speed_km: float = self.irsdk.get_speed_kmh()
+        gear: int = self.irsdk.get_value("Gear")
+        is_brake_abs: bool = self.irsdk.get_value("BrakeABSactive")
 
         return TelemetryContext(
             throttle=self._normalize_pedal(throttle),
             brake=self._normalize_pedal(brake),
             gear=gear,
             speed_km=speed_km,
+            is_brake_abs=is_brake_abs,
         )
 
     def _build_snapshot(self, ctx: TelemetryContext) -> dict[str, Any]:
@@ -48,6 +49,7 @@ class TelemetryService(BaseService):
             "brake_pct": round(ctx.brake * 100, 1),
             "gear": ctx.gear,
             "speed_km": ctx.speed_km,
+            "is_brake_abs": ctx.is_brake_abs,
         }
 
     @staticmethod
