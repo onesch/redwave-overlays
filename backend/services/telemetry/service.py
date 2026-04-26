@@ -33,8 +33,8 @@ class TelemetryService(BaseService):
             gear = 0
 
         return TelemetryContext(
-            throttle=self._get_pedal_pct(throttle),
-            brake=self._get_pedal_pct(brake),
+            throttle=self._normalize_pedal(throttle),
+            brake=self._normalize_pedal(brake),
             gear=gear,
             speed_km=speed_km,
         )
@@ -51,7 +51,7 @@ class TelemetryService(BaseService):
         }
 
     @staticmethod
-    def _get_pedal_pct(value: Any) -> float:
+    def _normalize_pedal(value: Any) -> float:
         """Return normalized pedal value in range [0.0, 1.0]."""
         if not isinstance(value, (int, float)):
             return 0.0
