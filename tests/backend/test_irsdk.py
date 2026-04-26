@@ -92,6 +92,10 @@ def test_get_car_rgb(idx, drivers, player_idx, multiclass, expected):
         == expected
     )
 
+def test_get_speed_kmh_valid(mock_irsdk_service):
+    result = mock_irsdk_service.get_speed_kmh()
+    assert result == pytest.approx(36.0)
+
 
 # --- Error tests ---
 
@@ -104,3 +108,17 @@ def test_get_value_when_not_connected(irsdk_mock_factory):
     service = IRSDKService()
     service.ir = irsdk_mock_factory(is_connected=False)
     assert service.get_value("Speed") is None
+
+
+def test_get_speed_kmh_none(irsdk_mock_factory):
+    service = IRSDKService()
+
+    mock_ir = irsdk_mock_factory()
+    service.ir = mock_ir
+    service.started = True
+
+    # override get_value
+    service.get_value = lambda key: None
+
+    result = service.get_speed_kmh()
+    assert result == 0.0
