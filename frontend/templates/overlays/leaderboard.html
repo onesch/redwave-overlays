@@ -4,7 +4,7 @@
 
 {% block content %}
 <div class="app">
-    <section class="card">
+    <section class="card overlay-bg-opacity-target">
         <div class="thead">
             <div>Pos</div>
             <div>Driver</div>
@@ -190,22 +190,6 @@ class LeaderboardUpdater extends BaseUpdater {
 
     async init() {
         await super.init();
-
-        // Set card transparency from the electronAPI
-        const opacity = await window.electronAPI.getCardBgOpacity?.('leaderboard');
-        if (opacity != null) this.setCardOpacity(opacity);
-
-        // Real-time transparency update
-        window.electronAPI.onCardBgOpacityUpdate?.((value) => {
-            this.setCardOpacity(value);
-        });
-    }
-
-    setCardOpacity(value) {
-        const card = document.querySelector('.card');
-        if (card) {
-            card.style.setProperty('--card-bg-opacity', value);
-        }
     }
 
     async renderOverlay(data) {
@@ -303,14 +287,6 @@ class LeaderboardUpdater extends BaseUpdater {
         this.renderDriver(rowElement, car);
         this.renderLicenseAndIrating(rowElement, car);
         this.renderGapAndLap(rowElement, car);
-    }
-
-    async applyCardOpacity() {
-        const opacity = await window.electronAPI.getCardBgOpacity('leaderboard');
-        const card = document.querySelector('.card');
-        if (card) {
-            card.style.setProperty('--card-bg-opacity', opacity);
-        }
     }
 
     renderPositionAndCar(rowElement, car) {

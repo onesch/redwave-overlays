@@ -1,4 +1,7 @@
 :root {
+    /* Base colors */
+    --yellow-primary: #FFCC00;
+
     /* Leaderboard colors */
     --m3-surface-top: 28, 28, 37;
     --m3-surface-bottom: 20, 20, 30;
@@ -9,6 +12,7 @@
     );
 
     --m3-surface-bg: 37, 37, 46;
+    --m3-surface-bg-light: 65, 65, 72;
     --m3-on-surface: #e0e0e0;
     --m3-outline-variant: #1A1A1F;
 
@@ -24,7 +28,7 @@
     --car-shadow: rgba(0, 0, 0, 0.5);
     --car-shadow-inner: rgba(0, 0, 0, 0.3);
 
-    /* Radius nad font */
+    /* Radius and font */
     --m3-radius-lg: 6px;
     --m3-radius-pill: 6px;
     --font-family: "Google Sans Flex", sans-serif;
@@ -32,6 +36,13 @@
     --fs-body: 16px;
     --pad-4: 6px;
     --row-height: 27px;
+
+    /* Telemetry colors */
+    --thr-color: rgba(92, 214, 51);
+    --thr-color-light: rgba(200, 255, 180);
+    --brk-color: rgba(181, 31, 25);
+    --brk-color-light: rgba(255, 160, 150);
+
  }
 
 ::-webkit-scrollbar {

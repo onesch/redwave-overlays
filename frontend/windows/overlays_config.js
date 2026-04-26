@@ -8,4 +8,5 @@ module.exports = {
       track: { width: 340, height: 340 },
     }
   },
+  'telemetry': { baseSize: { width: 230, height: 100 } },
 };
