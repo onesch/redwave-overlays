@@ -41,6 +41,13 @@ OVERRIDES = {
     298: {'shortname_override': 'snetterton'},
     299: {'shortname_override': 'snetterton'},
     15: {'shortname_override': 'concordhalf'},
+    324: {'shortname_override': 'tsukuba'},
+    325: {'shortname_override': 'tsukuba'},
+    326: {'shortname_override': 'tsukuba'},
+    327: {'shortname_override': 'tsukuba'},
+    328: {'shortname_override': 'tsukuba'},
+    329: {'shortname_override': 'tsukuba'},
+    333: {'shortname_override': 'tsukuba'},
 }
 
 # On some tracks, it is necessary to rewrite the direction to avoid problems
