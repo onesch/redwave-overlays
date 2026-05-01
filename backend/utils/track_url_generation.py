@@ -48,6 +48,12 @@ OVERRIDES = {
     328: {'shortname_override': 'tsukuba'},
     329: {'shortname_override': 'tsukuba'},
     333: {'shortname_override': 'tsukuba'},
+    449: {'shortname_override': 'oschersleben'},
+    454: {'shortname_override': 'oschersleben'},
+    455: {'shortname_override': 'oschersleben'},
+    456: {'shortname_override': 'oschersleben'},
+    47: {'shortname_override': 'lagunaseca'},
+    158: {'shortname_override': 'lagunaseca'},
 }
 
 # On some tracks, it is necessary to rewrite the direction to avoid problems
