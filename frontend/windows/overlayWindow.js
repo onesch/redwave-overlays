@@ -1,13 +1,19 @@
 const { app, BrowserWindow } = require('electron');
 const path = require('path');
 const isDev = process.env.NODE_ENV === "development";
-const { protectWindowShortcuts, disableZoomShortcuts, registerOverlayMoveShortcuts } = require('../utils/keyboard_protection');
+const {
+  protectWindowShortcuts,
+  disableZoomShortcuts,
+  registerOverlayMoveShortcuts,
+  getOverlayMovementState,
+} = require('../utils/keyboard_protection');
 const { applySavedZoom, registerZoomHandlers } = require('../utils/overlays/zoom_range');
 const { applySavedPosition, registerPositionHandlers, watchOverlayPosition } = require('../utils/overlays/overlay_position');
 const { registerOverlayOpacityHandlers } = require('../utils/overlays/overlay_opacity');
 const { registerOverlayTrackTypeHandlers } = require('../utils/overlays/track_type');
 const { registerOverlayDisplayModeHandlers } = require('../utils/overlays/display_mode');
 const { registerOverlayAutoStartModeHandlers } = require('../utils/overlays/auto_start_mode');
+const { registerOverlayMovementHandlers } = require('../utils/overlays/overlay_movement');
 
 const overlays = {};
 let overlayCount = 0;
@@ -19,6 +25,7 @@ registerOverlayOpacityHandlers(overlays);
 registerOverlayTrackTypeHandlers(overlays);
 registerOverlayDisplayModeHandlers(overlays);
 registerOverlayAutoStartModeHandlers(overlays);
+registerOverlayMovementHandlers(overlays);
 
 function createOverlay(route, options = {}) {
   if (overlays[route] && !overlays[route].isDestroyed()) {
@@ -45,9 +52,13 @@ function createOverlay(route, options = {}) {
     ...options.override,
   });
 
-  // By default turn off clicks/movements and turn on AlwaysOnTop
-  overlay.setIgnoreMouseEvents(true);
-  overlay.setMovable(false);
+  // On fresh app start, default is locked; while app is running,
+  // use the current shared movement state for newly opened overlays.
+  const isMovable = typeof getOverlayMovementState === 'function'
+    ? getOverlayMovementState()
+    : false;
+  overlay.setIgnoreMouseEvents(!isMovable);
+  overlay.setMovable(isMovable);
   overlay.setAlwaysOnTop(true, "screen-saver");
 
   // Disable unwanted keyboard shortcuts

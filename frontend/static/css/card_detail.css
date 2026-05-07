@@ -101,3 +101,32 @@
 .range-control:focus {
   outline: none;
 }
+
+/* Detail page buttons section */
+.action-buttons {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+/* Open button */
+.action-buttons .button {
+  width: 244px;
+  height: 32px;
+}
+
+/* Lock/unlock icon button */
+.action-buttons .icon-button {
+  width: 36px;
+  height: 32px;
+  padding: 0;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Google icon */
+.icon-button .material-symbols-outlined {
+  font-size: 20px;
+}

@@ -327,7 +327,6 @@ body.no-scroll {
 
 /* Buttons */
 .button {
-  width: 100%;
   padding: var(--spacing-sm) var(--spacing-lg);
   border-radius: var(--border-radius-md);
   border: none;
@@ -335,7 +334,6 @@ body.no-scroll {
   font-weight: 500;
   cursor: pointer;
   transition: all var(--transition);
-  width: 300px;
 }
 
 .button.primary-btn {

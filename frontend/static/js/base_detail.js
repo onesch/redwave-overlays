@@ -12,6 +12,7 @@ class OverlayBase {
         this.opacityValue = document.getElementById('opacityValue');
 
         this.openBtn = document.getElementById('OpenBtn');
+        this.toggleMovementBtn = document.getElementById('ToggleMovementBtn');
 
         this.displayButtons = {
             all_time: document.getElementById('DisplayAllTimeBtn'),
@@ -29,6 +30,7 @@ class OverlayBase {
         this.loadBackgroundOpacitySettings();
         this.loadDisplayMode();
         this.loadAutoStartMode();
+        this.loadOverlayMovementState();
     }
 
     setupEventListeners() {
@@ -38,6 +40,12 @@ class OverlayBase {
         if (this.opacityRange) {
             this.opacityRange.addEventListener('input', () => this.handleBackgroundOpacityChange());
         }
+        if (this.toggleMovementBtn) {
+            this.toggleMovementBtn.addEventListener('click', () => this.handleOverlayMovementToggle());
+        }
+        window.electronAPI.onOverlayMovementStateUpdate?.((isMovable) => {
+            this.applyOverlayMovementState(isMovable);
+        });
         Object.entries(this.displayButtons).forEach(([mode, btn]) => {
             if (btn) btn.addEventListener('click', () => this.handleDisplayModeChange(mode));
         });
@@ -125,5 +133,34 @@ class OverlayBase {
         Object.entries(this.autoStartButtons).forEach(([key, btn]) => {
             if (btn) btn.classList.toggle('active', key === value);
         });
+    }
+
+    async loadOverlayMovementState() {
+        if (!this.toggleMovementBtn || !window.electronAPI.getOverlayMovementState) return;
+
+        const isMovable = await window.electronAPI.getOverlayMovementState();
+        this.applyOverlayMovementState(isMovable);
+    }
+
+    async handleOverlayMovementToggle() {
+        if (!window.electronAPI.toggleOverlayMovement) return;
+
+        const isMovable = await window.electronAPI.toggleOverlayMovement();
+        this.applyOverlayMovementState(isMovable);
+    }
+
+    applyOverlayMovementState(isMovable) {
+        if (!this.toggleMovementBtn) return;
+
+        this.toggleMovementBtn.innerHTML = `
+            <span class="material-symbols-outlined">
+                ${isMovable ? 'lock_open_right' : 'lock'}
+            </span>
+        `;
+
+        this.toggleMovementBtn.classList.toggle(
+            'primary-btn',
+            isMovable,
+        );
     }
 }

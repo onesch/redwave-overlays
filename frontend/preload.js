@@ -48,6 +48,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onAutoStartModeUpdate: (callback) =>
     ipcRenderer.on('update-auto-start-mode', (_, value) => callback(value)),
 
+  // Overlay lock/unlock button
+  toggleOverlayMovement: () =>
+    ipcRenderer.invoke('toggle-overlay-movement'),
+  getOverlayMovementState: () =>
+    ipcRenderer.invoke('get-overlay-movement-state'),
+  onOverlayMovementStateUpdate: (callback) =>
+    ipcRenderer.on('overlay-movement-state-updated', (_, value) => callback(value)),
+
   // Reset overlay settings
   resetOverlaySettings: () =>
     ipcRenderer.send('reset-overlay-settings'),
