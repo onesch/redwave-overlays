@@ -7,8 +7,11 @@
 <div>
   <div class="text-column action-buttons">
     <button id="OpenBtn" class="button primary-btn">Open</button>
-
-    <button id="ToggleMovementBtn" class="button icon-button">
+    <button
+      id="ToggleMovementBtn"
+      class="button icon-button tooltip tooltip-top"
+      data-tooltip="toggle overlay movement mode (same as ctrl+shift+P)"
+    >
       <span class="material-symbols-outlined">
         lock
       </span>
@@ -32,7 +35,7 @@
 
 <div id="settings-header" class="section-header">
   <h2>Settings</h2>
-  <span class="info-icon" data-tooltip="use ctrl+shift+P to move overlay window"><span class="material-symbols-outlined">info</span></span>
+  <span class="info-icon tooltip tooltip-right" data-tooltip="customize overlay behavior and appearance"><span class="material-symbols-outlined">info</span></span>
 </div>
 
 <div class="range-container">
