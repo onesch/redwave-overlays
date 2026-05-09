@@ -1,13 +1,8 @@
 const { app, BrowserWindow } = require('electron');
 const path = require('path');
 const isDev = process.env.NODE_ENV === "development";
-const {
-  protectWindowShortcuts,
-  disableZoomShortcuts,
-  registerOverlayMoveShortcuts,
-  getOverlayMovementState,
-  applyOverlayMovementToWindow,
-} = require('../utils/keyboard_protection');
+const { getOverlayMovementState, applyOverlayMovementToWindow } = require('../utils/overlays/overlay_movement');
+const { protectWindowShortcuts, disableZoomShortcuts, registerOverlayMoveShortcuts } = require('../utils/keyboard_protection');
 const { applySavedZoom, registerZoomHandlers } = require('../utils/overlays/zoom_range');
 const { applySavedPosition, registerPositionHandlers, watchOverlayPosition } = require('../utils/overlays/overlay_position');
 const { registerOverlayOpacityHandlers } = require('../utils/overlays/overlay_opacity');
