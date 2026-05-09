@@ -41,10 +41,10 @@ class OverlayBase {
             this.opacityRange.addEventListener('input', () => this.handleBackgroundOpacityChange());
         }
         if (this.toggleMovementBtn) {
-            this.toggleMovementBtn.addEventListener('click', () => this.handleOverlayMovementToggle());
+            this.toggleMovementBtn.addEventListener('click', () => this.handleOverlayMovementState());
         }
-        window.electronAPI.onOverlayMovementStateUpdate?.((isMovable) => {
-            this.applyOverlayMovementState(isMovable);
+        window.electronAPI.onOverlayMovementStateUpdate?.((isMovementEnabled) => {
+            this.applyOverlayMovementState(isMovementEnabled);
         });
         Object.entries(this.displayButtons).forEach(([mode, btn]) => {
             if (btn) btn.addEventListener('click', () => this.handleDisplayModeChange(mode));
@@ -138,29 +138,29 @@ class OverlayBase {
     async loadOverlayMovementState() {
         if (!this.toggleMovementBtn || !window.electronAPI.getOverlayMovementState) return;
 
-        const isMovable = await window.electronAPI.getOverlayMovementState();
-        this.applyOverlayMovementState(isMovable);
+        const isMovementEnabled = await window.electronAPI.getOverlayMovementState();
+        this.applyOverlayMovementState(isMovementEnabled);
     }
 
-    async handleOverlayMovementToggle() {
-        if (!window.electronAPI.toggleOverlayMovement) return;
+    async handleOverlayMovementState() {
+        if (!window.electronAPI.updateOverlayMovementState) return;
 
-        const isMovable = await window.electronAPI.toggleOverlayMovement();
-        this.applyOverlayMovementState(isMovable);
+        const isMovementEnabled = await window.electronAPI.updateOverlayMovementState();
+        this.applyOverlayMovementState(isMovementEnabled);
     }
 
-    applyOverlayMovementState(isMovable) {
+    applyOverlayMovementState(isMovementEnabled) {
         if (!this.toggleMovementBtn) return;
 
         this.toggleMovementBtn.innerHTML = `
             <span class="material-symbols-outlined">
-                ${isMovable ? 'lock_open_right' : 'lock'}
+                ${isMovementEnabled ? 'lock_open_right' : 'lock'}
             </span>
         `;
 
         this.toggleMovementBtn.classList.toggle(
             'primary-btn',
-            isMovable,
+            isMovementEnabled,
         );
     }
 }

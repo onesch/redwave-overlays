@@ -53,11 +53,11 @@ function registerOverlayMoveShortcuts(app, overlays) {
   const { globalShortcut } = require('electron');
   // Global shortcut to quickly switch all overlays between locked and movable states
   globalShortcut.register('Control+Shift+P', () => {
-    toggleOverlayMovement(overlays);
+    updateOverlayMovementState(overlays);
   });
 }
 
-// Retrieves the state from the settings file once
+// Load the state from the settings file once
 function loadOverlayMovementStateOnce() {
   if (overlayMovementStateLoaded) return;
 
@@ -79,26 +79,29 @@ function getOverlayMovementState() {
   return overlayMovementEnabled;
 }
 
-function applyOverlayMovement(overlays, isMovable) {  // ! needs improvement
-  // Apply the requested movement mode to every currently opened overlay window
+// Apply the requested movement mode to every currently opened overlay window
+function applyOverlayMovementState(overlays, isMovementEnabled) {
   Object.values(overlays).forEach((win) => {
     if (!win.isDestroyed()) {
       // If movable, allow mouse clicks
-      win.setIgnoreMouseEvents(!isMovable);
-      win.setMovable(isMovable);
+      win.setIgnoreMouseEvents(!isMovementEnabled);
+      win.setMovable(isMovementEnabled);
     }
   });
 }
 
-function toggleOverlayMovement(overlays) {  // ! needs improvement
-  // Flip current mode and immediately propagate it to all active overlays
+// Update (flip) current mode and apply it to all active overlays
+function updateOverlayMovementState(overlays) {
   loadOverlayMovementStateOnce();
   overlayMovementEnabled = !overlayMovementEnabled;
   saveOverlayMovementState();
-  applyOverlayMovement(overlays, overlayMovementEnabled);
+  applyOverlayMovementState(overlays, overlayMovementEnabled);
 
   BrowserWindow.getAllWindows().forEach((win) => {
     if (!win.isDestroyed()) {
+      // Broadcast updated movement state to all renderer windows
+      // Used by OverlayBase.applyOverlayMovementState in base_detail.js
+      // (its needed to visually update the icons in the UI).
       win.webContents.send('overlay-movement-state-updated', overlayMovementEnabled);
     }
   });
@@ -109,6 +112,6 @@ module.exports = {
   protectWindowShortcuts,
   disableZoomShortcuts,
   registerOverlayMoveShortcuts,
-  toggleOverlayMovement,
+  updateOverlayMovementState,
   getOverlayMovementState,
 };

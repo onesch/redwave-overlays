@@ -54,11 +54,11 @@ function createOverlay(route, options = {}) {
 
   // On fresh app start, default is locked; while app is running,
   // use the current shared movement state for newly opened overlays.
-  const isMovable = typeof getOverlayMovementState === 'function'
+  const isMovementEnabled = typeof getOverlayMovementState === 'function'
     ? getOverlayMovementState()
     : false;
-  overlay.setIgnoreMouseEvents(!isMovable);
-  overlay.setMovable(isMovable);
+  overlay.setIgnoreMouseEvents(!isMovementEnabled);
+  overlay.setMovable(isMovementEnabled);
   overlay.setAlwaysOnTop(true, "screen-saver");
 
   // Disable unwanted keyboard shortcuts
