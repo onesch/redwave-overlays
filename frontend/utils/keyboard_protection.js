@@ -1,5 +1,12 @@
 const { loadSettings, saveSettings } = require('./overlays/overlay_settings');
 
+// Used to persist the global overlay movement mode
+//
+// Stored inside the application settings file and reused on startup
+// to restore the previous overlay interaction state.
+//
+// false = overlays are locked (mouse events ignored)
+// true = overlays are movable
 const OVERLAY_MOVEMENT_STATE_KEY = '__overlayMovementState';
 
 function protectWindowShortcuts(win, { allowDevTools = false } = {}) {
