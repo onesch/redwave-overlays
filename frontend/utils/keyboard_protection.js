@@ -1,13 +1,14 @@
 const { loadSettings, saveSettings } = require('./overlays/overlay_settings');
 
-// Used to persist the global overlay movement mode
-//
-// Stored inside the application settings file and reused on startup
-// to restore the previous overlay interaction state.
-//
-// false = overlays are locked (mouse events ignored)
-// true = overlays are movable
-const OVERLAY_MOVEMENT_STATE_KEY = '__overlayMovementState';
+// Settings key used to persist overlay movement mode
+// (false = locked, true = movable)
+const overlayMovementEnabledSettingKey =
+  'isOverlayMovementEnabled';
+// Shared movement state for all overlay windows
+let overlayMovementEnabled = false;
+// Prevent repeated settings reads after first initialization
+let overlayMovementStateLoaded = false;
+
 
 function protectWindowShortcuts(win, { allowDevTools = false } = {}) {
   win.webContents.on('before-input-event', (event, input) => {
@@ -57,23 +58,19 @@ function registerOverlayMoveShortcuts(app, overlays) {
   });
 }
 
-// Shared movement flag for all overlay windows (false = locked, true = movable)
-let isOverlayMovable = false;
-let isOverlayMovableLoaded = false;
-
 function ensureOverlayMovementStateLoaded() {
   // retrieves the state from the file once
-  if (isOverlayMovableLoaded) return;
+  if (overlayMovementStateLoaded) return;
 
   const settings = loadSettings();
-  isOverlayMovable = Boolean(settings[OVERLAY_MOVEMENT_STATE_KEY]);
-  isOverlayMovableLoaded = true;
+  overlayMovementEnabled = Boolean(settings[overlayMovementEnabledSettingKey]);
+  overlayMovementStateLoaded = true;
 }
 
 function persistOverlayMovementState() {
   // Save value to settings after each toggleOverlayMovement
   const settings = loadSettings();
-  settings[OVERLAY_MOVEMENT_STATE_KEY] = isOverlayMovable;
+  settings[overlayMovementEnabledSettingKey] = overlayMovementEnabled;
   saveSettings(settings);
 }
 
@@ -92,22 +89,22 @@ function toggleOverlayMovement(overlays) {
   // Flip current mode and immediately propagate it to all active overlays
   const { BrowserWindow } = require('electron');
   ensureOverlayMovementStateLoaded();
-  isOverlayMovable = !isOverlayMovable;
+  overlayMovementEnabled = !overlayMovementEnabled;
   persistOverlayMovementState();
-  applyOverlayMovement(overlays, isOverlayMovable);
+  applyOverlayMovement(overlays, overlayMovementEnabled);
 
   BrowserWindow.getAllWindows().forEach((win) => {
     if (!win.isDestroyed()) {
-      win.webContents.send('overlay-movement-state-updated', isOverlayMovable);
+      win.webContents.send('overlay-movement-state-updated', overlayMovementEnabled);
     }
   });
-  return isOverlayMovable;
+  return overlayMovementEnabled;
 }
 
 function getOverlayMovementState() {
   // Read current global movement mode for UI and IPC consumers
   ensureOverlayMovementStateLoaded();
-  return isOverlayMovable;
+  return overlayMovementEnabled;
 }
 
 module.exports = {
