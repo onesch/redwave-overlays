@@ -6,6 +6,7 @@ const {
   disableZoomShortcuts,
   registerOverlayMoveShortcuts,
   getOverlayMovementState,
+  applyOverlayMovementToWindow,
 } = require('../utils/keyboard_protection');
 const { applySavedZoom, registerZoomHandlers } = require('../utils/overlays/zoom_range');
 const { applySavedPosition, registerPositionHandlers, watchOverlayPosition } = require('../utils/overlays/overlay_position');
@@ -52,13 +53,9 @@ function createOverlay(route, options = {}) {
     ...options.override,
   });
 
-  // On fresh app start, default is locked; while app is running,
-  // use the current shared movement state for newly opened overlays.
-  const isMovementEnabled = typeof getOverlayMovementState === 'function'
-    ? getOverlayMovementState()
-    : false;
-  overlay.setIgnoreMouseEvents(!isMovementEnabled);
-  overlay.setMovable(isMovementEnabled);
+  // Use the current shared movement state for newly opened overlays
+  const isMovementEnabled = getOverlayMovementState();
+  applyOverlayMovementToWindow(overlay, isMovementEnabled);
   overlay.setAlwaysOnTop(true, "screen-saver");
 
   // Disable unwanted keyboard shortcuts
@@ -71,7 +68,7 @@ function createOverlay(route, options = {}) {
   applySavedZoom(overlay, route);
   applySavedPosition(overlay, route);
   watchOverlayPosition(overlay, route);
-  // opacity, track-type, display-mode, auto-start-mode is handled by a separate module
+  // opacity, track-type, display-mode, auto-start-mode ... is handled by a separate module
 
   overlay.on('closed', () => {
     delete overlays[route];

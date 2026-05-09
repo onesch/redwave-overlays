@@ -108,10 +108,17 @@ function updateOverlayMovementState(overlays) {
   return overlayMovementEnabled;
 }
 
+// Helper apply-function for single window
+function applyOverlayMovementToWindow(win, isMovementEnabled) {
+  win.setIgnoreMouseEvents(!isMovementEnabled);
+  win.setMovable(isMovementEnabled);
+}
+
 module.exports = {
   protectWindowShortcuts,
   disableZoomShortcuts,
   registerOverlayMoveShortcuts,
   updateOverlayMovementState,
   getOverlayMovementState,
+  applyOverlayMovementToWindow,
 };
