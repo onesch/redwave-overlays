@@ -40,6 +40,7 @@ function createOverlay(route, options = {}) {
     resizable: true,
     movable: false,
     focusable: true,
+    hasShadow: false,
     webPreferences: {
       contextIsolation: true,
       preload: path.join(__dirname, '../preload.js'),
