@@ -78,6 +78,10 @@ class BaseService:
         """
         Public entry point for retrieving service data.
         """
+        connected, _ = self.irsdk._ensure_connected()
+        if not connected:
+            return self._empty_snapshot()
+
         ctx = self._build_context()
         if not ctx:
             return self._empty_snapshot()
