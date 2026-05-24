@@ -71,9 +71,18 @@ function applyOverlayMovementToWindow(win, isMovementEnabled) {
   win.setMovable(isMovementEnabled);
 }
 
+// Ensure overlays start in locked mode on each app launch
+// to avoid blocking screen clicks after restart
+function resetOverlayMovementStateOnAppStart() {
+  overlayMovementEnabled = false;
+  overlayMovementStateLoaded = true;
+  saveOverlayMovementState();
+}
+
 module.exports = { 
   registerOverlayMovementHandlers,
   updateOverlayMovementState,
   getOverlayMovementState,
   applyOverlayMovementToWindow,
+  resetOverlayMovementStateOnAppStart,
 };
