@@ -1,3 +1,5 @@
+const { updateOverlayMovementState } = require('./overlays/overlay_movement');
+
 function protectWindowShortcuts(win, { allowDevTools = false } = {}) {
   win.webContents.on('before-input-event', (event, input) => {
     // F12 (devtools)
@@ -40,18 +42,9 @@ function disableZoomShortcuts(win) {
 
 function registerOverlayMoveShortcuts(app, overlays) {
   const { globalShortcut } = require('electron');
-  let isMovable = false;
-
+  // Global shortcut to quickly switch all overlays between locked and movable states
   globalShortcut.register('Control+Shift+P', () => {
-    isMovable = !isMovable;
-
-    Object.values(overlays).forEach((win) => {
-      if (!win.isDestroyed()) {
-        // If movable, allow mouse clicks
-        win.setIgnoreMouseEvents(!isMovable);
-        win.setMovable(isMovable);
-      }
-    });
+    updateOverlayMovementState(overlays);
   });
 }
 

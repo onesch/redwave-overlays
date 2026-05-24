@@ -24,8 +24,10 @@ class TelemetryService(BaseService):
         super().__init__(irsdk_service, builder=None)
 
     def _build_context(self) -> TelemetryContext | None:
-        self.irsdk._ensure_connected()
-
+        """
+        Returns TelemetryContext with up-to-date telemetry data.
+        Overridden method from BaseService.
+        """
         throttle: float = self.irsdk.get_value("Throttle")
         brake: float = self.irsdk.get_value("Brake")
         speed_km: float = self.irsdk.get_speed_kmh()
@@ -41,6 +43,10 @@ class TelemetryService(BaseService):
         )
 
     def _build_snapshot(self, ctx: TelemetryContext) -> dict[str, Any]:
+        """
+        Generates the snapshot for the API.
+        Overridden method from BaseService.
+        """
         return {
             "status": "ok",
             "throttle": ctx.throttle,

@@ -5,6 +5,7 @@ const { createOverlay } = require('./windows/overlayWindow');
 const { loadSettings } = require('./utils/overlays/overlay_settings');
 const overlaysConfig = require('./windows/overlays_config');
 const { startBackend, stopBackend } = require('./utils/backendManager');
+const { resetOverlayMovementStateOnAppStart } = require('./utils/overlays/overlay_movement');
 
 const { registerAllOverlayEvents } = require('./ipc/OverlayEvents');
 const registerSettingsEvents = require('./ipc/SettingsEvents');
@@ -41,6 +42,9 @@ async function createWindow() {
 
   // Registers IPC event for reset overlay settings
   registerSettingsEvents();
+
+  // Always start overlays in locked mode
+  resetOverlayMovementStateOnAppStart();
 
   // Open overlays marked as auto-start in settings
   autoStartOverlays();

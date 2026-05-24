@@ -20,6 +20,12 @@
   <div class="setting-item">
     <span class="setting-name">Reset overlays settings</span>
     <button id="reset-overlay-settings" class="button primary-btn" style="width: auto;">Reset</button>
+  </div>
+
+  <div class="setting-item">
+    <span class="setting-name">Uninstall application</span>
+    <button id="uninstall-app" class="button primary-btn" style="width: auto;">Uninstall</button>
+  </div>
 </div>
 
 <script>
@@ -33,6 +39,16 @@
       window.electronAPI.resetOverlaySettings();
 
       alert('Overlay settings have been reset');
+    });
+
+  document
+    .getElementById('uninstall-app')
+    .addEventListener('click', () => {
+      if (!confirm('Run uninstaller and close RedWave overlays?')) {
+        return;
+      }
+
+      window.electronAPI.uninstallApp();
     });
 </script>
 {% endblock %}

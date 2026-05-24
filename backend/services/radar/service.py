@@ -78,8 +78,6 @@ class RadarService(BaseService):
         Returns RadarContext with up-to-date radar telemetry.
         Overridden method from BaseService.
         """
-        self.irsdk._ensure_connected()
-
         car_left_right = self.irsdk.get_value("CarLeftRight")
         if car_left_right is None:
             return None

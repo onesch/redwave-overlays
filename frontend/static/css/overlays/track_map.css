@@ -15,9 +15,13 @@ body[data-track-type="linear"] #track-container {
   max-width: 300px;
 }
 
+body[data-track-type="track"] {
+  padding: 10px;
+  box-sizing: border-box;
+}
+
 body[data-track-type="track"] #track-container {
   max-width: 100%;
-  inset: 10px;
 }
 
 #track-line {

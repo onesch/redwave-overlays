@@ -48,7 +48,19 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onAutoStartModeUpdate: (callback) =>
     ipcRenderer.on('update-auto-start-mode', (_, value) => callback(value)),
 
+  // Overlay movement state
+  updateOverlayMovementState: () =>
+    ipcRenderer.invoke('update-overlay-movement-state'),
+  getOverlayMovementState: () =>
+    ipcRenderer.invoke('get-overlay-movement-state'),
+  onOverlayMovementStateUpdate: (callback) =>
+    ipcRenderer.on('overlay-movement-state-updated', (_, value) => callback(value)),
+
   // Reset overlay settings
   resetOverlaySettings: () =>
-    ipcRenderer.send('reset-overlay-settings')
+    ipcRenderer.send('reset-overlay-settings'),
+
+  // Uninstall app
+  uninstallApp: () =>
+    ipcRenderer.send('uninstall-app')
 });

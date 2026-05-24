@@ -69,8 +69,6 @@ class TrackMapService(BaseService):
         Returns a TrackMapContext with up-to-date data.
         Overridden method from BaseService.
         """
-        self.irsdk._ensure_connected()
-
         driver_info = self.irsdk.get_value("DriverInfo") or {}
         drivers = driver_info.get("Drivers", [])
         if not drivers:
