@@ -18,6 +18,8 @@ class LeaderboardContext:
             (for multiclass races).
         last_lap_times (list[float]):
             Last lap time of each driver in seconds.
+        best_lap_times (list[float]):
+            Best lap time of each driver in seconds.
         laps_started (list[int]):
             Number of laps started by each driver.
         lap_dist_pct (list[float]):
@@ -37,6 +39,7 @@ class LeaderboardContext:
     positions: list[int]
     class_positions: list[int]
     last_lap_times: list[float]
+    best_lap_times: list[float]
     laps_started: list[int]
     lap_dist_pct: list[float]
     is_pitroad: list[bool]
@@ -104,8 +107,21 @@ class CarDataBuilder:
         irating: int = driver.get("IRating")
         license_str: str = driver.get("LicString")
         car_class_color: int = driver.get("CarClassColor")
-        last_lap: str = TimeFormatter.format_lap_time(ctx.last_lap_times[idx])
         is_in_pitroad: bool = ctx.is_pitroad[idx]
+
+        #! ------------------------
+        last_lap_seconds: float | None = ctx.last_lap_times[idx]
+        last_lap: str = TimeFormatter.format_lap_time(last_lap_seconds)
+        best_lap_seconds: float | None = None
+        if idx < len(ctx.best_lap_times):
+            best_raw = ctx.best_lap_times[idx]
+            if isinstance(best_raw, (int, float)) and best_raw > 0:
+                best_lap_seconds = float(best_raw)
+
+        class_id = driver.get("CarClassID")
+        class_fastest_lap = self._get_class_fastest_lap(ctx, class_id)
+        session_fastest_lap = self._get_session_fastest_lap(ctx)
+        #! ------------------------
 
         if self._is_pace_car(driver):
             return None
@@ -121,6 +137,12 @@ class CarDataBuilder:
             "name": self._get_first_name(driver),
             "laps_started": laps_started,
             "last_lap": last_lap,
+            #! ------------------------
+            "last_lap_seconds": last_lap_seconds if isinstance(last_lap_seconds, (int, float)) and last_lap_seconds > 0 else None,
+            "best_lap_seconds": best_lap_seconds,
+            "class_fastest_lap_seconds": class_fastest_lap,
+            "session_fastest_lap_seconds": session_fastest_lap,
+            #! ------------------------
             "irating": irating,
             "license": license_str,
             "car_class_color": car_class_color,
@@ -130,6 +152,29 @@ class CarDataBuilder:
                 idx, ctx.laps_started, ctx.is_pitroad
             ),
         }
+
+    #! ------------------------
+    def _get_session_fastest_lap(self, ctx: LeaderboardContext) -> float | None:
+        valid_laps = [
+            float(lap)
+            for lap in ctx.best_lap_times
+            if isinstance(lap, (int, float)) and lap > 0
+        ]
+        return min(valid_laps) if valid_laps else None
+
+    def _get_class_fastest_lap(
+        self, ctx: LeaderboardContext, class_id: int | None
+    ) -> float | None:
+        valid_laps = [
+            float(ctx.best_lap_times[idx])
+            for idx, driver in enumerate(ctx.drivers)
+            if idx < len(ctx.best_lap_times)
+            and driver.get("CarClassID") == class_id
+            and isinstance(ctx.best_lap_times[idx], (int, float))
+            and ctx.best_lap_times[idx] > 0
+        ]
+        return min(valid_laps) if valid_laps else None
+    #! ------------------------
 
     def build_all(
         self, ctx: LeaderboardContext, exclude_idx: int | None = None
@@ -407,6 +452,9 @@ class Leaderboard:
             positions=self.irsdk.get_value("CarIdxPosition") or [],
             class_positions=self.irsdk.get_value("CarIdxClassPosition") or [],
             last_lap_times=self.irsdk.get_value("CarIdxLastLapTime") or [],
+            #! ------------------------
+            best_lap_times=self.irsdk.get_value("CarIdxBestLapTime") or [],
+            #! ------------------------
             laps_started=laps_started,
             lap_dist_pct=self.irsdk.get_value("CarIdxLapDistPct") or [],
             is_pitroad=self.irsdk.get_value("CarIdxOnPitRoad") or [],

@@ -383,13 +383,44 @@ class LeaderboardUpdater extends BaseUpdater {
             gapElement.style.opacity = "1";
         }
 
-        this.updateLapTime(rowElement, car.last_lap);
+        //! ------------------------
+        this.updateLapTime(rowElement, car);
+        //! ------------------------
         this.updateGap(rowElement, car.gap_sec);
     }
 
-    updateLapTime(row, lapTime) {
-        row.querySelector('.time').textContent = lapTime;
+    //! ------------------------
+    updateLapTime(row, car) {
+        const lapElement = row.querySelector('.time');
+        if (!lapElement) return;
+
+        lapElement.textContent = car.last_lap;
+        lapElement.style.color = '';
+
+        const hasValidLastLap = typeof car.last_lap_seconds === 'number' && car.last_lap_seconds > 0;
+        const hasValidBestLap = typeof car.best_lap_seconds === 'number' && car.best_lap_seconds > 0;
+
+        if (!hasValidLastLap || !hasValidBestLap) {
+            return;
+        }
+
+        const isPersonalBestLap = Math.abs(car.last_lap_seconds - car.best_lap_seconds) < 0.001;
+        const hasClassFastestLap = typeof car.class_fastest_lap_seconds === 'number' && car.class_fastest_lap_seconds > 0;
+        const hasSessionFastestLap = typeof car.session_fastest_lap_seconds === 'number' && car.session_fastest_lap_seconds > 0;
+
+        const isClassBestLap = hasClassFastestLap && Math.abs(car.last_lap_seconds - car.class_fastest_lap_seconds) < 0.001;
+        const isSessionBestLap = hasSessionFastestLap && Math.abs(car.last_lap_seconds - car.session_fastest_lap_seconds) < 0.001;
+
+        if (isSessionBestLap || isClassBestLap) {
+            lapElement.style.color = '#B85CFF';
+            return;
+        }
+
+        if (isPersonalBestLap) {
+            lapElement.style.color = '#37D67A';
+        }
     }
+    //! ------------------------
 
     updateGap(row, gapSec) {
         const gapElement = row.querySelector('.gap');
