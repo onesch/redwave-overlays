@@ -1,11 +1,11 @@
 import pytest
 from typing import Callable
 
+from backend.services.leaderboard.neighbords import NeighborsService
+from backend.services.leaderboard.context import LeaderboardContext
 from backend.services.leaderboard.service import (
     CarDataBuilder,
     Leaderboard,
-    LeaderboardContext,
-    NeighborsService,
 )
 
 
@@ -52,6 +52,9 @@ def mock_ctx(mock_values: Callable) -> LeaderboardContext:
         ),
         "last_lap_times": values.get_value(
             "CarIdxLastLapTime"
+        ),
+        "best_lap_times": values.get_value(
+            "CarIdxBestLapTime"
         ),
         "laps_started": values.get_value("CarIdxLap"),
         "lap_dist_pct": values.get_value("CarIdxLapDistPct"),

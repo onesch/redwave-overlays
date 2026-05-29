@@ -394,7 +394,7 @@ class LeaderboardUpdater extends BaseUpdater {
         const lapElement = row.querySelector('.time');
         if (!lapElement) return;
 
-        lapElement.textContent = car.last_lap;
+        lapElement.textContent = car.last_lap_formatted;
         lapElement.style.color = '';
 
         const hasValidLastLap = typeof car.last_lap_seconds === 'number' && car.last_lap_seconds > 0;

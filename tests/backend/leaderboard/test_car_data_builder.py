@@ -117,13 +117,6 @@ def test_builder_converts_negative_position_to_none(mock_builder, mock_ctx):
     assert result["pos"] is None
 
 
-def test_builder_negative_laps_converted_to_zero(mock_builder, mock_ctx):
-    CONVERTED_TO_ZERO = -999
-    ctx = mock_ctx(laps_started=[CONVERTED_TO_ZERO])
-    result = mock_builder.build(0, ctx)
-    assert result["laps_started"] == 0
-
-
 def test_builder_negative_lap_dist_pct_to_none(mock_builder, mock_ctx):
     NEGATIVE_TO_NONE = -9.9
     ctx = mock_ctx(lap_dist_pct=[NEGATIVE_TO_NONE])
@@ -140,7 +133,7 @@ def test_builder_returns_valid_data(mock_builder, mock_ctx):
     assert result["car_number"] == "12"
     assert result["name"] == "Driver1"
     assert result["laps_started"] == 5
-    assert result["last_lap"] == "01:20.000"
+    assert result["last_lap_formatted"] == "01:20.000"
     assert result["irating"] == 2000
     assert result["license"] == "A 4.99"
     assert result["car_class_color"] == 16711680

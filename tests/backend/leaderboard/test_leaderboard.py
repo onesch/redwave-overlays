@@ -1,11 +1,8 @@
+import pytest
 from unittest.mock import MagicMock
 
-import pytest
-
-from backend.services.leaderboard.service import (
-    Leaderboard,
-    LeaderboardContext,
-)
+from backend.services.leaderboard.context import LeaderboardContext
+from backend.services.leaderboard.service import Leaderboard
 
 
 def test_get_session_info_returns_expected(mock_values, mock_ctx):
@@ -45,7 +42,7 @@ def test_get_session_time_formats(mock_service):
 
 
 def test_leaderboard_snapshot_structure(mock_service):
-    snapshot = mock_service.get_leaderboard_snapshot()
+    snapshot = mock_service.get_snapshot()
     keys = (
         "cars",
         "player",
@@ -59,7 +56,7 @@ def test_leaderboard_snapshot_structure(mock_service):
 
 def test_leaderboard_snapshot_multiclass(mock_values):
     lb = Leaderboard(mock_values(is_multiclass=True))
-    snapshot = lb.get_leaderboard_snapshot()
+    snapshot = lb.get_snapshot()
     assert snapshot["multiclass"] is True
 
 
@@ -67,7 +64,7 @@ def test_leaderboard_no_drivers_returns_error(irsdk_mock_factory):
     irsdk = irsdk_mock_factory({"DriverInfo": {"Drivers": []}})
     mock_service = Leaderboard(irsdk)
 
-    result = mock_service.get_leaderboard_snapshot()
+    result = mock_service.get_snapshot()
 
     assert result["status"] == "waiting"
     assert result["player"] is None
