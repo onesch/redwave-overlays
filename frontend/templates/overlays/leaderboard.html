@@ -234,7 +234,7 @@ class LeaderboardUpdater extends BaseUpdater {
             data.leaderboard_data.session_laps,
             data.leaderboard_data.session_time,
             data.leaderboard_data.player_lap_time,
-            data.player.laps_started
+            data.player.laps_started_idx
         );
         // Update session time
         this.updateSessionTime(
@@ -394,13 +394,10 @@ class LeaderboardUpdater extends BaseUpdater {
         const lapElement = row.querySelector('.time');
         if (!lapElement) return;
 
-        lapElement.textContent = car.last_lap_formatted;
+        lapElement.textContent = car.last_lap_time_formatted;
         lapElement.style.color = '';
 
-        const hasValidLastLap = typeof car.last_lap_seconds === 'number' && car.last_lap_seconds > 0;
-        const hasValidBestLap = typeof car.best_lap_seconds === 'number' && car.best_lap_seconds > 0;
-
-        if (!hasValidLastLap || !hasValidBestLap) {
+        if (car.last_lap_seconds === -1.0 || car.best_lap_seconds === -1.0) {
             return;
         }
 

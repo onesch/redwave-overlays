@@ -31,11 +31,7 @@ class CarDataBuilder(BaseCarBuilder):
 
         driver: dict[str, Any] = ctx.drivers[idx]
         class_id = driver.get("CarClassID")
-        last_lap_seconds = self._get_valid_lap_time(ctx.last_lap_times, idx)
-
-        # laps_started: int = ctx.laps_started[idx]
-        # if laps_started < 0:
-        #     laps_started = 0
+        last_lap_seconds = ctx.last_lap_times[idx]
 
         return {
             **base_car,
@@ -46,25 +42,13 @@ class CarDataBuilder(BaseCarBuilder):
             "car_class_color": driver.get("CarClassColor"),
             "lap_dist_pct": self._format_lap_dist(idx, ctx),
             "last_pit_lap": self._get_last_pit_lap(idx, ctx.laps_started, ctx.is_pitroad),
-            "laps_started": ctx.laps_started[idx],
-            # !
-            "last_lap_formatted": TimeFormatter.format_lap_time(last_lap_seconds),
+            "laps_started_idx": ctx.laps_started[idx],
+            "last_lap_time_formatted": TimeFormatter.format_lap_time(last_lap_seconds),
             "last_lap_seconds": last_lap_seconds,
-            "best_lap_seconds": self._get_valid_lap_time(ctx.best_lap_times, idx),
+            "best_lap_seconds": ctx.best_lap_times[idx],
             "session_fastest_lap_seconds": self._get_session_fastest_lap(ctx),
             "class_fastest_lap_seconds": self._get_class_fastest_lap(ctx, class_id),
         }
-
-    def _get_valid_lap_time(  # ! need tests
-        self, lap_times: list[float], idx: int
-    ) -> float | None:
-        if idx >= len(lap_times):
-            return None
-
-        lap_time = lap_times[idx]
-        if isinstance(lap_time, (int, float)) and lap_time > 0:
-            return float(lap_time)
-        return None
 
     def _get_session_fastest_lap(  # ! need tests
         self, ctx: LeaderboardContext
@@ -225,16 +209,6 @@ class Leaderboard(BaseService):
             is_pitroad=self.irsdk.get_value("CarIdxOnPitRoad") or [],
             multiclass=self._is_multiclass(drivers),
         )
-
-    def _empty_snapshot(self) -> dict[str, Any]:  # ! necessary?
-        return {
-            "status": "waiting",
-            "player": None,
-            "cars": [],
-            "neighbors": {"ahead": [], "behind": []},
-            "leaderboard_data": None,
-            "multiclass": False,
-        }
 
     def get_car_lap_time(
         self,
