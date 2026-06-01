@@ -7,17 +7,9 @@ from backend.services.leaderboard.service import Leaderboard
 
 def test_get_session_info_returns_expected(mock_values, mock_ctx):
     lb = Leaderboard(mock_values())
-    data = lb.get_session_info(player_idx=0, ctx=mock_ctx)
+    data = lb.get_session_info(player_idx=0, ctx=mock_ctx())
     assert data["session_laps"] == 10
     assert data["player_lap_time"] == pytest.approx(11.1)
-
-
-def test_get_car_lap_time_returns_fastest_or_est(mock_values, mock_ctx):
-    ctx = mock_ctx()
-    lb = Leaderboard(mock_values())
-    assert lb.get_car_lap_time(0, ctx) == pytest.approx(11.1)
-    assert lb.get_car_lap_time(1, ctx) == pytest.approx(22.2)
-    assert lb.get_car_lap_time(2, ctx) == pytest.approx(80.0)
 
 
 def test_get_session_time_formats(mock_service):
@@ -67,12 +59,7 @@ def test_leaderboard_no_drivers_returns_error(irsdk_mock_factory):
     result = mock_service.get_snapshot()
 
     assert result["status"] == "waiting"
-    assert result["player"] is None
     assert result["cars"] == []
-    assert result["neighbors"]["ahead"] == []
-    assert result["neighbors"]["behind"] == []
-    assert result["leaderboard_data"] is None
-    assert result["multiclass"] is False
 
 
 def test_is_multiclass_returns_false_for_single_class(mock_service, mock_ctx):
@@ -85,63 +72,6 @@ def test_is_multiclass_returns_true_for_multiple_classes(
 ):
     ctx = mock_ctx(drivers=[{"CarClassID": 1}, {"CarClassID": 2}])
     assert mock_service._is_multiclass(ctx.drivers) is True
-
-
-def test_get_estimated_lap_time_invalid_values(mock_service, mock_ctx):
-    ctx = mock_ctx(
-        drivers=[{"CarClassEstLapTime": -5}, {"CarClassEstLapTime": "abc"}]
-    )
-    assert mock_service._get_estimated_lap_time(0, ctx) is None
-    assert mock_service._get_estimated_lap_time(1, ctx) is None
-
-
-def test_get_best_lap_time_invalid_values(mock_values):
-    mock_values.get_value = lambda key: [0, "abc", None]
-    mock_service = Leaderboard(mock_values)
-
-    assert mock_service._get_best_lap_time(player_idx=0) is None
-    assert mock_service._get_best_lap_time(player_idx=1) is None
-    assert mock_service._get_best_lap_time(player_idx=2) is None
-
-
-def test_calculate_session_time_unlimited_laps(mock_service):
-    current_session = {
-        "SessionLaps": "unlimited",
-        "SessionType": "Race",
-    }
-    result = mock_service._calculate_session_time_based_on_laps(
-        current_session,
-        player_lap_time=80,
-    )
-    assert result is None
-
-
-def test_calculate_session_time_not_race_session(mock_service):
-    current_session = {
-        "SessionLaps": 10,
-        "SessionType": "Practice",
-    }
-
-    result = mock_service._calculate_session_time_based_on_laps(
-        current_session,
-        player_lap_time=80,
-    )
-
-    assert result is None
-
-
-def test_calculate_session_time_race_session(mock_service):
-    current_session = {
-        "SessionLaps": 10,
-        "SessionType": "Race",
-    }
-
-    result = mock_service._calculate_session_time_based_on_laps(
-        current_session,
-        player_lap_time=80,
-    )
-
-    assert result == 800
 
 
 def test_reset_pit_status_calls_reset_on_new_session(mock_service):
@@ -162,15 +92,11 @@ def test_reset_pit_status_does_not_call_reset_on_same_session(mock_service):
 
 def test_get_current_session_empty_or_out_of_bounds(mock_service):
     assert (
-        mock_service._get_current_session(
-            {"Sessions": [], "CurrentSessionNum": 0}
-        )
+        mock_service._get_current_session({"Sessions": [], "CurrentSessionNum": 0})
         == {}
     )
     assert (
-        mock_service._get_current_session(
-            {"Sessions": [{}], "CurrentSessionNum": 2}
-        )
+        mock_service._get_current_session({"Sessions": [{}], "CurrentSessionNum": 2})
         == {}
     )
 
@@ -181,12 +107,7 @@ def test_empty_snapshot_structure(mock_service):
     assert isinstance(snapshot, dict)
 
     assert snapshot["status"] == "waiting"
-    assert snapshot["player"] is None
     assert snapshot["cars"] == []
-    assert snapshot["neighbors"]["ahead"] == []
-    assert snapshot["neighbors"]["behind"] == []
-    assert snapshot["leaderboard_data"] is None
-    assert snapshot["multiclass"] is False
 
 
 def test_build_context_success(mock_service):

@@ -33,8 +33,8 @@ def test_reset_pit_data_clears_dicts(mock_builder):
         ("", False),
     ],
 )
-def test_is_pace_car_variants(mock_values, username, expected):
-    mock_builder = CarDataBuilder(mock_values)
+def test_is_pace_car_variants(mock_values, mock_lap_times, username, expected):
+    mock_builder = CarDataBuilder(mock_values, mock_lap_times)
     driver = {"UserName": username}
     assert mock_builder._is_pace_car(driver) is expected
 
@@ -48,8 +48,8 @@ def test_is_pace_car_variants(mock_values, username, expected):
         ("   ", ""),
     ],
 )
-def test_get_first_name_variants(mock_values, username, expected):
-    mock_builder = CarDataBuilder(mock_values)
+def test_get_first_name_variants(mock_values, mock_lap_times, username, expected):
+    mock_builder = CarDataBuilder(mock_values, mock_lap_times)
     driver = {"UserName": username}
     assert mock_builder._get_first_name(driver) == expected
 

@@ -1,6 +1,7 @@
 import pytest
 from typing import Callable
 
+from backend.services.leaderboard.lap_times.service import LapTimeService
 from backend.services.leaderboard.neighbords import NeighborsService
 from backend.services.leaderboard.context import LeaderboardContext
 from backend.services.leaderboard.service import (
@@ -19,12 +20,12 @@ def mock_service(mock_values: Callable) -> Leaderboard:
 
 
 @pytest.fixture
-def mock_builder(mock_values: Callable) -> CarDataBuilder:
+def mock_builder(mock_values: Callable, mock_lap_times: LapTimeService) -> CarDataBuilder:
     """
     Returns the CarDataBuilder initialized with mock values.
     """
 
-    return CarDataBuilder(mock_values())
+    return CarDataBuilder(mock_values(), mock_lap_times)
 
 
 @pytest.fixture
@@ -34,6 +35,14 @@ def mock_neighbors(mock_builder: CarDataBuilder) -> NeighborsService:
     """
 
     return NeighborsService(mock_builder)
+
+
+@pytest.fixture
+def mock_lap_times():
+    """
+    Returns the LapTimeService initialized with default values.
+    """
+    return LapTimeService()
 
 
 @pytest.fixture
