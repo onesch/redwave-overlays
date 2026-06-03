@@ -15,10 +15,19 @@ def test_build_returns_car_data(mock_builder, mock_ctx):
     assert car["is_in_pitroad"] is False
 
 
-def test_is_pace_car_case_insensitive(mock_builder):
-    driver = {"UserName": "pace car"}
+@pytest.mark.parametrize(
+    "username,expected",
+    [
+        ("PACE CAR", True),
+        ("pace car", True),
+        ("Driver1", False),
+        ("", False),
+    ],
+)
+def test_is_pace_car_variants(mock_builder, username, expected):
+    driver = {"UserName": username}
 
-    assert mock_builder._is_pace_car(driver) is True
+    assert mock_builder._is_pace_car(driver) is expected
 
 
 # --- Negative tests ---

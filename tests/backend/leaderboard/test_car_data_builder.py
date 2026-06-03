@@ -26,22 +26,6 @@ def test_reset_pit_data_clears_dicts(mock_builder):
 @pytest.mark.parametrize(
     "username,expected",
     [
-        ("PACE CAR", True),
-        ("pace car", True),
-        ("PaCe CaR", True),
-        ("Driver1", False),
-        ("", False),
-    ],
-)
-def test_is_pace_car_variants(mock_values, mock_lap_times, username, expected):
-    mock_builder = CarDataBuilder(mock_values, mock_lap_times)
-    driver = {"UserName": username}
-    assert mock_builder._is_pace_car(driver) is expected
-
-
-@pytest.mark.parametrize(
-    "username,expected",
-    [
         ("Driver One", "Driver"),
         (" SingleName ", "SingleName"),
         ("", ""),

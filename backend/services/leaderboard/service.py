@@ -63,10 +63,6 @@ class CarDataBuilder(BaseCarBuilder):
         ]
         return CarSorter.sort(cars)
 
-    def _is_pace_car(self, driver: dict) -> bool:
-        """Checks if a car is a pace car by name."""
-        return driver.get("UserName", "").upper() == "PACE CAR"
-
     def _get_first_name(self, driver: dict) -> str:
         names = driver.get("UserName", "").strip().split()
         return names[0] if names else ""
