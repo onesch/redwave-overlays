@@ -14,7 +14,7 @@ class CarDataBuilder(BaseCarBuilder):
 
     def __init__(self, irsdk_service, lap_times: LapTimeService):
         self.irsdk = irsdk_service
-        self.lap_times = lap_times or LapTimeService()
+        self.lap_times = lap_times
         self._last_pit_laps: dict[int, int] = {}
         self._pit_exit_times: dict[int, float] = {}
 
