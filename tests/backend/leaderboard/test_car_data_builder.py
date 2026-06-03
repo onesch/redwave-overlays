@@ -1,4 +1,5 @@
 import pytest
+from unittest.mock import MagicMock
 
 from backend.services.leaderboard.service import CarDataBuilder
 
@@ -122,6 +123,19 @@ def test_builder_returns_valid_data(mock_builder, mock_ctx):
     assert result["license"] == "A 4.99"
     assert result["car_class_color"] == 16711680
     assert result["lap_dist_pct"] == pytest.approx(0.6)
+
+
+def test_builder_uses_cached_fastest_laps(mock_values, mock_ctx):
+    lap_times = MagicMock()
+    builder = CarDataBuilder(mock_values(), lap_times)
+    ctx = mock_ctx(session_fastest_lap=10.5, class_fastest_laps={1: 10.5})
+
+    result = builder.build(0, ctx)
+
+    assert result["session_fastest_lap_seconds"] == pytest.approx(10.5)
+    assert result["class_fastest_lap_seconds"] == pytest.approx(10.5)
+    lap_times.session_fastest_lap.assert_not_called()
+    lap_times.class_fastest_lap.assert_not_called()
 
 
 def test_get_last_pit_lap_behavior(mock_builder):

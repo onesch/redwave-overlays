@@ -122,6 +122,8 @@ def test_build_context_success(mock_service):
     assert ctx.lap_dist_pct == [0.6, 0.3, 0.9]
     assert ctx.is_pitroad == [False, False, False]
     assert ctx.laps_started == [5, 5, 4]
+    assert ctx.session_fastest_lap == pytest.approx(11.1)
+    assert ctx.class_fastest_laps == {1: pytest.approx(11.1)}
     assert ctx.multiclass is False
 
 
@@ -130,6 +132,10 @@ def test_build_context_multiclass(mock_values):
     ctx = mock_service._build_context()
 
     assert isinstance(ctx, LeaderboardContext)
+    assert ctx.class_fastest_laps == {
+        1: pytest.approx(11.1),
+        2: pytest.approx(22.2),
+    }
     assert ctx.multiclass is True
 
 
@@ -144,3 +150,17 @@ def test_build_context_returns_none_when_no_drivers(irsdk_mock_factory):
     ctx = mock_service._build_context()
 
     assert ctx is None
+
+
+@pytest.mark.parametrize(
+    "raw_laps,expected",
+    [
+        ([-1], [0]),
+        ([1], [1]),
+        ([0], [0]),
+        ([None], [0]),
+        (["str"], [0]),
+    ],
+)
+def test_normalize_laps_started(mock_service, raw_laps, expected):
+    assert mock_service._normalize_laps_started(raw_laps) == expected

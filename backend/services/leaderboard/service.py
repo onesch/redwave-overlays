@@ -32,8 +32,8 @@ class CarDataBuilder(BaseCarBuilder):
             return None
 
         driver: dict[str, Any] = ctx.drivers[idx]
-        class_id = driver.get("CarClassID")
-        last_lap_seconds = ctx.last_lap_times[idx]
+        class_id: int = driver.get("CarClassID")
+        last_lap_seconds: float = ctx.last_lap_times[idx]
 
         return {
             **base_car,
@@ -48,8 +48,8 @@ class CarDataBuilder(BaseCarBuilder):
             "last_lap_time_formatted": TimeFormatter.format_lap_time(last_lap_seconds),
             "last_lap_seconds": last_lap_seconds,
             "best_lap_seconds": ctx.best_lap_times[idx],
-            "session_fastest_lap_seconds": self.lap_times.session_fastest_lap(ctx),
-            "class_fastest_lap_seconds": self.lap_times.class_fastest_lap(ctx, class_id),
+            "session_fastest_lap_seconds": ctx.session_fastest_lap,
+            "class_fastest_lap_seconds": ctx.class_fastest_laps.get(class_id),
         }
 
     def build_all(
@@ -145,7 +145,6 @@ class Leaderboard(BaseService):
         self._last_session_num: int | None = None
 
     def _build_snapshot(self, ctx: LeaderboardContext) -> dict[str, Any]:
-        """Build the leaderboard snapshot using prepared context."""
         player_idx: int = self.irsdk.get_value("PlayerCarIdx")
 
         return {
@@ -164,7 +163,7 @@ class Leaderboard(BaseService):
         if not drivers:
             return None
 
-        return LeaderboardContext(
+        ctx = LeaderboardContext(
             drivers=drivers,
             positions=self.irsdk.get_value("CarIdxPosition") or [],
             class_positions=self.irsdk.get_value("CarIdxClassPosition") or [],
@@ -177,6 +176,14 @@ class Leaderboard(BaseService):
             is_pitroad=self.irsdk.get_value("CarIdxOnPitRoad") or [],
             multiclass=self._is_multiclass(drivers),
         )
+
+        ctx.session_fastest_lap = self.lap_times.session_fastest_lap(ctx)
+        ctx.class_fastest_laps = {
+            class_id: self.lap_times.class_fastest_lap(ctx, class_id)
+            for class_id in {driver.get("CarClassID") for driver in drivers}
+        }
+
+        return ctx
 
     def get_session_time(
         self,
@@ -258,7 +265,11 @@ class Leaderboard(BaseService):
             {d.get("CarClassID") for d in drivers if d.get("CarClassID")}
         ) > 1
 
-    def _normalize_laps_started(self, raw_laps: list[Any]) -> list[int]:  # ! need tests
+    def _normalize_laps_started(self, raw_laps: list[Any]) -> list[int]:
+        """
+        Replace invalid lap counts with 0.
+        Negative values, non-integers, and None are treated as 0.
+        """
         return [
             lap if isinstance(lap, int) and lap >= 0 else 0
             for lap in raw_laps

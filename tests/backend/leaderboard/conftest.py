@@ -66,6 +66,8 @@ def mock_ctx(mock_values: Callable) -> LeaderboardContext:
             "CarIdxBestLapTime"
         ),
         "laps_started": values.get_value("CarIdxLap"),
+        "session_fastest_lap": 11.1,
+        "class_fastest_laps": {1: 11.1, 2: 22.2},
         "lap_dist_pct": values.get_value("CarIdxLapDistPct"),
         "is_pitroad": values.get_value("CarIdxOnPitRoad"),
         "multiclass": False,
