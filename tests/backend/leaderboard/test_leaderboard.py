@@ -12,25 +12,28 @@ def test_get_session_info_returns_expected(mock_values, mock_ctx):
     assert data["player_lap_time"] == pytest.approx(11.1)
 
 
-def test_get_session_time_formats(mock_service):
+def test_get_session_time_returns_lap_based(mock_service):
     current_session = {"SessionType": "Race", "SessionLaps": 10}
     player_lap_time = 80.0
 
-    unformatted = mock_service.get_session_time(
-        current_session,
-        player_lap_time,
-        is_format=False,
-    )
-    formatted = mock_service.get_session_time(
-        current_session,
-        player_lap_time,
-        is_format=True,
+    session_time, is_approximate = mock_service.get_session_time(
+        current_session, player_lap_time,
     )
 
-    assert isinstance(unformatted, float)
-    assert isinstance(formatted, str)
-    assert formatted.startswith("~")
-    assert formatted.endswith("m")
+    assert isinstance(session_time, float)
+    assert is_approximate is True
+
+
+def test_get_session_time_falls_back_to_total(mock_service):
+    current_session = {"SessionType": "Race", "SessionLaps": "unlimited"}
+    player_lap_time = 80.0
+
+    session_time, is_approximate = mock_service.get_session_time(
+        current_session, player_lap_time,
+    )
+
+    assert session_time == mock_service.irsdk.get_value("SessionTimeTotal")
+    assert is_approximate is False
 
 
 def test_leaderboard_snapshot_structure(mock_service):

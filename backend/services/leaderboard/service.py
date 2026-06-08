@@ -189,36 +189,18 @@ class Leaderboard(BaseService):
         self,
         current_session: dict,
         player_lap_time: float | None,
-        is_format: bool = True,
-    ) -> str | float:
+    ) -> tuple[float, bool]:
         """
-        Public method to get the session time.
-
-        Calculates the session duration using lap-based timing if available,
-        otherwise falls back to total session time.
-        Returns a formatted string if requested.
+        Calculate session time and whether it was derived from lap count.
+        Returns (session_time, is_approximate).
         """
-        session_time_total: float = self.irsdk.get_value("SessionTimeTotal")
-        lap_calculated_time = self.lap_times.calculate_session_time_based_on_laps(
+        lap_calculated = self.lap_times.calculate_session_time_based_on_laps(
             current_session,
             player_lap_time,
         )
-
-        if lap_calculated_time is not None:
-            session_time = lap_calculated_time
-            is_lap_calculated_time = True
-        else:
-            session_time = session_time_total
-            is_lap_calculated_time = False
-
-        if is_format:
-            formatted = TimeFormatter.format_session_time(
-                session_time,
-                show_seconds=False,
-            )
-            return f"~{formatted}" if is_lap_calculated_time else formatted
-
-        return session_time
+        if lap_calculated is not None:
+            return lap_calculated, True
+        return self.irsdk.get_value("SessionTimeTotal"), False
 
     def get_session_info(
         self,
@@ -236,19 +218,14 @@ class Leaderboard(BaseService):
 
         player_lap_time = self.lap_times.car_lap_time(player_idx, ctx)
 
-        session_time = self.get_session_time(
-            current_session,
-            player_lap_time,
-            is_format=False,
+        session_time, is_approximate = self.get_session_time(
+            current_session, player_lap_time,
         )
         resolved_session_time_current = TimeFormatter.format_session_time(
-            session_time_current,
-            show_seconds=True,
+            session_time_current, show_seconds=True,
         )
-        session_time_formatted = self.get_session_time(
-            current_session,
-            player_lap_time,
-            is_format=True,
+        session_time_formatted = TimeFormatter.format_session_time(
+            session_time, show_seconds=False,
         )
 
         return {
@@ -256,7 +233,7 @@ class Leaderboard(BaseService):
             "player_lap_time": player_lap_time,
             "session_time": session_time,
             "session_time_current": resolved_session_time_current,
-            "session_time_formatted": session_time_formatted,
+            "session_time_formatted": f"~{session_time_formatted}" if is_approximate else session_time_formatted,
         }
 
     def _is_multiclass(self, drivers: list) -> bool:
