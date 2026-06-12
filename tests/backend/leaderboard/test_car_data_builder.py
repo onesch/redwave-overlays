@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import MagicMock
 
-from backend.services.leaderboard.service import CarDataBuilder
+from backend.services.leaderboard.car_data_builder import CarDataBuilder
 
 
 # --- CarDataBuilder tests ---
