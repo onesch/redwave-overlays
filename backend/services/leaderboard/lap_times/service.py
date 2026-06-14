@@ -14,7 +14,7 @@ class LapTimeService:
     def fastest_lap(self, lap_times: Iterable[Any]) -> float | None:
         """Return the fastest valid lap from an arbitrary collection."""
         valid_laps = [
-            float(lap_time)
+            lap_time
             for lap_time in lap_times
             if self.is_valid_lap_time(lap_time)
         ]

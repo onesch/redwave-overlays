@@ -383,41 +383,35 @@ class LeaderboardUpdater extends BaseUpdater {
             gapElement.style.opacity = "1";
         }
 
-        //! ------------------------
         this.updateLapTime(rowElement, car);
-        //! ------------------------
         this.updateGap(rowElement, car.gap_sec);
     }
 
-    //! ------------------------
     updateLapTime(row, car) {
         const lapElement = row.querySelector('.time');
         if (!lapElement) return;
 
         lapElement.textContent = car.last_lap_time_formatted;
-        lapElement.style.color = '';
+        lapElement.className = 'time';
 
-        if (car.last_lap_seconds === -1.0 || car.best_lap_seconds === -1.0) {
-            return;
-        }
-
-        const isPersonalBestLap = Math.abs(car.last_lap_seconds - car.best_lap_seconds) < 0.001;
-        const hasClassFastestLap = typeof car.class_fastest_lap_seconds === 'number' && car.class_fastest_lap_seconds > 0;
-        const hasSessionFastestLap = typeof car.session_fastest_lap_seconds === 'number' && car.session_fastest_lap_seconds > 0;
-
-        const isClassBestLap = hasClassFastestLap && Math.abs(car.last_lap_seconds - car.class_fastest_lap_seconds) < 0.001;
-        const isSessionBestLap = hasSessionFastestLap && Math.abs(car.last_lap_seconds - car.session_fastest_lap_seconds) < 0.001;
-
-        if (isSessionBestLap || isClassBestLap) {
-            lapElement.style.color = '#B85CFF';
-            return;
-        }
-
-        if (isPersonalBestLap) {
-            lapElement.style.color = '#37D67A';
-        }
+        const color = this._resolveLapColor(car);
+        if (color) lapElement.classList.add(color);
     }
-    //! ------------------------
+
+    _resolveLapColor(car) {
+        if (car.last_lap_seconds === -1.0 || car.best_lap_seconds === -1.0) return null;
+
+        if (car.last_lap_seconds === car.session_fastest_lap_seconds ||
+            car.last_lap_seconds === car.class_fastest_lap_seconds) {
+            return 'session-best';
+        }
+
+        if (car.last_lap_seconds === car.best_lap_seconds) {
+            return 'personal-best';
+        }
+
+        return null;
+    }
 
     updateGap(row, gapSec) {
         const gapElement = row.querySelector('.gap');
