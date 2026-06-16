@@ -383,12 +383,34 @@ class LeaderboardUpdater extends BaseUpdater {
             gapElement.style.opacity = "1";
         }
 
-        this.updateLapTime(rowElement, car.last_lap);
+        this.updateLapTime(rowElement, car);
         this.updateGap(rowElement, car.gap_sec);
     }
 
-    updateLapTime(row, lapTime) {
-        row.querySelector('.time').textContent = lapTime;
+    updateLapTime(row, car) {
+        const lapElement = row.querySelector('.time');
+        if (!lapElement) return;
+
+        lapElement.textContent = car.last_lap_time_formatted;
+        lapElement.className = 'time';
+
+        const color = this._resolveLapColor(car);
+        if (color) lapElement.classList.add(color);
+    }
+
+    _resolveLapColor(car) {
+        if (car.last_lap_seconds === -1.0 || car.best_lap_seconds === -1.0) return null;
+
+        if (car.last_lap_seconds === car.session_fastest_lap_seconds ||
+            car.last_lap_seconds === car.class_fastest_lap_seconds) {
+            return 'session-best';
+        }
+
+        if (car.last_lap_seconds === car.best_lap_seconds) {
+            return 'personal-best';
+        }
+
+        return null;
     }
 
     updateGap(row, gapSec) {

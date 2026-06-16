@@ -17,8 +17,8 @@ def test_format_lap_time(seconds, expected):
 @pytest.mark.parametrize(
     "secs,expected",
     [
-        (None, "--:--.---"),
-        (-5, "--:--.---"),
+        (None, "--:--"),
+        (-5, "--:--"),
         (0, "00:00m"),
         (3600, "01:00:00h"),
         (3665, "01:01:05h"),
@@ -27,5 +27,5 @@ def test_format_lap_time(seconds, expected):
 )
 def test_format_session_time(secs, expected):
     assert (
-        TimeFormatter.format_session_time(secs, is_seconds=True) == expected
+        TimeFormatter.format_session_time(secs, show_seconds=True) == expected
     )

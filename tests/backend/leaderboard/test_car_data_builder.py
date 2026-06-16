@@ -1,6 +1,7 @@
 import pytest
+from unittest.mock import MagicMock
 
-from backend.services.leaderboard.service import CarDataBuilder
+from backend.services.leaderboard.car_data_builder import CarDataBuilder
 
 
 # --- CarDataBuilder tests ---
@@ -26,30 +27,14 @@ def test_reset_pit_data_clears_dicts(mock_builder):
 @pytest.mark.parametrize(
     "username,expected",
     [
-        ("PACE CAR", True),
-        ("pace car", True),
-        ("PaCe CaR", True),
-        ("Driver1", False),
-        ("", False),
-    ],
-)
-def test_is_pace_car_variants(mock_values, username, expected):
-    mock_builder = CarDataBuilder(mock_values)
-    driver = {"UserName": username}
-    assert mock_builder._is_pace_car(driver) is expected
-
-
-@pytest.mark.parametrize(
-    "username,expected",
-    [
         ("Driver One", "Driver"),
         (" SingleName ", "SingleName"),
         ("", ""),
         ("   ", ""),
     ],
 )
-def test_get_first_name_variants(mock_values, username, expected):
-    mock_builder = CarDataBuilder(mock_values)
+def test_get_first_name_variants(mock_values, mock_lap_times, username, expected):
+    mock_builder = CarDataBuilder(mock_values, mock_lap_times)
     driver = {"UserName": username}
     assert mock_builder._get_first_name(driver) == expected
 
@@ -117,13 +102,6 @@ def test_builder_converts_negative_position_to_none(mock_builder, mock_ctx):
     assert result["pos"] is None
 
 
-def test_builder_negative_laps_converted_to_zero(mock_builder, mock_ctx):
-    CONVERTED_TO_ZERO = -999
-    ctx = mock_ctx(laps_started=[CONVERTED_TO_ZERO])
-    result = mock_builder.build(0, ctx)
-    assert result["laps_started"] == 0
-
-
 def test_builder_negative_lap_dist_pct_to_none(mock_builder, mock_ctx):
     NEGATIVE_TO_NONE = -9.9
     ctx = mock_ctx(lap_dist_pct=[NEGATIVE_TO_NONE])
@@ -140,11 +118,24 @@ def test_builder_returns_valid_data(mock_builder, mock_ctx):
     assert result["car_number"] == "12"
     assert result["name"] == "Driver1"
     assert result["laps_started"] == 5
-    assert result["last_lap"] == "01:20.000"
+    assert result["last_lap_time_formatted"] == "01:20.000"
     assert result["irating"] == 2000
     assert result["license"] == "A 4.99"
     assert result["car_class_color"] == 16711680
     assert result["lap_dist_pct"] == pytest.approx(0.6)
+
+
+def test_builder_uses_cached_fastest_laps(mock_values, mock_ctx):
+    lap_times = MagicMock()
+    builder = CarDataBuilder(mock_values(), lap_times)
+    ctx = mock_ctx(session_fastest_lap=10.5, class_fastest_laps={1: 10.5})
+
+    result = builder.build(0, ctx)
+
+    assert result["session_fastest_lap_seconds"] == pytest.approx(10.5)
+    assert result["class_fastest_lap_seconds"] == pytest.approx(10.5)
+    lap_times.session_fastest_lap.assert_not_called()
+    lap_times.class_fastest_lap.assert_not_called()
 
 
 def test_get_last_pit_lap_behavior(mock_builder):

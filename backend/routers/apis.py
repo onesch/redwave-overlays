@@ -22,7 +22,7 @@ def get_radar_data():
 
 @router.get("/leaderboard")
 def get_leaderboard_data():
-    return leaderboard_service.get_leaderboard_snapshot()
+    return leaderboard_service.get_snapshot()
 
 
 @router.get("/track-map")

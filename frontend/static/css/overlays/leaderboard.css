@@ -179,6 +179,8 @@
   min-width: 90px;
   font-size: 15px;
 }
+.time.session-best  { color: #B85CFF; }
+.time.personal-best { color: #37D67A; }
 
 .driver {
   display: flex;
