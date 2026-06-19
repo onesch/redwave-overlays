@@ -9,6 +9,4 @@ dist/
 build/
 backend_run/
 TODOLIST.md
-print_tree.py
-irating_calculation.py
-eventresult.json
+.venv/

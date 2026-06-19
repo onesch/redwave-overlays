@@ -17,7 +17,7 @@ BASE_PATH = get_base_path()
 async def main_view(request: Request):
     app_version = get_app_version()
     return templates.TemplateResponse(
-        "pages/main.html", {"request": request, "app_version": app_version}
+        request, "pages/main.html", {"app_version": app_version}
     )
 
 
@@ -25,15 +25,13 @@ async def main_view(request: Request):
 async def changelog_view(request: Request):
     images = get_changelog_images()
     return templates.TemplateResponse(
-        "pages/changelog.html", {"request": request, "images": images}
+        request, "pages/changelog.html", {"images": images}
     )
 
 
 @router.get("/settings", response_class=HTMLResponse, name="settings")
 async def settings_view(request: Request):
-    return templates.TemplateResponse(
-        "pages/settings.html", {"request": request}
-    )
+    return templates.TemplateResponse(request, "pages/settings.html")
 
 
 @router.get("/overlays", response_class=HTMLResponse)
@@ -42,9 +40,8 @@ async def overlays(request: Request, overlay: str | None = None):
         selected_key=overlay,
     )
     return templates.TemplateResponse(
-        "pages/overlays.html",
+        request, "pages/overlays.html",
         {
-            "request": request,
             "overlays": overlays_list,
             "selected_overlay": selected_overlay,
             "card_data": card_data,
