@@ -56,6 +56,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onOverlayMovementStateUpdate: (callback) =>
     ipcRenderer.on('overlay-movement-state-updated', (_, value) => callback(value)),
 
+  // Radar visibility mode
+  setRadarVisibility: (overlayName, value) =>
+    ipcRenderer.send('set-radar-visibility', { overlayName, value }),
+  getRadarVisibility: (overlayName) =>
+    ipcRenderer.invoke('get-radar-visibility', overlayName),
+  onRadarVisibilityUpdate: (callback) =>
+    ipcRenderer.on('update-radar-visibility', (_, value) => callback(value)),
+
   // Reset overlay settings
   resetOverlaySettings: () =>
     ipcRenderer.send('reset-overlay-settings'),
