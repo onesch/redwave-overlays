@@ -5,11 +5,11 @@
 {% block additional_settings %}
 <div class="setting-container">
   <div class="setting-label">Visibility:</div>
-  <div class="setting-value button-section">
-    <button id="dimBtn" class="active">dim</button>
-    <button id="showBtn">show</button>
-    <button id="hideBtn">hide</button>
-  </div>
+    <div class="setting-value button-section">
+    <button id="dimBtn" class="active tooltip tooltip-top" data-tooltip="dim radar when no cars are nearby">dim</button>
+    <button id="showBtn" class="tooltip tooltip-top" data-tooltip="always show radar regardless of distance">show</button>
+    <button id="hideBtn" class="tooltip tooltip-top" data-tooltip="hide radar when no cars are nearby">hide</button>
+    </div>
 </div>
 {% endblock %}
 

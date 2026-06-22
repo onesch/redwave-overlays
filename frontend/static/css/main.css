@@ -446,6 +446,7 @@ body.no-scroll {
 .tooltip:hover::before {
   opacity: 1;
   transition-delay: 0.8s;
+  text-transform: lowercase;
 }
 
 /* TOP */
