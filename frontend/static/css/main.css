@@ -440,13 +440,13 @@ body.no-scroll {
     opacity 0.2s ease,
     transform 0.2s ease;
   transition-delay: 0s;
+  text-transform: lowercase;
 }
 
 /* Show */
 .tooltip:hover::before {
   opacity: 1;
   transition-delay: 0.8s;
-  text-transform: lowercase;
 }
 
 /* TOP */
