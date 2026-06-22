@@ -5,6 +5,9 @@
   aspect-ratio: 1 / 1;
   border-radius: 50%;
   overflow: hidden;
+
+  opacity: 1;
+  transition: opacity 0.5s ease;
 }
 
 .my-car {

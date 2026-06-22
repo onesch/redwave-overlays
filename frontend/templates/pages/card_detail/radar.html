@@ -3,17 +3,54 @@
 {% block title %}Overlays - {{ card_data.title }}{% endblock %}
 
 {% block additional_settings %}
+<div class="setting-container">
+  <div class="setting-label">Visibility:</div>
+    <div class="setting-value button-section">
+    <button id="dimBtn" class="active tooltip tooltip-top" data-tooltip="dim radar when no cars are nearby">dim</button>
+    <button id="showBtn" class="tooltip tooltip-top" data-tooltip="always show radar regardless of distance">show</button>
+    <button id="hideBtn" class="tooltip tooltip-top" data-tooltip="hide radar when no cars are nearby">hide</button>
+    </div>
+</div>
 {% endblock %}
 
 {% block overlay_scripts %}
 <script>
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const overlayName = 'radar';
     const overlay = new OverlayBase(overlayName);
     
+    const showBtn = document.getElementById('showBtn');
+    const dimBtn = document.getElementById('dimBtn');
+    const hideBtn = document.getElementById('hideBtn');
+
     document.getElementById('OpenBtn').addEventListener('click', () => {
         window.electronAPI.openOverlay(overlayName);
     });
+
+    const savedVisibilityMode = await window.electronAPI.getRadarVisibility(overlayName);
+    applyVisibility(savedVisibilityMode);
+
+    hideBtn.onclick = () => {
+        window.electronAPI.setRadarVisibility(overlayName, 'hide');
+        applyVisibility('hide');
+    };
+
+    dimBtn.onclick = () => {
+        window.electronAPI.setRadarVisibility(overlayName, 'dim');
+        applyVisibility('dim');
+    };
+
+    showBtn.onclick = () => {
+        window.electronAPI.setRadarVisibility(overlayName, 'show');
+        applyVisibility('show');
+    };
+
+    function applyVisibility(mode) {
+        hideBtn.classList.toggle('active', mode === 'hide');
+        dimBtn.classList.toggle('active', mode === 'dim');
+        showBtn.classList.toggle('active', mode === 'show');
+    }
+
 });
 </script>
 {% endblock %}

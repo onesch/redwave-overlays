@@ -32,8 +32,20 @@ class RadarUpdater extends BaseUpdater {
         this.MAX_DIST = 15.0;
         this.RADAR_H = 260;
         this.CENTER_Y = this.RADAR_H / 2;
+        this.MAX_SHOW_DIST = 15.0;
     }
 
+    async init() {
+        await super.init();
+
+        // Get saved radar visibility mode
+        this.radarMode = await window.electronAPI.getRadarVisibility?.('radar');
+
+        // Listen for updates to the radar visibility mode
+        window.electronAPI.onRadarVisibilityUpdate?.((mode) => {
+            this.radarMode = mode;
+        });
+    }
     async renderOverlay(data) {
         this.renderRadar(data);
     }
@@ -78,6 +90,56 @@ class RadarUpdater extends BaseUpdater {
 
         this.setSide(document.getElementById("side-left"), data.left);
         this.setSide(document.getElementById("side-right"), data.right);
+
+        this.updateRadarVisibility(data);
+    }
+
+    // Update radar visibility based on the current mode and distances
+    updateRadarVisibility(data) {
+        const el = document.querySelector(".radar-container");
+
+        const mode = this.radarMode;
+
+        const distances = [];
+        if (data.ahead_m != null) distances.push(data.ahead_m);
+        if (data.behind_m != null) distances.push(data.behind_m);
+
+        const nearest = distances.length ? Math.min(...distances) : null;
+
+        // Always show if any cars are nearby
+        if (data.left || data.right) {
+            el.style.display = 'block';
+            el.style.opacity = 1;
+            return;
+        }
+
+        // Always show overlay
+        if (mode === 'show') {
+            el.style.display = 'block';
+            el.style.opacity = 1;
+            return;
+        }
+
+        // Hide if no cars nearby
+        if (mode === 'hide') {
+            if (nearest == null || nearest > this.MAX_SHOW_DIST) {
+                el.style.opacity = 0;
+                el.style.display = 'none';
+                return;
+            }
+            el.style.display = 'block';
+            el.style.opacity = 1;
+            return;
+        }
+
+        // Dim if no cars nearby
+        el.style.display = 'block';
+
+        if (nearest == null || nearest > this.MAX_SHOW_DIST) {
+            el.style.opacity = 0.35;
+        } else {
+            el.style.opacity = 1;
+        }
     }
 }
 
