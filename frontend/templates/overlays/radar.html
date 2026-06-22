@@ -38,11 +38,8 @@ class RadarUpdater extends BaseUpdater {
     async init() {
         await super.init();
 
-        // Fetch the saved visibility mode
-        const savedMode =
-        await window.electronAPI.getRadarVisibility?.('radar');
-
-        this.radarMode = savedMode ?? 'dim';
+        // Get saved radar visibility mode
+        this.radarMode = await window.electronAPI.getRadarVisibility?.('radar');
 
         // Listen for updates to the radar visibility mode
         window.electronAPI.onRadarVisibilityUpdate?.((mode) => {

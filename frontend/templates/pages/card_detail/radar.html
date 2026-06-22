@@ -27,8 +27,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.electronAPI.openOverlay(overlayName);
     });
 
-    const saved = await window.electronAPI.getRadarVisibility(overlayName);
-    applyVisibility(saved || 'dim');
+    const savedVisibilityMode = await window.electronAPI.getRadarVisibility(overlayName);
+    applyVisibility(savedVisibilityMode);
 
     hideBtn.onclick = () => {
         window.electronAPI.setRadarVisibility(overlayName, 'hide');

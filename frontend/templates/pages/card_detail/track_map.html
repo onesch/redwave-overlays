@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     const savedTrackType = await window.electronAPI.getTrackType(overlayName);
-    applyTrackType(savedTrackType || 'linear');
+    applyTrackType(savedTrackType);
 
     linearBtn.addEventListener('click', () => {
         window.electronAPI.setTrackType(overlayName, 'linear');
