@@ -20,6 +20,8 @@ def mock_ctx(mock_values: dict) -> RadarContext:
         "dist_ahead": mock_values.get_value("CarDistAhead"),
         "dist_behind": mock_values.get_value("CarDistBehind"),
         "car_left_right": mock_values.get_value("CarLeftRight"),
+        "lap_dist_pct": mock_values.get_value("CarIdxLapDistPct"),
+        "player_idx": mock_values.get_value("PlayerCarIdx"),
     }
 
     def _make_ctx(**overrides):
@@ -40,5 +42,7 @@ def mock_values(irsdk_mock_factory) -> dict:
         "CarDistAhead": 5.0,
         "CarDistBehind": 6.0,
         "CarLeftRight": 0,
+        "CarIdxLapDistPct": [0.50, 0.51],
+        "PlayerCarIdx": 0,
     }
     return irsdk_mock_factory(values)
