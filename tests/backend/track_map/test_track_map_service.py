@@ -1,5 +1,3 @@
-from unittest.mock import patch
-
 from backend.services.track_map.service import TrackMapService
 
 
@@ -15,16 +13,47 @@ def test_get_snapshot_returns_expected_structure(mock_service):
     assert len(snapshot["cars"]) == 2
 
 
-def test_is_session_changed_returns_true_on_session_update(mock_values):
-    service1 = TrackMapService(mock_values)
+def test_is_session_changed_returns_true_on_session_update(
+    irsdk_mock_factory,
+):
+    values = {
+        "PlayerCarIdx": 0,
+        "SessionNum": 0,
+        "CarIdxOnPitRoad": [False, False],
+        "CarIdxLapDistPct": [0.3, 0.2],
+        "CarIdxPosition": [1, 2],
+        "CarIdxClassPosition": [0, 1],
+        "DriverInfo": {
+            "Drivers": [
+                {
+                    "CarNumber": "12",
+                    "CarClassColor": 16711680,
+                    "CarClassID": 1,
+                },
+                {
+                    "CarNumber": "8",
+                    "CarClassColor": 16711680,
+                    "CarClassID": 1,
+                },
+            ]
+        },
+        "WeekendInfo": {
+            "SessionID": 1234567890,
+            "TrackID": 123,
+            "TrackName": "Test Track",
+            "TrackDisplayShortName": "test_track",
+        },
+    }
+
+    service1 = TrackMapService(irsdk_mock_factory(values))
     service1.get_snapshot()
 
-    # Changed SessionID value to get trigger
-    new_values = mock_values.copy()
-    new_values["WeekendInfo"]["SessionID"] = 999999999
-    service2 = TrackMapService(new_values)
+    values["WeekendInfo"]["SessionID"] = 999999999
+
+    service2 = TrackMapService(irsdk_mock_factory(values))
 
     snapshot = service2.get_snapshot()
+
     assert snapshot["is_session_changed"] is True
 
 

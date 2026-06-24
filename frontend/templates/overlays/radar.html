@@ -32,8 +32,20 @@ class RadarUpdater extends BaseUpdater {
         this.MAX_DIST = 15.0;
         this.RADAR_H = 260;
         this.CENTER_Y = this.RADAR_H / 2;
+        this.MAX_SHOW_DIST = 15.0;
     }
 
+    async init() {
+        await super.init();
+
+        // Get saved radar visibility mode
+        this.radarMode = await window.electronAPI.getRadarVisibility?.('radar');
+
+        // Listen for updates to the radar visibility mode
+        window.electronAPI.onRadarVisibilityUpdate?.((mode) => {
+            this.radarMode = mode;
+        });
+    }
     async renderOverlay(data) {
         this.renderRadar(data);
     }
@@ -56,18 +68,26 @@ class RadarUpdater extends BaseUpdater {
     }
 
     // Side indicator controls
-    setSide(el, info){
-        el.classList.remove("red","gray");
+    setSide(el, info, bothSides) {
+        el.classList.remove("red", "gray");
 
-        if(!info){
+        if (!info) {
             el.style.opacity = 0;
             return;
         }
 
         el.style.opacity = 1;
-        el.style.top = this.CENTER_Y + "px";
-        // side ones are always red according to
-        // the current implementation of the service
+
+        const BOX_H = 40;
+        const MAX_DELTA = 0.05;
+        // If both left and right are present, we don't offset the boxes
+        const offset = bothSides ? 0 : info.offset;
+        // Clamp the offset to avoid moving the box too far
+        const clamped = Math.max(-MAX_DELTA, Math.min(MAX_DELTA, offset));
+        const offsetPx = (clamped / MAX_DELTA) * (this.RADAR_H / 2 - BOX_H / 2);
+
+        // Position the car based on the offset
+        el.style.top = (this.CENTER_Y - BOX_H - offsetPx - 20) + "px";
         el.classList.add("red");
     }
 
@@ -76,8 +96,59 @@ class RadarUpdater extends BaseUpdater {
         this.setFB(document.getElementById("fb-ahead"), data.ahead_m, data.ahead_severity);
         this.setFB(document.getElementById("fb-behind"), data.behind_m, data.behind_severity);
 
-        this.setSide(document.getElementById("side-left"), data.left);
-        this.setSide(document.getElementById("side-right"), data.right);
+        const bothSides = !!(data.left && data.right);
+        this.setSide(document.getElementById("side-left"), data.left, bothSides);
+        this.setSide(document.getElementById("side-right"), data.right, bothSides);
+
+        this.updateRadarVisibility(data);
+    }
+
+    // Update radar visibility based on the current mode and distances
+    updateRadarVisibility(data) {
+        const el = document.querySelector(".radar-container");
+
+        const mode = this.radarMode;
+
+        const distances = [];
+        if (data.ahead_m != null) distances.push(data.ahead_m);
+        if (data.behind_m != null) distances.push(data.behind_m);
+
+        const nearest = distances.length ? Math.min(...distances) : null;
+
+        // Always show if any cars are nearby
+        if (data.left || data.right) {
+            el.style.display = 'block';
+            el.style.opacity = 1;
+            return;
+        }
+
+        // Always show overlay
+        if (mode === 'show') {
+            el.style.display = 'block';
+            el.style.opacity = 1;
+            return;
+        }
+
+        // Hide if no cars nearby
+        if (mode === 'hide') {
+            if (nearest == null || nearest > this.MAX_SHOW_DIST) {
+                el.style.opacity = 0;
+                el.style.pointerEvents = 'none';
+                return;
+            }
+            el.style.opacity = 1;
+            el.style.pointerEvents = 'auto';
+            return;
+        }
+
+        // Dim if no cars nearby
+        el.style.display = 'block';
+
+        if (nearest == null || nearest > this.MAX_SHOW_DIST) {
+            el.style.opacity = 0.35;
+        } else {
+            el.style.opacity = 1;
+        }
     }
 }
 

@@ -1,6 +1,6 @@
 RED_M = 4.5
 YEL_M = 6.5
-MAX_SHOW_DIST = 15.0
+MAX_SHOW_DIST = 15.0  # Max distance to show on radar, in meters, reused in RadarUpdater this.MAX_SHOW_DIST.
 SIDE_WINDOW_M = 8.0
 
 CLR_OFF = 0

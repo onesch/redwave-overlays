@@ -1,4 +1,4 @@
-from backend.services.leaderboard.service import CarSorter
+from backend.services.leaderboard.car_sorter import CarSorter
 
 
 def test_car_sorter_orders_correctly():

@@ -9,26 +9,26 @@ router = APIRouter()
 @router.get("/radar", response_class=HTMLResponse)
 async def radar_window_view(request: Request):
     return templates.TemplateResponse(
-        "overlays/radar.html", {"request": request}
+        request, "overlays/radar.html"
     )
 
 
 @router.get("/leaderboard", response_class=HTMLResponse)
 async def leaderboard_window_view(request: Request):
     return templates.TemplateResponse(
-        "overlays/leaderboard.html", {"request": request}
+        request, "overlays/leaderboard.html"
     )
 
 
 @router.get("/track-map", response_class=HTMLResponse)
 async def track_map_window_view(request: Request):
     return templates.TemplateResponse(
-        "overlays/track_map.html", {"request": request}
+        request, "overlays/track_map.html"
     )
 
 
 @router.get("/telemetry", response_class=HTMLResponse)
 async def telemetry_window_view(request: Request):
     return templates.TemplateResponse(
-        "overlays/telemetry.html", {"request": request}
+        request, "overlays/telemetry.html"
     )

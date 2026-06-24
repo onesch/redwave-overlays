@@ -440,6 +440,7 @@ body.no-scroll {
     opacity 0.2s ease,
     transform 0.2s ease;
   transition-delay: 0s;
+  text-transform: lowercase;
 }
 
 /* Show */
