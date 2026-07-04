@@ -49,6 +49,7 @@ class Leaderboard(BaseService):
             lap_dist_pct=self.irsdk.get_value("CarIdxLapDistPct") or [],
             is_pitroad=self.irsdk.get_value("CarIdxOnPitRoad") or [],
             multiclass=self._is_multiclass(drivers),
+            est_times=self.irsdk.get_value("CarIdxEstTime") or [],
         )
 
         ctx.session_fastest_lap = self.lap_times.session_fastest_lap(ctx)
