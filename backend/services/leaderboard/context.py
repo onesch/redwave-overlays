@@ -19,6 +19,8 @@ class LeaderboardContext(SessionStateContext):
             Cached fastest valid best lap across the whole session.
         class_fastest_laps (dict[int | None, float | None]):
             Cached fastest valid best lap by car class ID.
+        est_times (list[float]):
+           Estimated time in seconds from the S/F line to the cars current position.
             
     Used by NeighborsService, CarDataBuilder and Leaderboard to construct
     and sort leaderboard telemetry data.
@@ -31,3 +33,4 @@ class LeaderboardContext(SessionStateContext):
     session_fastest_lap: float | None = None
     # Set in Leaderboard._build_context(). Keyed by CarClassID.
     class_fastest_laps: dict[int | None, float | None] = field(default_factory=dict)
+    est_times: list[float] = field(default_factory=list)
