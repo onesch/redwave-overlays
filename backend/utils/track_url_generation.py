@@ -54,6 +54,12 @@ OVERRIDES = {
     456: {'shortname_override': 'oschersleben'},
     47: {'shortname_override': 'lagunaseca'},
     158: {'shortname_override': 'lagunaseca'},
+    432: {'shortname_override': 'watkinsglen'},
+    433: {'shortname_override': 'watkinsglen'},
+    434: {'shortname_override': 'watkinsglen'},
+    435: {'shortname_override': 'watkinsglen'},
+    16: {'shortname_override': 'lakeland'},
+    275: {'shortname_override': 'lakeland'},
 }
 
 # On some tracks, it is necessary to rewrite the direction to avoid problems
