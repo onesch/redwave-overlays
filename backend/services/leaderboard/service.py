@@ -5,7 +5,7 @@ from backend.services.leaderboard.car_data_builder import CarDataBuilder
 from backend.services.leaderboard.context import LeaderboardContext
 from backend.services.leaderboard.lap_times.formatter import TimeFormatter
 from backend.services.leaderboard.lap_times.service import LapTimeService
-from backend.services.leaderboard.neighbords import NeighborsService
+from backend.services.leaderboard.neighbors import NeighborsService
 
 
 class Leaderboard(BaseService):

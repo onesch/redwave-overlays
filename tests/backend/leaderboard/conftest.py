@@ -2,7 +2,7 @@ import pytest
 from typing import Callable
 
 from backend.services.leaderboard.lap_times.service import LapTimeService
-from backend.services.leaderboard.neighbords import NeighborsService
+from backend.services.leaderboard.neighbors import NeighborsService
 from backend.services.leaderboard.context import LeaderboardContext
 from backend.services.leaderboard.service import (
     CarDataBuilder,
