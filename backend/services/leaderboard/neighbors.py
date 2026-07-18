@@ -121,7 +121,7 @@ class NeighborsService:
         my_class_id = my_driver.get("CarClassID")
         my_est_lap_time = my_driver.get("CarClassEstLapTime") or 0.0
 
-        my_est_time = (  # ! my_est_time and my_est_lap_time
+        my_est_time = (
             ctx.est_times[player_idx]
             if player_idx < len(ctx.est_times)
             else 0.0
