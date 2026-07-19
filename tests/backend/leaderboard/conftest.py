@@ -71,6 +71,7 @@ def mock_ctx(mock_values: Callable) -> LeaderboardContext:
         "lap_dist_pct": values.get_value("CarIdxLapDistPct"),
         "is_pitroad": values.get_value("CarIdxOnPitRoad"),
         "multiclass": False,
+        "est_times": values.get_value("CarIdxEstTime"),
     }
 
     def _make_ctx(**overrides):
@@ -128,6 +129,7 @@ def mock_values(irsdk_mock_factory):
             "CarIdxLastLapTime": [80.0, 81.5, 82.2],
             "CarIdxBestLapTime": [11.1, 22.2, None],
             "CarIdxLapDistPct": [0.6, 0.3, 0.9],
+            "CarIdxEstTime": [48.0, 24.0, 72.0],
             "CarIdxOnPitRoad": [False, False, False],
             "PlayerCarIdx": 0,
             "SessionTime": 100.0,

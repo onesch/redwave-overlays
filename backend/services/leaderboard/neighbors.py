@@ -1,3 +1,5 @@
+from typing import Any
+
 from backend.services.leaderboard.context import LeaderboardContext
 
 
@@ -6,8 +8,6 @@ class NeighborsService:
     Service responsible for detecting cars around the player
     and preparing neighbor data for Leaderboard presentation.
     """
-
-    PHYSICAL_TRAFFIC_LIMIT = 3  # display three nearby cars of a different class ahead and behind.
 
     def __init__(self, builder):
         self.builder = builder
@@ -41,12 +41,8 @@ class NeighborsService:
             physical_ahead, physical_behind
         )
         result = self._format_neighbors(ahead, behind)
-        result["physical_ahead"] = self._format_candidate_list(
-            physical_ahead, self.PHYSICAL_TRAFFIC_LIMIT
-        )
-        result["physical_behind"] = self._format_candidate_list(
-            physical_behind, self.PHYSICAL_TRAFFIC_LIMIT
-        )
+        result["physical_ahead"] = self._format_candidate_list(physical_ahead)
+        result["physical_behind"] = self._format_candidate_list(physical_behind)
         return result
 
     def _calc_gap(
@@ -67,17 +63,15 @@ class NeighborsService:
         - gap_sec:
             Time difference between two cars based on CarIdxEstTime.
             """
-        if not isinstance(dist, (int, float)) or dist < 0:
+        if not self._is_valid_distance(dist):
             return None
 
-        if not isinstance(my_dist, (int, float)) or my_dist < 0:
+        if not self._is_valid_distance(my_dist):
             return None
 
         raw = (other_laps + dist) - (my_laps + my_dist)
 
-        # Shortest signed positional distance on a circular track. Use this for
-        # physical ahead/behind decisions, including S/F-line wrap-around.
-        gap_pct = raw - round(raw)
+        gap_pct = self._wrap_gap(raw)
 
         gap_sec = None
         if other_est_time > 0 and my_est_time > 0:
@@ -115,6 +109,9 @@ class NeighborsService:
             - ahead / behind: All physically nearby cars.
             - physical_ahead / physical_behind: Only multiclass traffic cars.
         """
+        if not self._has_required_arrays(player_idx, ctx):
+            return [], [], [], []
+
         my_dist = ctx.lap_dist_pct[player_idx]
         my_laps = ctx.laps_started[player_idx]
         my_driver = ctx.drivers[player_idx]
@@ -179,27 +176,6 @@ class NeighborsService:
         return ahead, behind, physical_ahead, physical_behind
 
     @staticmethod
-    def _has_required_arrays(idx: int, ctx: LeaderboardContext) -> bool:
-        """
-        Validate that driver has all required telemetry arrays.
-
-        A driver can exist in the session data but have incomplete telemetry.
-
-        Required data:
-            - lap distance;
-            - lap count;
-            - estimated time.
-
-        Returns:
-            True if driver data is complete enough for calculations.
-        """
-        return (
-            idx < len(ctx.lap_dist_pct)
-            and idx < len(ctx.laps_started)
-            and idx < len(ctx.est_times)
-        )
-
-    @staticmethod
     def _get_lap_diff(
         player_laps: int,
         other_laps: int,
@@ -231,7 +207,11 @@ class NeighborsService:
         return ahead, behind
 
     @classmethod
-    def _format_candidate_list(cls, cars: list[dict], limit: int) -> list[dict]:
+    def _format_candidate_list(
+        cls,
+        cars: list[dict],
+        limit: int = 3,
+    ) -> list[dict]:
         """
         Convert internal candidate objects into API/UI format.
         """
@@ -262,3 +242,40 @@ class NeighborsService:
             "ahead": cls._format_candidate_list(ahead, limit),
             "behind": cls._format_candidate_list(behind, limit),
         }
+
+    @staticmethod
+    def _has_required_arrays(idx: int, ctx: LeaderboardContext) -> bool:
+        """
+        Validate that driver has all required telemetry arrays.
+
+        A driver can exist in the session data but have incomplete telemetry.
+
+        Required data:
+            - lap distance;
+            - lap count;
+            - estimated time.
+
+        Returns:
+            True if driver data is complete enough for calculations.
+        """
+        return (
+            0 <= idx < len(ctx.lap_dist_pct)
+            and 0 <= idx < len(ctx.laps_started)
+            and 0 <= idx < len(ctx.est_times)
+        )
+
+    @staticmethod
+    def _is_valid_distance(value: Any) -> bool:
+        """Return True when a lap-distance value can be used for gap math."""
+        return isinstance(value, (int, float)) and value >= 0
+
+    @staticmethod
+    def _wrap_gap(raw_gap: float) -> float:
+        """
+        Convert a lap-position difference into the shortest signed track gap.
+
+        iRacing lap distance wraps from 1.0 back to 0.0 at the start/finish line.
+        Removing the nearest whole lap keeps cars close across the S/F line from
+        being classified as almost a full lap apart.
+        """
+        return raw_gap - round(raw_gap)
