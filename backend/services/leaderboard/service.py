@@ -5,7 +5,7 @@ from backend.services.leaderboard.car_data_builder import CarDataBuilder
 from backend.services.leaderboard.context import LeaderboardContext
 from backend.services.leaderboard.lap_times.formatter import TimeFormatter
 from backend.services.leaderboard.lap_times.service import LapTimeService
-from backend.services.leaderboard.neighbords import NeighborsService
+from backend.services.leaderboard.neighbors import NeighborsService
 
 
 class Leaderboard(BaseService):
@@ -49,6 +49,7 @@ class Leaderboard(BaseService):
             lap_dist_pct=self.irsdk.get_value("CarIdxLapDistPct") or [],
             is_pitroad=self.irsdk.get_value("CarIdxOnPitRoad") or [],
             multiclass=self._is_multiclass(drivers),
+            est_times=self.irsdk.get_value("CarIdxEstTime") or [],
         )
 
         ctx.session_fastest_lap = self.lap_times.session_fastest_lap(ctx)
