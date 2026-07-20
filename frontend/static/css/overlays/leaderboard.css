@@ -258,6 +258,15 @@
   color: var(--yellow-primary);
   width: 40px;
 }
+.gap.ahead_lap {
+  color: #FF5C5C;
+}
+.gap.behind_lap {
+  color: #6F8EEB;
+}
+.gap.in-pit {
+  opacity: 0.6;
+}
 
 .pit-flag {
   padding: 2px 6px;

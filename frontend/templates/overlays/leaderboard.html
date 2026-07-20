@@ -368,25 +368,22 @@ class LeaderboardUpdater extends BaseUpdater {
 
     renderGapAndLap(rowElement, car) {
         if (!car) return;
+
         const gapElement = rowElement.querySelector('.gap');
+        gapElement.className = 'gap';
 
         switch (car.lap_diff) {
             case "ahead_lap":
-                gapElement.style.color = "#FF5C5C";
+                gapElement.classList.add('ahead_lap');
                 break;
 
             case "behind_lap":
-                gapElement.style.color = "#6F8EEB";
+                gapElement.classList.add('behind_lap');
                 break;
-
-            default:
-                gapElement.style.color = "#FFCC00";
         }
 
         if (car.is_in_pitroad) {
-            gapElement.style.opacity = "0.6";
-        } else {
-            gapElement.style.opacity = "1";
+            gapElement.classList.add('in-pit');
         }
 
         this.updateLapTime(rowElement, car);
