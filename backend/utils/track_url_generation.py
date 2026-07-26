@@ -60,6 +60,9 @@ OVERRIDES = {
     435: {'shortname_override': 'watkinsglen'},
     16: {'shortname_override': 'lakeland'},
     275: {'shortname_override': 'lakeland'},
+    439: {'shortname_override': 'tracks_winton'},
+    440: {'shortname_override': 'tracks_winton'},
+    582: {'shortname_override': 'tracks_winton'},
 }
 
 # On some tracks, it is necessary to rewrite the direction to avoid problems
