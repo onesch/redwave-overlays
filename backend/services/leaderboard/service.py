@@ -6,6 +6,7 @@ from backend.services.leaderboard.context import LeaderboardContext
 from backend.services.leaderboard.lap_times.formatter import TimeFormatter
 from backend.services.leaderboard.lap_times.service import LapTimeService
 from backend.services.leaderboard.neighbors import NeighborsService
+from backend.utils.irating_calculation import IRatingCalculator
 
 
 class Leaderboard(BaseService):
@@ -16,6 +17,7 @@ class Leaderboard(BaseService):
         builder = CarDataBuilder(irsdk_service, self.lap_times)
         super().__init__(irsdk_service, builder)
         self.neighbors = NeighborsService(builder)
+        self.irating_calculator = IRatingCalculator()
         self._last_session_num: int | None = None
 
     def _build_snapshot(self, ctx: LeaderboardContext) -> dict[str, Any]:
@@ -28,6 +30,7 @@ class Leaderboard(BaseService):
             "neighbors": self.neighbors.get_neighbors(player_idx, ctx),
             "leaderboard_data": self.get_session_info(player_idx, ctx),
             "multiclass": ctx.multiclass,
+            "irating_deltas": ctx.irating_deltas,
         }
 
     def _build_context(self) -> LeaderboardContext | None:
@@ -57,8 +60,29 @@ class Leaderboard(BaseService):
             class_id: self.lap_times.class_fastest_lap(ctx, class_id)
             for class_id in {driver.get("CarClassID") for driver in drivers}
         }
+        ctx.irating_deltas = self._calculate_irating_deltas(ctx)
 
         return ctx
+
+    def _calculate_irating_deltas(self, ctx: LeaderboardContext) -> dict[int, int]:
+        """
+        Calculate iRating deltas from current leaderboard state.
+        Returns mapping: UserID -> delta.
+        """
+        drivers = self.builder.build_irating_results(ctx)
+
+        race_results = {
+            driver["id"]: driver["irating"]
+            for driver in drivers
+            if driver["position"] is not None
+        }
+
+        deltas = self.irating_calculator.calculate(race_results)
+
+        return {
+            driver_id: delta
+            for driver_id, delta in deltas.items()
+        }
 
     def get_session_time(
         self,

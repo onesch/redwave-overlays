@@ -193,6 +193,7 @@ class LeaderboardUpdater extends BaseUpdater {
     }
 
     async renderOverlay(data) {
+        this.data = data;
         this.renderLeaderboard(data);
     }
 
@@ -310,38 +311,83 @@ class LeaderboardUpdater extends BaseUpdater {
 
     renderDriver(rowElement, car) {
         if (!car) return;
+        this.renderDriverName(rowElement, car);
+        this.renderPitFlag(rowElement, car);
+    }
+
+    renderPitFlag(rowElement, car) {
         const nameElement = rowElement.querySelector('.driver .name');
         const pitFlag = rowElement.querySelector('.driver .pit-flag');
 
-        nameElement.textContent = car.name || 'Unknown';
-        nameElement.classList.remove('with-flag', 'in-pit', 'gradient');
-
-        let pitLapText = car.last_pit_lap;
-        if (pitLapText === "IN L0") {
-            pitLapText = "IN PIT";
-        }
-        if (pitLapText === "L0") {
-            pitLapText = "";
-        }
-        if (pitLapText === "OUT L0") {
-            pitLapText = "OUT PIT";
-        }
+        let pitLapText = this.formatPitLap(car.last_pit_lap);
 
         if (car.is_in_pitroad) {
-            nameElement.classList.add('with-flag', 'in-pit', 'gradient');
-            if (pitLapText) {
-                pitFlag.textContent = pitLapText;
-                pitFlag.style.display = 'inline-flex';
-            } else {
-                pitFlag.style.display = 'none';
-            }
-        } else if (pitLapText) {
-            nameElement.classList.add('with-flag', 'gradient');
-            pitFlag.textContent = pitLapText;
-            pitFlag.style.display = 'inline-flex';
-        } else {
-            pitFlag.style.display = 'none';
+            nameElement.classList.add(
+                'with-flag',
+                'in-pit',
+                'gradient'
+            );
+
+            this.showPitFlag(pitFlag, pitLapText);
+            return;
         }
+
+        if (pitLapText) {
+            nameElement.classList.add(
+                'with-flag',
+                'gradient'
+            );
+
+            this.showPitFlag(pitFlag, pitLapText);
+            return;
+        }
+
+        pitFlag.style.display = 'none';
+    }
+
+    formatPitLap(pitLapText) {
+        switch (pitLapText) {
+            case "IN L0":
+                return "IN PIT";
+
+            case "L0":
+                return "";
+
+            case "OUT L0":
+                return "OUT PIT";
+
+            default:
+                return pitLapText;
+        }
+    }
+
+    showPitFlag(element, text) {
+        if (!text) {
+            element.style.display = 'none';
+            return;
+        }
+
+        element.textContent = text;
+        element.style.display = 'inline-flex';
+    }
+
+    renderDriverName(rowElement, car) {
+        const nameElement = rowElement.querySelector('.driver .name');
+        const delta = this.data?.irating_deltas?.[car.driver_id];
+
+        let deltaText = '';
+
+        if (delta !== undefined && delta !== null) {
+            deltaText = `${delta > 0 ? '+' : ''}${delta} `;
+        }
+
+        nameElement.textContent = `${deltaText}${car.name || 'Unknown'}`;
+
+        nameElement.classList.remove(
+            'with-flag',
+            'in-pit',
+            'gradient'
+        );
     }
 
     renderLicenseAndIrating(rowElement, car) {

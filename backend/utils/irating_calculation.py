@@ -3,6 +3,8 @@ iRacing iRating calculator.
 
 Original algorithm based on the iRacing rating calculation formula.
 Calculations based on:
+https://github.com/arrecio/ircalculator
+https://github.com/Turbo87/irating-rs
 https://github.com/SIMRacingApps/SIMRacingApps/files/3617438/iRacing.SOF.iRating.Calculator.v1_1.xlsx
 """
 
@@ -51,8 +53,8 @@ class IRatingCalculator:
 
     def calculate(
         self,
-        race_results: Mapping[str, int],
-    ) -> dict[str, int]:
+        race_results: Mapping[int, int],
+    ) -> dict[int, int]:
         """
         Calculate iRating delta for each driver.
 
@@ -106,7 +108,7 @@ class IRatingCalculator:
 
     @staticmethod
     def calculate_sof(
-        race_results: Mapping[str, int],
+        race_results: Mapping[int, int],
     ) -> int:
         """
         Calculate Strength of Field.
@@ -131,26 +133,3 @@ class IRatingCalculator:
             -BASE_RATING
             * math.log(total / len(race_results))
         )
-
-
-race = {
-    "Driver 1": 3945,
-    "Driver 2": 1221,
-    "Driver 3": 1322,
-    "Driver 4": 1321,
-    "Meeeee 5": 1479,
-    "Driver 6": 1626,
-    "Driver 7": 1371,
-    "Driver 8": 1448,
-    "Driver 9": 1348,
-}
-
-calculator = IRatingCalculator()
-
-new_ratings = calculator.calculate(race)
-
-race_sof = calculator.calculate_sof(race)
-print(race_sof)
-
-for driver, rating in new_ratings.items():
-    print(driver, rating)

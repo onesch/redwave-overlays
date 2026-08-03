@@ -21,7 +21,9 @@ class LeaderboardContext(SessionStateContext):
             Cached fastest valid best lap by car class ID.
         est_times (list[float]):
            Estimated time in seconds from the S/F line to the cars current position.
-            
+        irating_deltas (dict[int, int]):
+            Cached iRating deltas for each driver, keyed by driver ID.
+           
     Used by NeighborsService, CarDataBuilder and Leaderboard to construct
     and sort leaderboard telemetry data.
     """
@@ -34,3 +36,4 @@ class LeaderboardContext(SessionStateContext):
     # Set in Leaderboard._build_context(). Keyed by CarClassID.
     class_fastest_laps: dict[int | None, float | None] = field(default_factory=dict)
     est_times: list[float] = field(default_factory=list)
+    irating_deltas: dict[int, int] = field(default_factory=dict)
