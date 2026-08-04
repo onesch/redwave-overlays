@@ -29,6 +29,7 @@
                 <div class="lic-container">
                     <span class="lic">--</span>
                     <span class="ir">--</span>
+                    <span class="ir-delta">--</span>
                 </div>
             </div>
             <div class="time">--:--.---</div>
@@ -50,6 +51,7 @@
                 <div class="lic-container">
                     <span class="lic">--</span>
                     <span class="ir">--</span>
+                    <span class="ir-delta">--</span>
                 </div>
             </div>
             <div class="time">--:--.---</div>
@@ -71,6 +73,7 @@
                 <div class="lic-container">
                     <span class="lic">--</span>
                     <span class="ir">--</span>
+                    <span class="ir-delta">--</span>
                 </div>
             </div>
             <div class="time">--:--.---</div>
@@ -93,6 +96,7 @@
                 <div class="lic-container">
                     <span class="lic">--</span>
                     <span class="ir">--</span>
+                    <span class="ir-delta">--</span>
                 </div>
             </div>
             <div class="time">--:--.---</div>
@@ -115,6 +119,7 @@
                 <div class="lic-container">
                     <span class="lic">--</span>
                     <span class="ir">--</span>
+                    <span class="ir-delta">--</span>
                 </div>
             </div>
             <div class="time">--:--.---</div>
@@ -136,6 +141,7 @@
                 <div class="lic-container">
                     <span class="lic">--</span>
                     <span class="ir">--</span>
+                    <span class="ir-delta">--</span>
                 </div>
             </div>
             <div class="time">--:--.---</div>
@@ -157,6 +163,7 @@
                 <div class="lic-container">
                     <span class="lic">--</span>
                     <span class="ir">--</span>
+                    <span class="ir-delta">--</span>
                 </div>
             </div>
             <div class="time">--:--.---</div>
@@ -373,15 +380,7 @@ class LeaderboardUpdater extends BaseUpdater {
 
     renderDriverName(rowElement, car) {
         const nameElement = rowElement.querySelector('.driver .name');
-        const delta = this.data?.irating_deltas?.[car.driver_id];
-
-        let deltaText = '';
-
-        if (delta !== undefined && delta !== null) {
-            deltaText = `${delta > 0 ? '+' : ''}${delta} `;
-        }
-
-        nameElement.textContent = `${deltaText}${car.name || 'Unknown'}`;
+        nameElement.textContent = car.name || 'Unknown';
 
         nameElement.classList.remove(
             'with-flag',
@@ -410,6 +409,29 @@ class LeaderboardUpdater extends BaseUpdater {
         irElement.textContent = car.irating
             ? (Math.floor(car.irating / 100) / 10).toFixed(1) + 'k'
             : '--';
+
+        this.renderIratingDelta(rowElement, car);
+    }
+
+    renderIratingDelta(rowElement, car) {
+        const deltaElement = rowElement.querySelector('.ir-delta');
+        if (!deltaElement) return;
+
+        const delta = this.data?.irating_deltas?.[car.driver_id];
+        deltaElement.className = 'ir-delta';
+
+        if (delta === undefined || delta === null) {
+            deltaElement.textContent = '--';
+            return;
+        }
+
+        deltaElement.textContent = `${delta > 0 ? '+' : ''}${delta}`;
+
+        if (delta > 0) {
+            deltaElement.classList.add('positive');
+        } else if (delta < 0) {
+            deltaElement.classList.add('negative');
+        }
     }
 
     renderGapAndLap(rowElement, car) {

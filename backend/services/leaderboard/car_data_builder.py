@@ -67,7 +67,7 @@ class CarDataBuilder(BaseCarBuilder):
         names = driver.get("UserName", "").strip().split()
         return names[0] if names else ""
 
-    def build_irating_results(
+    def get_irating_drivers(
         self,
         ctx: LeaderboardContext,
     ) -> list[dict[str, Any]]:
@@ -80,25 +80,20 @@ class CarDataBuilder(BaseCarBuilder):
             if self._is_pace_car(driver):
                 continue
 
-            irating = driver.get("IRating")
+            position = self._resolve_position(car_idx, ctx)
+            started = position is not None and position > 0
 
+            irating = driver.get("IRating")
             if not isinstance(irating, int):
                 continue
-
-            position = None
-
-            if car_idx < len(ctx.positions):
-                raw_position = ctx.positions[car_idx]
-
-                if isinstance(raw_position, int) and raw_position > 0:
-                    position = raw_position
 
             drivers.append(
                 {
                     "id": driver.get("UserID", car_idx),
                     "irating": irating,
                     "position": position,
-                    "started": position is not None,
+                    "class_id": driver.get("CarClassID"),
+                    "started": started,
                 }
             )
 

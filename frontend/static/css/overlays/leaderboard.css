@@ -1,7 +1,7 @@
 @import url('base.css');
 
 .app {
-  max-width: 420px;
+  max-width: 470px;
   margin: 40px auto;
  }
 
@@ -21,7 +21,7 @@
 
 .thead, .row {
   display: grid;
-  grid-template-columns: 60px 90px 80px 90px 40px;
+  grid-template-columns: 60px 90px 110px 90px 40px;
   align-items: center;
   column-gap: 12px;
 }
@@ -234,12 +234,22 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.ir {
+.ir,
+.ir-delta {
   width: 40px;
   background: rgb(var(--m3-surface-bg), 0.6);
   display: flex;
   align-items: center;
   justify-content: center;
+}
+.ir-delta {
+  color: #888;
+}
+.ir-delta.positive {
+  color: #37D67A;
+}
+.ir-delta.negative {
+  color: #FF5C5C;
 }
 
 .lic.a { background: #007bff; }

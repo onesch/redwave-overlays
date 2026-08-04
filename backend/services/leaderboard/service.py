@@ -69,15 +69,34 @@ class Leaderboard(BaseService):
         Calculate iRating deltas from current leaderboard state.
         Returns mapping: UserID -> delta.
         """
-        drivers = self.builder.build_irating_results(ctx)
+        drivers = self.builder.get_irating_drivers(ctx)
 
-        race_results = {
-            driver["id"]: driver["irating"]
-            for driver in drivers
-            if driver["position"] is not None
-        }
+        classes: dict[int, list[dict[str, Any]]] = {}
 
-        deltas = self.irating_calculator.calculate(race_results)
+        for driver in drivers:
+            if not driver["started"]:
+                continue
+
+            classes.setdefault(
+                driver["class_id"],
+                []
+            ).append(driver)
+
+
+        deltas: dict[int, int] = {}
+
+        for class_id, class_drivers in classes.items():
+
+            race_results = {
+                driver["id"]: driver["irating"]
+                for driver in class_drivers
+            }
+
+            class_deltas = self.irating_calculator.calculate(
+                race_results
+            )
+
+            deltas.update(class_deltas)
 
         return {
             driver_id: delta
