@@ -29,6 +29,7 @@
                 <div class="lic-container">
                     <span class="lic">--</span>
                     <span class="ir">--</span>
+                    <span class="ir-delta">--</span>
                 </div>
             </div>
             <div class="time">--:--.---</div>
@@ -50,6 +51,7 @@
                 <div class="lic-container">
                     <span class="lic">--</span>
                     <span class="ir">--</span>
+                    <span class="ir-delta">--</span>
                 </div>
             </div>
             <div class="time">--:--.---</div>
@@ -71,6 +73,7 @@
                 <div class="lic-container">
                     <span class="lic">--</span>
                     <span class="ir">--</span>
+                    <span class="ir-delta">--</span>
                 </div>
             </div>
             <div class="time">--:--.---</div>
@@ -93,6 +96,7 @@
                 <div class="lic-container">
                     <span class="lic">--</span>
                     <span class="ir">--</span>
+                    <span class="ir-delta">--</span>
                 </div>
             </div>
             <div class="time">--:--.---</div>
@@ -115,6 +119,7 @@
                 <div class="lic-container">
                     <span class="lic">--</span>
                     <span class="ir">--</span>
+                    <span class="ir-delta">--</span>
                 </div>
             </div>
             <div class="time">--:--.---</div>
@@ -136,6 +141,7 @@
                 <div class="lic-container">
                     <span class="lic">--</span>
                     <span class="ir">--</span>
+                    <span class="ir-delta">--</span>
                 </div>
             </div>
             <div class="time">--:--.---</div>
@@ -157,6 +163,7 @@
                 <div class="lic-container">
                     <span class="lic">--</span>
                     <span class="ir">--</span>
+                    <span class="ir-delta">--</span>
                 </div>
             </div>
             <div class="time">--:--.---</div>
@@ -193,6 +200,7 @@ class LeaderboardUpdater extends BaseUpdater {
     }
 
     async renderOverlay(data) {
+        this.data = data;
         this.renderLeaderboard(data);
     }
 
@@ -310,38 +318,75 @@ class LeaderboardUpdater extends BaseUpdater {
 
     renderDriver(rowElement, car) {
         if (!car) return;
+        this.renderDriverName(rowElement, car);
+        this.renderPitFlag(rowElement, car);
+    }
+
+    renderPitFlag(rowElement, car) {
         const nameElement = rowElement.querySelector('.driver .name');
         const pitFlag = rowElement.querySelector('.driver .pit-flag');
 
-        nameElement.textContent = car.name || 'Unknown';
-        nameElement.classList.remove('with-flag', 'in-pit', 'gradient');
-
-        let pitLapText = car.last_pit_lap;
-        if (pitLapText === "IN L0") {
-            pitLapText = "IN PIT";
-        }
-        if (pitLapText === "L0") {
-            pitLapText = "";
-        }
-        if (pitLapText === "OUT L0") {
-            pitLapText = "OUT PIT";
-        }
+        let pitLapText = this.formatPitLap(car.last_pit_lap);
 
         if (car.is_in_pitroad) {
-            nameElement.classList.add('with-flag', 'in-pit', 'gradient');
-            if (pitLapText) {
-                pitFlag.textContent = pitLapText;
-                pitFlag.style.display = 'inline-flex';
-            } else {
-                pitFlag.style.display = 'none';
-            }
-        } else if (pitLapText) {
-            nameElement.classList.add('with-flag', 'gradient');
-            pitFlag.textContent = pitLapText;
-            pitFlag.style.display = 'inline-flex';
-        } else {
-            pitFlag.style.display = 'none';
+            nameElement.classList.add(
+                'with-flag',
+                'in-pit',
+                'gradient'
+            );
+
+            this.showPitFlag(pitFlag, pitLapText);
+            return;
         }
+
+        if (pitLapText) {
+            nameElement.classList.add(
+                'with-flag',
+                'gradient'
+            );
+
+            this.showPitFlag(pitFlag, pitLapText);
+            return;
+        }
+
+        pitFlag.style.display = 'none';
+    }
+
+    formatPitLap(pitLapText) {
+        switch (pitLapText) {
+            case "IN L0":
+                return "IN PIT";
+
+            case "L0":
+                return "";
+
+            case "OUT L0":
+                return "OUT PIT";
+
+            default:
+                return pitLapText;
+        }
+    }
+
+    showPitFlag(element, text) {
+        if (!text) {
+            element.style.display = 'none';
+            return;
+        }
+
+        element.textContent = text;
+        element.style.display = 'inline-flex';
+    }
+
+    renderDriverName(rowElement, car) {
+        const nameElement = rowElement.querySelector('.driver .name');
+        nameElement.textContent = car.name || 'Unknown';
+
+        nameElement.classList.remove(
+            'with-flag',
+            'in-pit',
+            'gradient'
+        );
     }
 
     renderLicenseAndIrating(rowElement, car) {
@@ -364,6 +409,29 @@ class LeaderboardUpdater extends BaseUpdater {
         irElement.textContent = car.irating
             ? (Math.floor(car.irating / 100) / 10).toFixed(1) + 'k'
             : '--';
+
+        this.renderIratingDelta(rowElement, car);
+    }
+
+    renderIratingDelta(rowElement, car) {
+        const deltaElement = rowElement.querySelector('.ir-delta');
+        if (!deltaElement) return;
+
+        const delta = this.data?.irating_deltas?.[car.driver_id];
+        deltaElement.className = 'ir-delta';
+
+        if (delta === undefined || delta === null) {
+            deltaElement.textContent = '--';
+            return;
+        }
+
+        deltaElement.textContent = `${delta > 0 ? '+' : ''}${delta}`;
+
+        if (delta > 0) {
+            deltaElement.classList.add('positive');
+        } else if (delta < 0) {
+            deltaElement.classList.add('negative');
+        }
     }
 
     renderGapAndLap(rowElement, car) {

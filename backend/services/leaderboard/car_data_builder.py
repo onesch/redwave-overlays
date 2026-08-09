@@ -36,6 +36,7 @@ class CarDataBuilder(BaseCarBuilder):
 
         return {
             **base_car,
+            "driver_id": driver.get("UserID", idx),
             "pos": self._resolve_position(idx, ctx),
             "name": self._get_first_name(driver),
             "irating": driver.get("IRating"),
@@ -65,6 +66,44 @@ class CarDataBuilder(BaseCarBuilder):
     def _get_first_name(self, driver: dict) -> str:
         names = driver.get("UserName", "").strip().split()
         return names[0] if names else ""
+
+    def get_irating_drivers(
+        self,
+        ctx: LeaderboardContext,
+    ) -> list[dict[str, Any]]:
+        """
+        Build driver data required for iRating calculation.
+        """
+        drivers = []
+
+        for car_idx, driver in enumerate(ctx.drivers):
+            if self._is_pace_car(driver):
+                continue
+
+            position = self._resolve_position(car_idx, ctx)
+            started = position is not None and position > 0
+
+            irating = driver.get("IRating")
+            if not isinstance(irating, int):
+                continue
+
+            drivers.append(
+                {
+                    "id": driver.get("UserID", car_idx),
+                    "irating": irating,
+                    "position": position,
+                    "class_id": driver.get("CarClassID"),
+                    "started": started,
+                }
+            )
+
+        return sorted(
+            drivers,
+            key=lambda d: (
+                d["position"] is None,
+                d["position"] or 9999,
+            ),
+        )
 
     def _format_lap_dist(self, idx: int, ctx: LeaderboardContext) -> float:
         dist: float = ctx.lap_dist_pct[idx]

@@ -167,3 +167,53 @@ def test_build_context_returns_none_when_no_drivers(irsdk_mock_factory):
 )
 def test_normalize_laps_started(mock_service, raw_laps, expected):
     assert mock_service._normalize_laps_started(raw_laps) == expected
+
+
+def test_build_snapshot_includes_cached_irating_deltas(mock_service, mock_ctx):
+    ctx = mock_ctx(irating_deltas={101: 60, 102: 2, 103: -60})
+
+    snapshot = mock_service._build_snapshot(ctx)
+
+    assert snapshot["irating_deltas"] == {101: 60, 102: 2, 103: -60}
+
+
+def test_calculate_irating_deltas_uses_finishing_order_by_class(
+    mock_service,
+    mock_ctx,
+):
+    ctx = mock_ctx(
+        drivers=[
+            {
+                "UserName": "Driver1",
+                "UserID": 101,
+                "IRating": 2000,
+                "CarClassID": 1,
+            },
+            {
+                "UserName": "Driver2",
+                "UserID": 102,
+                "IRating": 1800,
+                "CarClassID": 2,
+            },
+            {
+                "UserName": "Driver3",
+                "UserID": 103,
+                "IRating": 1700,
+                "CarClassID": 1,
+            },
+            {
+                "UserName": "Driver4",
+                "UserID": 104,
+                "IRating": 1600,
+                "CarClassID": 2,
+            },
+        ],
+        positions=[2, 1, 1, -1],
+        class_positions=[2, 1, 1, -1],
+        multiclass=True,
+    )
+
+    result = mock_service._calculate_irating_deltas(ctx)
+
+    assert result == {103: 56, 101: -55, 102: 1}
+    assert 104 not in result

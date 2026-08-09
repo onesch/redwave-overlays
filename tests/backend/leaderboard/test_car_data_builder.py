@@ -197,3 +197,104 @@ def test_build_all_sorted_by_position(mock_builder, mock_ctx):
 
     positions = [car["pos"] for car in cars]
     assert positions == sorted(positions)
+
+
+def test_get_irating_drivers_returns_ordered_eligible_drivers(mock_builder, mock_ctx):
+    ctx = mock_ctx(
+        drivers=[
+            {
+                "UserName": "Driver1",
+                "UserID": 101,
+                "IRating": 2000,
+                "CarClassID": 1,
+            },
+            {
+                "UserName": "Driver2",
+                "UserID": 102,
+                "IRating": 1800,
+                "CarClassID": 1,
+            },
+            {
+                "UserName": "Driver3",
+                "UserID": 103,
+                "IRating": 1700,
+                "CarClassID": 2,
+            },
+        ],
+        positions=[3, 1, 2],
+    )
+
+    result = mock_builder.get_irating_drivers(ctx)
+
+    assert result == [
+        {
+            "id": 102,
+            "irating": 1800,
+            "position": 1,
+            "class_id": 1,
+            "started": True,
+        },
+        {
+            "id": 103,
+            "irating": 1700,
+            "position": 2,
+            "class_id": 2,
+            "started": True,
+        },
+        {
+            "id": 101,
+            "irating": 2000,
+            "position": 3,
+            "class_id": 1,
+            "started": True,
+        },
+    ]
+
+
+def test_get_irating_drivers_skips_pace_car_and_invalid_irating(
+    mock_builder,
+    mock_ctx,
+):
+    ctx = mock_ctx(
+        drivers=[
+            {"UserName": "PACE CAR", "IRating": 0, "CarClassID": 1},
+            {
+                "UserName": "Driver1",
+                "UserID": 101,
+                "IRating": "invalid",
+                "CarClassID": 1,
+            },
+            {
+                "UserName": "Driver2",
+                "UserID": 102,
+                "IRating": 1800,
+                "CarClassID": 1,
+            },
+        ],
+        positions=[1, 2, 3],
+    )
+
+    result = mock_builder.get_irating_drivers(ctx)
+
+    assert result == [
+        {
+            "id": 102,
+            "irating": 1800,
+            "position": 3,
+            "class_id": 1,
+            "started": True,
+        }
+    ]
+
+
+def test_get_irating_drivers_marks_unresolved_position_as_not_started(
+    mock_builder,
+    mock_ctx,
+):
+    ctx = mock_ctx(positions=[-1, 1, 2])
+
+    result = mock_builder.get_irating_drivers(ctx)
+
+    assert result[-1]["id"] == 101
+    assert result[-1]["position"] is None
+    assert result[-1]["started"] is False
