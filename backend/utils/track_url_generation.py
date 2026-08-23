@@ -63,6 +63,11 @@ OVERRIDES = {
     439: {'shortname_override': 'winton'},
     440: {'shortname_override': 'winton'},
     582: {'shortname_override': 'winton'},
+    465: {'shortname_override': 'virginia'},
+    466: {'shortname_override': 'virginia'},
+    467: {'shortname_override': 'virginia'},
+    468: {'shortname_override': 'virginia'},
+    469: {'shortname_override': 'virginia'},
 }
 
 # On some tracks, it is necessary to rewrite the direction to avoid problems
