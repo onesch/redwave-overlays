@@ -22,7 +22,9 @@ class LeaderboardContext(SessionStateContext):
         est_times (list[float]):
            Estimated time in seconds from the S/F line to the cars current position.
         irating_deltas (dict[int, int]):
-            Cached iRating deltas for each driver, keyed by driver ID.
+            Calculated iRating delta for each driver, keyed by driver ID.
+        sof (int):
+            Strength of Field for the displayed leaderboard class.
            
     Used by NeighborsService, CarDataBuilder and Leaderboard to construct
     and sort leaderboard telemetry data.
@@ -37,3 +39,4 @@ class LeaderboardContext(SessionStateContext):
     class_fastest_laps: dict[int | None, float | None] = field(default_factory=dict)
     est_times: list[float] = field(default_factory=list)
     irating_deltas: dict[int, int] = field(default_factory=dict)
+    sof: int = 0

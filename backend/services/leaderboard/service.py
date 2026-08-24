@@ -28,7 +28,10 @@ class Leaderboard(BaseService):
             "cars": self.builder.build_all(ctx, exclude_idx=player_idx),
             "player": self.builder.build(player_idx, ctx),
             "neighbors": self.neighbors.get_neighbors(player_idx, ctx),
-            "leaderboard_data": self.get_session_info(player_idx, ctx),
+            "leaderboard_data": {
+                **self.get_session_info(player_idx, ctx),
+                "sof": ctx.sof,
+            },
             "multiclass": ctx.multiclass,
             "irating_deltas": ctx.irating_deltas,
         }
@@ -36,6 +39,7 @@ class Leaderboard(BaseService):
     def _build_context(self) -> LeaderboardContext | None:
         driver_info: dict[str, Any] = self.irsdk.get_value("DriverInfo") or {}
         drivers: list[dict[str, Any]] = driver_info.get("Drivers", []) or []
+        player_idx: int = self.irsdk.get_value("PlayerCarIdx")
 
         if not drivers:
             return None
@@ -61,6 +65,7 @@ class Leaderboard(BaseService):
             for class_id in {driver.get("CarClassID") for driver in drivers}
         }
         ctx.irating_deltas = self._calculate_irating_deltas(ctx)
+        ctx.sof = self._calculate_sof(ctx, player_idx)
 
         return ctx
 
@@ -102,6 +107,18 @@ class Leaderboard(BaseService):
             driver_id: delta
             for driver_id, delta in deltas.items()
         }
+
+    def _calculate_sof(self, ctx: LeaderboardContext, player_idx: int) -> int:
+        """Calculate Strength of Field for the active leaderboard class."""
+        drivers = self.builder.get_irating_drivers(ctx)
+        player_class_id = ctx.drivers[player_idx].get("CarClassID")
+
+        race_results = {
+            driver["id"]: driver["irating"]
+            for driver in drivers
+            if (not ctx.multiclass or driver["class_id"] == player_class_id)
+        }
+        return self.irating_calculator.calculate_sof(race_results)
 
     def get_session_time(
         self,

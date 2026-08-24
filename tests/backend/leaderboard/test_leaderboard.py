@@ -44,9 +44,11 @@ def test_leaderboard_snapshot_structure(mock_service):
         "neighbors",
         "leaderboard_data",
         "multiclass",
+        "irating_deltas",
     )
 
     assert all(k in snapshot for k in keys)
+    assert "sof" in snapshot["leaderboard_data"]
 
 
 def test_leaderboard_snapshot_multiclass(mock_values):
@@ -128,6 +130,7 @@ def test_build_context_success(mock_service):
     assert ctx.session_fastest_lap == pytest.approx(11.1)
     assert ctx.class_fastest_laps == {1: pytest.approx(11.1)}
     assert ctx.multiclass is False
+    assert ctx.sof == 1830
 
 
 def test_build_context_multiclass(mock_values):
@@ -217,3 +220,117 @@ def test_calculate_irating_deltas_uses_finishing_order_by_class(
 
     assert result == {103: 56, 101: -55, 102: 1}
     assert 104 not in result
+
+
+def test_calculate_sof_returns_expected_value(
+    mock_service,
+    mock_ctx,
+):
+    ctx = mock_ctx(
+        drivers=[
+            {
+                "UserID": 101,
+                "IRating": 2000,
+                "CarClassID": 1,
+            },
+            {
+                "UserID": 102,
+                "IRating": 1800,
+                "CarClassID": 1,
+            },
+            {
+                "UserID": 103,
+                "IRating": 1700,
+                "CarClassID": 1,
+            },
+        ],
+        multiclass=False,
+    )
+
+    result = mock_service._calculate_sof(ctx, player_idx=0)
+
+    expected = mock_service.irating_calculator.calculate_sof(
+        {
+            101: 2000,
+            102: 1800,
+            103: 1700,
+        }
+    )
+
+    assert result == expected
+
+
+def test_calculate_sof_uses_player_class_in_multiclass(
+    mock_service,
+    mock_ctx,
+):
+    ctx = mock_ctx(
+        drivers=[
+            {
+                "UserID": 101,
+                "IRating": 2000,
+                "CarClassID": 1,
+            },
+            {
+                "UserID": 102,
+                "IRating": 1800,
+                "CarClassID": 2,
+            },
+            {
+                "UserID": 103,
+                "IRating": 1700,
+                "CarClassID": 1,
+            },
+        ],
+        multiclass=True,
+    )
+
+    result = mock_service._calculate_sof(ctx, player_idx=0)
+
+    expected = mock_service.irating_calculator.calculate_sof(
+        {
+            101: 2000,
+            103: 1700,
+        }
+    )
+
+    assert result == expected
+
+
+def test_calculate_sof_includes_unstarted_drivers(
+    mock_service,
+    mock_ctx,
+):
+    ctx = mock_ctx(
+        drivers=[
+            {
+                "UserID": 101,
+                "IRating": 2000,
+                "CarClassID": 1,
+            },
+            {
+                "UserID": 102,
+                "IRating": 1800,
+                "CarClassID": 1,
+            },
+            {
+                "UserID": 103,
+                "IRating": 1700,
+                "CarClassID": 1,
+            },
+        ],
+        positions=[0, 0, 0],
+        multiclass=False,
+    )
+
+    result = mock_service._calculate_sof(ctx, player_idx=0)
+
+    expected = mock_service.irating_calculator.calculate_sof(
+        {
+            101: 2000,
+            102: 1800,
+            103: 1700,
+        }
+    )
+
+    assert result == expected
