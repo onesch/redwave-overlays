@@ -10,9 +10,6 @@ from backend.services.radar.constants import (
 )
 
 
-# --- Positive tests ---
-
-
 # --- Snapshot tests ---
 
 
@@ -46,7 +43,7 @@ def test_snapshot_contains_left_alert(
     snapshot = mock_service._build_snapshot(ctx)
 
     assert snapshot["left"] is not None
-    assert "offset" in snapshot["left"]
+    assert "offset_m" in snapshot["left"]
 
 
 @pytest.mark.parametrize(
@@ -67,7 +64,7 @@ def test_snapshot_contains_right_alert(
     snapshot = mock_service._build_snapshot(ctx)
 
     assert snapshot["right"] is not None
-    assert "offset" in snapshot["right"]
+    assert "offset_m" in snapshot["right"]
 
 
 @pytest.mark.parametrize(
@@ -117,18 +114,36 @@ def test_distances_out_of_range(irsdk_mock_factory):
     assert snapshot["behind_severity"] == "none"
 
 
+# --- _build_context tests ---
+
+
+def test_build_context(mock_service):
+    ctx = mock_service._build_context()
+
+    assert ctx is not None
+    assert ctx.dist_ahead == pytest.approx(5.0)
+    assert ctx.dist_behind == pytest.approx(6.0)
+    assert ctx.car_left_right == 0
+    assert ctx.lap_dist_pct == [0.50, 0.51]
+    assert ctx.player_idx == 0
+    assert ctx.track_length_m == pytest.approx(3992.7)
+
+
 # --- _lap_delta tests ---
 
 
 def test_lap_delta_ahead():
     assert RadarService._lap_delta(0.45, 0.47) == pytest.approx(0.02)
 
+
 def test_lap_delta_behind():
     assert RadarService._lap_delta(0.47, 0.45) == pytest.approx(-0.02)
+
 
 def test_lap_delta_wraparound_ahead():
     # Player at 98%, other at 2% — other is 4% ahead
     assert RadarService._lap_delta(0.98, 0.02) == pytest.approx(0.04)
+
 
 def test_lap_delta_wraparound_behind():
     # Player at 2%, other at 98% — other is 4% behind
@@ -140,16 +155,24 @@ def test_lap_delta_wraparound_behind():
 
 def test_find_closest_side_car_basic(mock_service, mock_ctx):
     # Car 1 at 0.51 is closer than car 2 at 0.60
-    ctx = mock_ctx(lap_dist_pct=[0.50, 0.51, 0.60], player_idx=0)
+    ctx = mock_ctx(
+        lap_dist_pct=[0.50, 0.51, 0.60],
+        player_idx=0,
+    )
     result = mock_service._find_closest_side_car(ctx)
     assert result == 1
+
 
 def test_find_closest_side_car_no_player(mock_service, mock_ctx):
     ctx = mock_ctx(player_idx=None)
     assert mock_service._find_closest_side_car(ctx) is None
 
+
 def test_find_closest_side_car_empty(mock_service, mock_ctx):
-    ctx = mock_ctx(lap_dist_pct=[], player_idx=None)
+    ctx = mock_ctx(
+        lap_dist_pct=[],
+        player_idx=None,
+    )
     assert mock_service._find_closest_side_car(ctx) is None
 
 
@@ -157,19 +180,95 @@ def test_find_closest_side_car_empty(mock_service, mock_ctx):
 
 
 def test_compute_side_offset_ahead(mock_service, mock_ctx):
-    # Car 1 is slightly ahead
-    ctx = mock_ctx(lap_dist_pct=[0.50, 0.52], player_idx=0)
+    # Car 1 is 2% of a lap ahead on a 4000 m track.
+    ctx = mock_ctx(
+        lap_dist_pct=[0.50, 0.52],
+        player_idx=0,
+        track_length_m=4000.0,
+    )
     result = mock_service._compute_side_offset(ctx)
+
     assert result is not None
-    assert result["offset"] == pytest.approx(0.02)
+    assert result["offset_m"] == pytest.approx(80.0)
+
 
 def test_compute_side_offset_behind(mock_service, mock_ctx):
-    # Car 1 is slightly behind
-    ctx = mock_ctx(lap_dist_pct=[0.50, 0.48], player_idx=0)
+    # Car 1 is 2% of a lap behind on a 4000 m track.
+    ctx = mock_ctx(
+        lap_dist_pct=[0.50, 0.48],
+        player_idx=0,
+        track_length_m=4000.0,
+    )
     result = mock_service._compute_side_offset(ctx)
+
     assert result is not None
-    assert result["offset"] == pytest.approx(-0.02)
+    assert result["offset_m"] == pytest.approx(-80.0)
+
 
 def test_compute_side_offset_no_player(mock_service, mock_ctx):
     ctx = mock_ctx(player_idx=None)
     assert mock_service._compute_side_offset(ctx) is None
+
+
+def test_compute_side_offset_depends_on_track_length(
+    mock_service,
+    mock_ctx,
+):
+    # The same lap percentage difference must produce
+    # different physical distances on tracks of different lengths.
+    ctx_short = mock_ctx(
+        lap_dist_pct=[0.50, 0.52],
+        player_idx=0,
+        track_length_m=4000.0,
+    )
+    ctx_long = mock_ctx(
+        lap_dist_pct=[0.50, 0.52],
+        player_idx=0,
+        track_length_m=6000.0,
+    )
+    short_result = mock_service._compute_side_offset(ctx_short)
+    long_result = mock_service._compute_side_offset(ctx_long)
+
+    assert short_result["offset_m"] == pytest.approx(80.0)
+    assert long_result["offset_m"] == pytest.approx(120.0)
+
+
+def test_compute_side_offset_no_track_length(
+    mock_service,
+    mock_ctx,
+):
+    ctx = mock_ctx(
+        lap_dist_pct=[0.50, 0.52],
+        player_idx=0,
+        track_length_m=None,
+    )
+
+    assert mock_service._compute_side_offset(ctx) is None
+
+
+# --- _parse_track_length tests ---
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        ("3.9927 km", 3992.7),
+        ("4.02 km", 4020.0),
+        ("5 km", 5000.0),
+    ],
+)
+def test_parse_track_length(value, expected):
+    assert RadarService._parse_track_length(value) == pytest.approx(expected)
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        None,
+        "",
+        "invalid",
+        "abc km",
+    ],
+)
+def test_parse_track_length_invalid(value):
+    assert RadarService._parse_track_length(value) is None

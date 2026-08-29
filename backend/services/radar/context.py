@@ -22,6 +22,8 @@ class RadarContext:
         player_idx (int | None):
             Index of the player's car in the lap_dist_pct list.
             None if not available.
+        track_length_m (float | None):
+            Track length in meters.
             
     Used by RadarService to pass pre-fetched, consistent telemetry data
     into snapshot builders.
@@ -31,3 +33,4 @@ class RadarContext:
     car_left_right: int
     lap_dist_pct: list[float]
     player_idx: int | None
+    track_length_m: float | None

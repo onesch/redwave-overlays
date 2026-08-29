@@ -1,7 +1,7 @@
-from dataclasses import dataclass
 from typing import Any
 
 from backend.services.base import BaseService
+from backend.services.radar.context import RadarContext
 from backend.services.radar.constants import (
     RED_M,
     YEL_M,
@@ -12,7 +12,6 @@ from backend.services.radar.constants import (
     CLR_RIGHT,
     CLR_TWO_RIGHT,
 )
-from backend.services.radar.context import RadarContext
 
 
 class DistanceSeverity:
@@ -30,17 +29,24 @@ class DistanceSeverity:
         """Return severity level for a given distance."""
         if dist is None:
             return "none"
+
         if dist <= RED_M:
             return "red"
+
         if dist <= YEL_M:
             return "yellow"
+
         return "ok"
 
     @staticmethod
     def format_meta(dist: float | None) -> tuple[float | None, str]:
         """Return sanitized distance with severity."""
         sanitized_dist = DistanceSeverity._sanitize_distance(dist)
-        return (sanitized_dist, DistanceSeverity.for_distance(sanitized_dist))
+
+        return (
+            sanitized_dist,
+            DistanceSeverity.for_distance(sanitized_dist),
+        )
 
 
 class RadarService(BaseService):
@@ -58,21 +64,50 @@ class RadarService(BaseService):
         if car_left_right is None:
             return None
 
+        weekend_info = self.irsdk.get_value("WeekendInfo") or {}
+
+        track_length_m = self._parse_track_length(weekend_info.get("TrackLength"))
+
         return RadarContext(
             dist_ahead=self.irsdk.get_value("CarDistAhead"),
             dist_behind=self.irsdk.get_value("CarDistBehind"),
             car_left_right=car_left_right,
             lap_dist_pct=self.irsdk.get_value("CarIdxLapDistPct") or [],
             player_idx=self.irsdk.get_value("PlayerCarIdx"),
+            track_length_m=track_length_m,
         )
 
-    def _build_snapshot(self, ctx: RadarContext) -> dict[str, Any]:
+    @staticmethod
+    def _parse_track_length(track_length: str | None) -> float | None:
+        """
+        Convert iRacing TrackLength from kilometers to meters.
+
+        Example:
+            "3.9927 km" -> 3992.7
+        """
+        if not track_length:
+            return None
+
+        try:
+            value = float(track_length.split()[0])
+        except (ValueError, IndexError):
+            return None
+
+        return value * 1000
+
+    def _build_snapshot(
+        self,
+        ctx: RadarContext,
+    ) -> dict[str, Any]:
         """
         Generates the snapshot for the API.
         Overridden method from BaseService.
         """
         left_data, right_data = self._build_side_data(ctx)
-        suppress_ahead = left_data is not None or right_data is not None
+
+        suppress_ahead = (
+            left_data is not None or right_data is not None
+        )
 
         dist_ahead = None if suppress_ahead else ctx.dist_ahead
         dist_behind = None if suppress_ahead else ctx.dist_behind
@@ -90,22 +125,34 @@ class RadarService(BaseService):
             "right": right_data,
         }
 
-    def _build_side_data(self, ctx: RadarContext) -> tuple[dict | None, dict | None]:
+    def _build_side_data(
+        self, ctx: RadarContext,
+    ) -> tuple[dict | None, dict | None]:
         """
-        Returns data for left and right side indicators based on radar context.
+        Returns data for left and right side indicators
+        based on radar context.
         """
-        left_present = ctx.car_left_right in (CLR_LEFT, CLR_TWO_LEFT, CLR_BOTH)
-        right_present = ctx.car_left_right in (CLR_RIGHT, CLR_TWO_RIGHT, CLR_BOTH)
-
+        left_present = ctx.car_left_right in (
+            CLR_LEFT,
+            CLR_TWO_LEFT,
+            CLR_BOTH,
+        )
+        right_present = ctx.car_left_right in (
+            CLR_RIGHT,
+            CLR_TWO_RIGHT,
+            CLR_BOTH,
+        )
         left_data = None
         right_data = None
 
         # Note: When both sides are present,
-        # _compute_side_offset is called twice,
-        # this is intentional, offset is
-        # ignored on the frontend when bothSides is true
+        # _compute_side_offset is called twice.
+        # This is intentional because offset is
+        # ignored on the frontend when bothSides is true.
+
         if left_present:
             left_data = self._compute_side_offset(ctx)
+
         if right_present:
             right_data = self._compute_side_offset(ctx)
 
@@ -114,12 +161,13 @@ class RadarService(BaseService):
     @staticmethod
     def _lap_delta(my: float, other: float) -> float:
         """
-        Computes the lap distance delta between two
-        cars, accounting for wrap-around at 0/1.
+        Computes the normalized lap distance delta between two cars,
+        accounting for wrap-around at 0/1.
 
-        > 0 if the other car is ahead.
-        < 0 if the other car is behind.
-        0 if both cars are aligned.
+        Returns:
+            Positive value if the other car is ahead.
+            Negative value if the other car is behind.
+            Zero if both cars are aligned.
         """
         delta = other - my
 
@@ -132,8 +180,8 @@ class RadarService(BaseService):
 
     def _find_closest_side_car(self, ctx: RadarContext) -> int | None:
         """
-        Returns the index of the closest car on
-        the side (left or right) based on lap distance percentage.
+        Returns the index of the closest car on the side
+        based on lap distance percentage.
         """
         my_idx = ctx.player_idx
         if my_idx is None:
@@ -142,20 +190,17 @@ class RadarService(BaseService):
         my_pct = ctx.lap_dist_pct[my_idx]
 
         best_idx = None
-        # Larger than any possible delta
-        best_score = float('inf')
+        best_score = float("inf")
 
-        # Find the closest car
         for i, pct in enumerate(ctx.lap_dist_pct):
             if i == my_idx:
                 continue
+
             if pct is None:
                 continue
 
             delta = abs(self._lap_delta(my_pct, pct))
 
-            # If this car is closer than the best
-            # one found so far, update best_idx and best_score
             if delta < best_score:
                 best_score = delta
                 best_idx = i
@@ -165,26 +210,28 @@ class RadarService(BaseService):
     def _compute_side_offset(self, ctx: RadarContext) -> dict | None:
         """
         Computes the longitudinal offset of the closest side car.
+        The lap distance percentage is converted to meters using
+        the current track length.
 
         Example:
-            Player lap position: 0.45
 
-            Cars:
-                Car A = 0.47
-                Car B = 0.60
+            Track length = 4000 m
+            Player = 0.45
+            Other car = 0.452
 
-            Candidate deltas:
-                Car A -> _lap_delta(0.45, 0.47) = +0.02
-                Car B -> _lap_delta(0.45, 0.60) = +0.15
+            delta_pct = 0.002
 
-            _find_closest_side_car() selects Car A because
-            abs(+0.02) < abs(+0.15).
+            offset_m = 0.002 * 4000 = 8 m
 
-            Therefore this method returns:
+        Result:
 
-                {"offset": 0.02}
+            {"offset_m": 8.0}
         """
+
         if ctx.player_idx is None:
+            return None
+
+        if ctx.track_length_m is None:
             return None
 
         my_pct = ctx.lap_dist_pct[ctx.player_idx]
@@ -195,6 +242,10 @@ class RadarService(BaseService):
 
         other_pct = ctx.lap_dist_pct[car_idx]
 
-        delta = self._lap_delta(my_pct, other_pct)
+        delta_pct = self._lap_delta(my_pct, other_pct)
 
-        return {"offset": round(delta, 4)}
+        offset_m = delta_pct * ctx.track_length_m
+
+        return {
+            "offset_m": round(offset_m, 2),
+        }
