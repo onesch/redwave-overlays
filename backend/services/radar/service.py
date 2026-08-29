@@ -6,6 +6,7 @@ from backend.services.radar.constants import (
     RED_M,
     YEL_M,
     MAX_SHOW_DIST,
+    SIDE_WINDOW_M,
     CLR_LEFT,
     CLR_TWO_LEFT,
     CLR_BOTH,
@@ -47,6 +48,30 @@ class DistanceSeverity:
             sanitized_dist,
             DistanceSeverity.for_distance(sanitized_dist),
         )
+
+    @staticmethod
+    def is_nearby(dist: float | None) -> bool:
+        """
+        Return whether the distance is within radar visibility range.
+
+        A distance is considered nearby when it is between 0 and
+        MAX_SHOW_DIST meters, inclusive.
+
+        Example:
+
+            MAX_SHOW_DIST = 15.0
+
+            is_nearby(10.0) -> True
+            is_nearby(15.0) -> True
+            is_nearby(15.1) -> False
+            is_nearby(None) -> False
+
+        Result:
+
+            Returns True if the car is within the radar visibility range,
+            otherwise returns False.
+        """
+        return dist is not None and 0 <= dist <= MAX_SHOW_DIST
 
 
 class RadarService(BaseService):
@@ -119,8 +144,10 @@ class RadarService(BaseService):
             "status": "ok",
             "ahead_m": ahead_val,
             "ahead_severity": ahead_sev,
+            "ahead_nearby": DistanceSeverity.is_nearby(ctx.dist_ahead),
             "behind_m": behind_val,
             "behind_severity": behind_sev,
+            "behind_nearby": DistanceSeverity.is_nearby(ctx.dist_behind),
             "left": left_data,
             "right": right_data,
         }
@@ -209,9 +236,12 @@ class RadarService(BaseService):
 
     def _compute_side_offset(self, ctx: RadarContext) -> dict | None:
         """
-        Computes the longitudinal offset of the closest side car.
-        The lap distance percentage is converted to meters using
-        the current track length.
+        Computes the normalized longitudinal offset of the closest side car.
+
+        The lap distance percentage is first converted to a physical
+        distance in meters using the current track length. The distance
+        is then clamped to SIDE_WINDOW_M and normalized to the [-1, 1]
+        range for frontend positioning.
 
         Example:
 
@@ -220,12 +250,14 @@ class RadarService(BaseService):
             Other car = 0.452
 
             delta_pct = 0.002
-
             offset_m = 0.002 * 4000 = 8 m
+
+            clamped = 8 m
+            offset_ratio = 8 / 8 = 1.0
 
         Result:
 
-            {"offset_m": 8.0}
+            {"offset_ratio": 1.0}
         """
 
         if ctx.player_idx is None:
@@ -246,6 +278,14 @@ class RadarService(BaseService):
 
         offset_m = delta_pct * ctx.track_length_m
 
+        # Do not allow offset_m to be less than -8 or greater than +8
+        clamped = max(
+            -SIDE_WINDOW_M,
+            min(SIDE_WINDOW_M, offset_m),
+        )
+
+        offset_ratio = clamped / SIDE_WINDOW_M
+
         return {
-            "offset_m": round(offset_m, 2),
+            "offset_ratio": round(offset_ratio, 4),
         }
