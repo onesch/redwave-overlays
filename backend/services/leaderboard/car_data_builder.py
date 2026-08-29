@@ -84,7 +84,7 @@ class CarDataBuilder(BaseCarBuilder):
             started = position is not None and position > 0
 
             irating = driver.get("IRating")
-            if not isinstance(irating, int):
+            if not isinstance(irating, int) or irating <= 0:
                 continue
 
             drivers.append(

@@ -33,7 +33,7 @@ def test_reset_pit_data_clears_dicts(mock_builder):
         ("   ", ""),
     ],
 )
-def test_get_first_name_variants(mock_values, mock_lap_times, username, expected):
+def test_get_first_name(mock_values, mock_lap_times, username, expected):
     mock_builder = CarDataBuilder(mock_values, mock_lap_times)
     driver = {"UserName": username}
     assert mock_builder._get_first_name(driver) == expected
@@ -60,18 +60,25 @@ def test_format_lap_dist_invalid(mock_builder, mock_ctx, lap_dist):
     assert mock_builder._format_lap_dist(0, ctx) is None
 
 
-def test_resolve_position_multiclass_zero_and_negative(mock_builder, mock_ctx):
-    ctx = mock_ctx(positions=[0, -1])
-    zero_pos = mock_builder._resolve_position(idx=0, ctx=ctx)
-    negative_pos = mock_builder._resolve_position(idx=1, ctx=ctx)
-    assert zero_pos == 1
-    assert negative_pos is None
+@pytest.mark.parametrize(
+    "positions,idx,expected",
+    [
+        ([0, -1], 0, 1),
+        ([0, -1], 1, None),
+        ([-1, 3], 0, None),
+        ([-1, 3], 1, 3),
+    ],
+)
+def test_resolve_position(
+    mock_builder,
+    mock_ctx,
+    positions,
+    idx,
+    expected,
+):
+    ctx = mock_ctx(positions=positions)
 
-
-def test_resolve_position_normal_and_negative(mock_builder, mock_ctx):
-    ctx = mock_ctx(positions=[-1, 3])
-    assert mock_builder._resolve_position(0, ctx) is None
-    assert mock_builder._resolve_position(1, ctx) == 3
+    assert mock_builder._resolve_position(idx, ctx) == expected
 
 
 def test_get_starting_position_from_qualify_stats(mock_builder):
@@ -298,3 +305,35 @@ def test_get_irating_drivers_marks_unresolved_position_as_not_started(
     assert result[-1]["id"] == 101
     assert result[-1]["position"] is None
     assert result[-1]["started"] is False
+
+
+def test_get_irating_drivers_excludes_zero_irating(
+    mock_service,
+    mock_ctx,
+):
+    ctx = mock_ctx(
+        drivers=[
+            {
+                "UserID": 101,
+                "IRating": 0,
+                "CarClassID": 1,
+            },
+            {
+                "UserID": 102,
+                "IRating": 1800,
+                "CarClassID": 1,
+            },
+        ],
+    )
+
+    result = mock_service.builder.get_irating_drivers(ctx)
+
+    assert result == [
+        {
+            "id": 102,
+            "irating": 1800,
+            "position": 2,
+            "class_id": 1,
+            "started": True,
+        }
+    ]

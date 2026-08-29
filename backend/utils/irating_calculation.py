@@ -129,7 +129,7 @@ class IRatingCalculator:
             for rating in race_results.values()
         )
 
-        return round(
+        return int(
             -BASE_RATING
             * math.log(total / len(race_results))
         )

@@ -178,6 +178,10 @@
                 <span id="laps-total" class="value">--</span>
             </div>
             <div class="race-stats">
+                <span class="label">SOF</span>
+                <span id="sof" class="value">--</span>
+            </div>
+            <div class="race-stats">
                 <span id="time-current" class="value">--</span>
                 <span class="sep">/</span>
                 <span id="time-total" class="value">--</span>
@@ -244,6 +248,8 @@ class LeaderboardUpdater extends BaseUpdater {
             data.leaderboard_data.player_lap_time,
             data.player.laps_started
         );
+        // Update Strength of Field
+        this.updateStrengthOfField(data.leaderboard_data.sof);
         // Update session time
         this.updateSessionTime(
             data.leaderboard_data.session_time_current,
@@ -504,6 +510,11 @@ class LeaderboardUpdater extends BaseUpdater {
         } else {
             totalElement.textContent = `~${(sessionTime / playerLapTime).toFixed(1)}`;
         }
+    }
+
+    updateStrengthOfField(sof) {
+        const sofElement = document.getElementById('sof');
+        sofElement.textContent = sof || '--';
     }
 
     updateSessionTime(current_time, total_time) {
