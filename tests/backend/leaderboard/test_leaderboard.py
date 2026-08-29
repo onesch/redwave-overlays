@@ -130,7 +130,7 @@ def test_build_context_success(mock_service):
     assert ctx.session_fastest_lap == pytest.approx(11.1)
     assert ctx.class_fastest_laps == {1: pytest.approx(11.1)}
     assert ctx.multiclass is False
-    assert ctx.sof == 1830
+    assert ctx.sof == 1829
 
 
 def test_build_context_multiclass(mock_values):

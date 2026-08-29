@@ -47,7 +47,7 @@ def test_irating_calculator_calculates_deltas(race_results, expected_deltas):
     "race_results,expected_sof",
     [
         ({}, 0),
-        ({1: 2000, 2: 1800, 3: 1700}, 1830),
+        ({1: 2000, 2: 1800, 3: 1700}, 1829),
         ({1: 1000, 2: 2000}, 1446),
     ],
 )
