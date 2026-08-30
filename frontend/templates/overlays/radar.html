@@ -29,10 +29,10 @@
 class RadarUpdater extends BaseUpdater {
     constructor() {
         super({ endpoint: '/api/radar', updateInterval: 100, overlayName: 'radar' });
-        this.MAX_DIST = 15.0;
+        // Height of the radar area in pixels.
         this.RADAR_H = 260;
+        // Vertical center of the radar used as the reference point for positioning.
         this.CENTER_Y = this.RADAR_H / 2;
-        this.MAX_SHOW_DIST = 15.0;
     }
 
     async init() {
@@ -46,6 +46,7 @@ class RadarUpdater extends BaseUpdater {
             this.radarMode = mode;
         });
     }
+
     async renderOverlay(data) {
         this.renderRadar(data);
     }
@@ -72,22 +73,21 @@ class RadarUpdater extends BaseUpdater {
         el.classList.remove("red", "gray");
 
         if (!info) {
-            el.style.opacity = 0;
+            el.remove();
             return;
         }
 
-        el.style.opacity = 1;
-
         const BOX_H = 40;
-        const MAX_DELTA = 0.05;
-        // If both left and right are present, we don't offset the boxes
-        const offset = bothSides ? 0 : info.offset;
-        // Clamp the offset to avoid moving the box too far
-        const clamped = Math.max(-MAX_DELTA, Math.min(MAX_DELTA, offset));
-        const offsetPx = (clamped / MAX_DELTA) * (this.RADAR_H / 2 - BOX_H / 2);
+        const offsetRatio = bothSides ? 0 : info.offset_ratio;
+
+        const offsetPx =
+            offsetRatio * (this.RADAR_H / 2 - BOX_H / 2);
 
         // Position the car based on the offset
-        el.style.top = (this.CENTER_Y - BOX_H - offsetPx - 20) + "px";
+        el.style.top =
+            (this.CENTER_Y - BOX_H - offsetPx - 20) + "px";
+
+        el.style.opacity = 1;
         el.classList.add("red");
     }
 
@@ -97,10 +97,41 @@ class RadarUpdater extends BaseUpdater {
         this.setFB(document.getElementById("fb-behind"), data.behind_m, data.behind_severity);
 
         const bothSides = !!(data.left && data.right);
-        this.setSide(document.getElementById("side-left"), data.left, bothSides);
-        this.setSide(document.getElementById("side-right"), data.right, bothSides);
+
+        // Create the left/right car indicator
+        // if it was removed when the previous car disappeared.
+        // Remove the element to prevent a visual jump
+        // from its previous top position when a new car appears.
+        if (data.left) {
+            const left = this.getSideElement("side-left", "left");
+            this.setSide(left, data.left, bothSides);
+        } else {
+            document.getElementById("side-left")?.remove();
+        }
+
+        if (data.right) {
+            const right = this.getSideElement("side-right", "right");
+            this.setSide(right, data.right, bothSides);
+        } else {
+            document.getElementById("side-right")?.remove();
+        }
 
         this.updateRadarVisibility(data);
+    }
+
+    // Return an existing side indicator
+    // or create a fresh one after it was removed.
+    getSideElement(id, side) {
+        let el = document.getElementById(id);
+
+        if (!el) {
+            el = document.createElement("div");
+            el.id = id;
+            el.className = `side-box ${side}`;
+            document.querySelector(".radar-container").appendChild(el);
+        }
+
+        return el;
     }
 
     // Update radar visibility based on the current mode and distances
@@ -108,12 +139,6 @@ class RadarUpdater extends BaseUpdater {
         const el = document.querySelector(".radar-container");
 
         const mode = this.radarMode;
-
-        const distances = [];
-        if (data.ahead_m != null) distances.push(data.ahead_m);
-        if (data.behind_m != null) distances.push(data.behind_m);
-
-        const nearest = distances.length ? Math.min(...distances) : null;
 
         // Always show if any cars are nearby
         if (data.left || data.right) {
@@ -131,7 +156,7 @@ class RadarUpdater extends BaseUpdater {
 
         // Hide if no cars nearby
         if (mode === 'hide') {
-            if (nearest == null || nearest > this.MAX_SHOW_DIST) {
+            if (!data.ahead_nearby && !data.behind_nearby) {
                 el.style.opacity = 0;
                 el.style.pointerEvents = 'none';
                 return;
@@ -144,7 +169,7 @@ class RadarUpdater extends BaseUpdater {
         // Dim if no cars nearby
         el.style.display = 'block';
 
-        if (nearest == null || nearest > this.MAX_SHOW_DIST) {
+        if (!data.ahead_nearby && !data.behind_nearby) {
             el.style.opacity = 0.35;
         } else {
             el.style.opacity = 1;

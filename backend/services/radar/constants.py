@@ -1,8 +1,16 @@
+# Distance at which the radar indicator becomes red.
 RED_M = 4.5
+
+# Distance at which the radar indicator becomes yellow.
 YEL_M = 6.5
-MAX_SHOW_DIST = 15.0  # Max distance to show on radar, in meters, reused in RadarUpdater this.MAX_SHOW_DIST.
+
+# Maximum longitudinal side offset represented by the radar indicator.
 SIDE_WINDOW_M = 8.0
 
+# Maximum distance at which the radar is shown in hide/dim modes.
+MAX_SHOW_DIST = 15.0
+
+# iRacingSDK CarLeftRight values.
 CLR_OFF = 0
 CLR_CLEAR = 1
 CLR_LEFT = 2
