@@ -207,8 +207,22 @@ class RadarService(BaseService):
 
     def _find_closest_side_car(self, ctx: RadarContext) -> int | None:
         """
-        Returns the index of the closest car on the side
-        based on lap distance percentage.
+        Find the car closest to the player along the track.
+
+        Uses lap distance percentages to compare the longitudinal
+        position of each car relative to the player's car.
+        Wrap-around at the start/finish line is handled by `_lap_delta()`.
+
+        Example:
+            Player car is at 50% of the lap.
+            Other cars are at 51% and 60%.
+
+            The car at 51% is closest to the player
+            and its index is returned.
+
+        Returns:
+            The index of the closest other car, or None if the
+            player's car index is unavailable.
         """
         my_idx = ctx.player_idx
         if my_idx is None:
@@ -219,15 +233,20 @@ class RadarService(BaseService):
         best_idx = None
         best_score = float("inf")
 
+        # Check every car and find the one
+        # with the smallest lap-distance difference.
         for i, pct in enumerate(ctx.lap_dist_pct):
             if i == my_idx:
                 continue
 
+            # Skip cars without a valid lap-distance value.
             if pct is None:
                 continue
 
+            # Calculate the absolute longitudinal distance from the player's car.
             delta = abs(self._lap_delta(my_pct, pct))
 
+             # Keep the closest car found so far.
             if delta < best_score:
                 best_score = delta
                 best_idx = i
