@@ -44,10 +44,16 @@ class Leaderboard(BaseService):
         if not drivers:
             return None
 
+        starting_positions, starting_class_positions = (
+            self.builder.get_starting_positions()
+        )
+
         ctx = LeaderboardContext(
             drivers=drivers,
             positions=self.irsdk.get_value("CarIdxPosition") or [],
             class_positions=self.irsdk.get_value("CarIdxClassPosition") or [],
+            starting_positions=starting_positions,
+            starting_class_positions=starting_class_positions,
             last_lap_times=self.irsdk.get_value("CarIdxLastLapTime") or [],
             best_lap_times=self.irsdk.get_value("CarIdxBestLapTime") or [],
             laps_started=self._normalize_laps_started(

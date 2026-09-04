@@ -131,6 +131,8 @@ def test_build_context_success(mock_service):
     assert ctx.class_fastest_laps == {1: pytest.approx(11.1)}
     assert ctx.multiclass is False
     assert ctx.sof == 1829
+    assert ctx.starting_positions == {0: 2, 1: 3, 2: 1}
+    assert ctx.starting_class_positions == {0: 2, 1: 3, 2: 1}
 
 
 def test_build_context_multiclass(mock_values):
@@ -143,6 +145,9 @@ def test_build_context_multiclass(mock_values):
         2: pytest.approx(22.2),
     }
     assert ctx.multiclass is True
+    assert ctx.sof == 1845  # for class №1 from mock_values 101 and 103 ids.
+    assert ctx.starting_positions == {0: 2, 1: 3, 2: 1}
+    assert ctx.starting_class_positions == {0: 2, 1: 2, 2: 1}
 
 
 def test_build_context_returns_none_when_no_drivers(irsdk_mock_factory):

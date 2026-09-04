@@ -109,46 +109,79 @@ class CarDataBuilder(BaseCarBuilder):
         dist: float = ctx.lap_dist_pct[idx]
         return round(dist, 3) if isinstance(dist, float) and dist >= 0 else None
 
-    def _resolve_position(self, idx: int, ctx: LeaderboardContext) -> int | None:
+    def _resolve_position(
+        self,
+        idx: int,
+        ctx: LeaderboardContext,
+    ) -> int | None:
         """
-        Return the car's effective position,
-        using class positions if multiclass.
-        Returns None if unknown, or calculates starting position if zero.
-        """
-        pos_list = ctx.class_positions if ctx.multiclass else ctx.positions
-        pos = pos_list[idx]
+        Return the car's effective position.
 
-        if pos == -1:
+        Uses current telemetry position when available.
+        Falls back to the starting position from QualifyResultsInfo
+        when the current position is zero.
+        """
+        positions: list[int] = (
+            ctx.class_positions
+            if ctx.multiclass
+            else ctx.positions
+        )
+
+        position = positions[idx]
+
+        if position == -1:
             return None
-        if pos == 0:
-            return self._get_starting_position(
-                idx,
-                "ClassPosition" if ctx.multiclass else "Position",
-                1 if ctx.multiclass else 0,
-            )
-        return pos
 
-    def _get_starting_position(
-        self, car_idx: int, field: str, offset: int
-    ) -> int:
-        """
-        Get the car's starting position from
-        session results, adding an offset.
-        Returns 0 if not found.
-        """
-        session_info: dict[str, Any] = self.irsdk.get_value("SessionInfo") or {}
-        sessions: list[dict[str, Any]] = session_info.get("Sessions", [])
+        if position > 0:
+            return position
 
-        for sess in sessions:
-            if sess.get("SessionType") in (
-                "Warmup",
-                "Lone Qualify",
-                "Open Qualify",
-            ):
-                for res in sess.get("ResultsPositions") or []:
-                    if res.get("CarIdx") == car_idx:
-                        return int(res.get(field, 0)) + offset
-        return 0
+        starting_positions: dict[int, int] = (
+            ctx.starting_class_positions
+            if ctx.multiclass
+            else ctx.starting_positions
+        )
+
+        return starting_positions.get(idx)
+
+    def get_starting_positions(
+        self,
+    ) -> tuple[dict[int, int], dict[int, int]]:
+        """
+        Return starting overall and class positions from
+        QualifyResultsInfo.
+
+        Returns:
+            Tuple containing:
+                - overall starting positions by car index
+                - class starting positions by car index
+        """
+        qualify_info: dict[str, Any] = (
+            self.irsdk.get_value("QualifyResultsInfo") or {}
+        )
+
+        qualify_results: list[dict[str, Any]] = (
+            qualify_info.get("Results") or []
+        )
+
+        starting_positions = {}
+        starting_class_positions = {}
+
+        for result in qualify_results:
+            car_idx = result.get("CarIdx")
+
+            if car_idx is None:
+                continue
+
+            position = result.get("Position")
+            class_position = result.get("ClassPosition")
+
+            if position is not None:
+                starting_positions[car_idx] = position + 1
+
+            if class_position is not None:
+                starting_class_positions[car_idx] = class_position + 1
+
+        return starting_positions, starting_class_positions
 
     def _get_last_pit_lap(
         self, idx: int, laps_started: list[int], is_pitroad: list[bool]

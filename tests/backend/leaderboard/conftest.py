@@ -73,6 +73,8 @@ def mock_ctx(mock_values: Callable) -> LeaderboardContext:
         "multiclass": False,
         "est_times": values.get_value("CarIdxEstTime"),
         "irating_deltas": {},
+        "starting_positions": {0: 2, 1: 3, 2: 1},
+        "starting_class_positions": {0: 2, 1: 3, 2: 1},
     }
 
     def _make_ctx(**overrides):
@@ -123,9 +125,6 @@ def mock_values(irsdk_mock_factory):
             },
         ]
 
-        if is_multiclass:
-            drivers[1]["CarClassID"] = 2
-
         values = {
             "CarIdxPosition": [1, 2, 3],
             "CarIdxClassPosition": [0, 1, 2],
@@ -138,6 +137,13 @@ def mock_values(irsdk_mock_factory):
             "PlayerCarIdx": 0,
             "SessionTime": 100.0,
             "SessionTimeTotal": 100.0,
+            "QualifyResultsInfo": {
+                "Results": [
+                    {"CarIdx": 0, "Position": 1, "ClassPosition": 1},
+                    {"CarIdx": 1, "Position": 2, "ClassPosition": 2},
+                    {"CarIdx": 2, "Position": 0, "ClassPosition": 0},
+                ],
+            },
             "DriverInfo": {
                 "Drivers": drivers,
             },
@@ -174,6 +180,16 @@ def mock_values(irsdk_mock_factory):
                 ],
             },
         }
+
+        if is_multiclass:
+            drivers[1]["CarClassID"] = 2
+
+            values["QualifyResultsInfo"]["Results"] = [
+                {"CarIdx": 0, "Position": 1, "ClassPosition": 1},
+                {"CarIdx": 1, "Position": 2, "ClassPosition": 1},
+                {"CarIdx": 2, "Position": 0, "ClassPosition": 0},
+            ]
+
         return irsdk_mock_factory(values)
 
     return _factory
