@@ -88,6 +88,8 @@ DIRECTION_OVERRIDES = {
     145: 1,
     146: 1,
     290: -1,
+    # Circuit de Ledenon
+    489: -1,
 }
 
 def make_track_svg_url(
