@@ -61,45 +61,118 @@ def test_format_lap_dist_invalid(mock_builder, mock_ctx, lap_dist):
 
 
 @pytest.mark.parametrize(
-    "positions,idx,expected",
+    "multiclass,positions,idx,expected",
     [
-        ([0, -1], 0, 1),
-        ([0, -1], 1, None),
-        ([-1, 3], 0, None),
-        ([-1, 3], 1, 3),
+         # Current overall position is available.
+        (False, [9, 2, 3], 0, 9),
+        # Current position is -1 -> car is not classified.
+        (False, [-1, 2, 3], 0, None),
+        # fallback to starting position.
+        (False, [0, 2, 3], 0, 2),
+        # Current overall position is available in multiclass.
+        (True, [9, 2, 3], 0, 9),
+        # Current position is -1 -> car is not classified in multiclass.
+        (True, [-1, 2, 3], 0, None),
+        # fallback to starting position in multiclass.
+        (True, [1, 0, 3], 1, 3),
     ],
 )
 def test_resolve_position(
     mock_builder,
     mock_ctx,
+    multiclass,
     positions,
     idx,
     expected,
 ):
-    ctx = mock_ctx(positions=positions)
-
+    ctx = mock_ctx(
+        positions=positions,
+        class_positions=positions,
+        multiclass=multiclass,
+    )
     assert mock_builder._resolve_position(idx, ctx) == expected
 
 
-def test_get_starting_position_from_qualify_stats(mock_builder):
-    pos = mock_builder._get_starting_position(
-        car_idx=1, field="Position", offset=0
+def test_resolve_position_returns_none_when_starting_position_missing(
+    mock_builder,
+    mock_ctx,
+):
+    ctx = mock_ctx(
+        positions=[0, 2, 3],
+        starting_positions={},
     )
-    assert pos == 2
+    assert mock_builder._resolve_position(0, ctx) is None
 
 
-def test_get_starting_position_missing_qualify(mock_builder):
-    pos = mock_builder._get_starting_position(
-        car_idx=999, field="Position", offset=0
-    )
-    assert pos == 0
+def test_get_starting_positions_from_qualify_results(mock_builder):
+    positions, class_positions = mock_builder.get_starting_positions()
+    assert positions == {0: 2, 1: 3, 2: 1}
+    assert class_positions == {0: 2, 1: 3, 2: 1}
+
+
+def test_get_starting_positions_skips_result_without_car_idx(
+    mock_builder,
+):
+    mock_builder.irsdk.get_value = lambda key: {
+        "Results": [
+            {
+                "CarIdx": 0,
+                "Position": 1,
+                "ClassPosition": 0,
+            },
+            {
+                "Position": 2,
+                "ClassPosition": 1,
+            },
+        ]
+    }
+
+    positions, class_positions = mock_builder.get_starting_positions()
+
+    assert positions == {0: 2}
+    assert class_positions == {0: 1}
+
+
+def test_get_starting_positions_skips_missing_positions(
+    mock_builder,
+):
+    mock_builder.irsdk.get_value = lambda key: {
+        "Results": [
+            {
+                "CarIdx": 0,
+                "Position": None,
+                "ClassPosition": 0,
+            },
+            {
+                "CarIdx": 1,
+                "Position": 2,
+                "ClassPosition": None,
+            },
+        ]
+    }
+
+    positions, class_positions = mock_builder.get_starting_positions()
+
+    assert positions == {1: 3}
+    assert class_positions == {0: 1}
+
+
+def test_get_starting_positions_returns_empty_when_no_qualify_results(
+    mock_builder,
+):
+    mock_builder.irsdk.get_value.side_effect = lambda key: {}
+
+    positions, class_positions = mock_builder.get_starting_positions()
+
+    assert positions == {}
+    assert class_positions == {}
 
 
 def test_starting_position_falls_back_to_race(mock_builder, mock_ctx):
     ctx = mock_ctx(positions=[0])
     result = mock_builder.build(0, ctx)
-    assert result["name"] == "Driver1"
-    assert result["pos"] == 1
+    # fallback value from mock_ctx.starting_positions
+    assert result["pos"] == 2
 
 
 def test_builder_converts_negative_position_to_none(mock_builder, mock_ctx):

@@ -25,7 +25,13 @@ class LeaderboardContext(SessionStateContext):
             Calculated iRating delta for each driver, keyed by driver ID.
         sof (int):
             Strength of Field for the displayed leaderboard class.
-           
+        starting_positions (dict[int, int]):
+            Starting overall positions by car index from
+            QualifyResultsInfo.
+        starting_class_positions (dict[int, int]):
+            Starting class positions by car index from
+            QualifyResultsInfo.
+
     Used by NeighborsService, CarDataBuilder and Leaderboard to construct
     and sort leaderboard telemetry data.
     """
@@ -40,3 +46,5 @@ class LeaderboardContext(SessionStateContext):
     est_times: list[float] = field(default_factory=list)
     irating_deltas: dict[int, int] = field(default_factory=dict)
     sof: int = 0
+    starting_positions: dict[int, int] = field(default_factory=dict)
+    starting_class_positions: dict[int, int] = field(default_factory=dict)
