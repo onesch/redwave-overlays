@@ -54,6 +54,8 @@ class NeighborsService:
         dist: float,
         other_laps: int,
         other_est_time: float,
+        other_est_lap_time: float = 0.0,
+        same_class: bool = True,
     ) -> dict[str, float | None] | None:
         """
         Calculate physical and time distance between two cars.
@@ -62,25 +64,54 @@ class NeighborsService:
             Physical distance difference on the track.
         - gap_sec:
             Time difference between two cars based on CarIdxEstTime.
-            """
+
+            CarIdxEstTime uses a class-specific lap-time scale,
+            so cars from another class must first be normalized
+            to the player's class time scale before comparison.
+        """
         if not self._is_valid_distance(dist):
             return None
 
         if not self._is_valid_distance(my_dist):
             return None
 
+        # Calculate the shortest physical gap between the cars on the track.
         raw = (other_laps + dist) - (my_laps + my_dist)
-
         gap_pct = self._wrap_gap(raw)
 
+         # Calculate the estimated time gap when both cars have valid telemetry.
         gap_sec = None
-        if other_est_time > 0 and my_est_time > 0:
-            gap_sec = other_est_time - my_est_time
 
-            if my_est_lap_time:
+        if other_est_time > 0 and my_est_time > 0:
+            comparable_other_est_time = other_est_time
+
+            # Normalize another class's estimated time to the player's time scale.
+            if not same_class:
+                if not (
+                    self._is_valid_lap_time(my_est_lap_time)
+                    and self._is_valid_lap_time(other_est_lap_time)
+                ):
+                    return {
+                        "gap_pct": gap_pct,
+                        "gap_sec": None,
+                    }
+
+                comparable_other_est_time = (
+                    other_est_time
+                    * my_est_lap_time
+                    / other_est_lap_time
+                )
+
+            # Calculate the time difference using comparable time scales.
+            gap_sec = comparable_other_est_time - my_est_time
+
+            # Wrap the time gap across the start/finish line.
+            if self._is_valid_lap_time(my_est_lap_time):
                 half_lap = my_est_lap_time / 2
+
                 if gap_sec > half_lap:
                     gap_sec -= my_est_lap_time
+
                 elif gap_sec < -half_lap:
                     gap_sec += my_est_lap_time
 
@@ -152,6 +183,8 @@ class NeighborsService:
                 dist=ctx.lap_dist_pct[idx],
                 other_laps=other_laps,
                 other_est_time=ctx.est_times[idx],
+                other_est_lap_time=other_driver.get("CarClassEstLapTime"),
+                same_class=same_class,
             )
 
             if not gap or gap["gap_pct"] == 0:
@@ -268,6 +301,11 @@ class NeighborsService:
     def _is_valid_distance(value: Any) -> bool:
         """Return True when a lap-distance value can be used for gap math."""
         return isinstance(value, (int, float)) and value >= 0
+
+    @staticmethod
+    def _is_valid_lap_time(value: Any) -> bool:
+        """Return True when a class lap time can be used as a time scale."""
+        return isinstance(value, (int, float)) and value > 0
 
     @staticmethod
     def _wrap_gap(raw_gap: float) -> float:
