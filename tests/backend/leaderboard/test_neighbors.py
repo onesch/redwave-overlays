@@ -13,9 +13,34 @@ def calc_gap(mock_neighbors, **overrides):
         "dist": 0.5,
         "other_laps": 5,
         "other_est_time": 40.0,
+        "other_est_lap_time": 80.0,
+        "same_class": True,
     }
     values.update(overrides)
     return mock_neighbors._calc_gap(**values)
+
+
+def test_calc_gap_normalizes_estimated_time_between_classes(mock_neighbors):
+    result = calc_gap(
+        mock_neighbors,
+        my_est_time=50.0,
+        my_est_lap_time=100.0,
+        my_dist=0.5,
+        other_est_time=40.8,
+        other_est_lap_time=80.0,
+        dist=0.51,
+        same_class=False,
+    )
+    assert result["gap_sec"] == pytest.approx(1.0)
+
+
+def test_calc_gap_omits_cross_class_time_without_class_lap_estimate(
+    mock_neighbors,
+):
+    result = calc_gap(mock_neighbors, other_est_lap_time=0.0, same_class=False)
+
+    assert result["gap_pct"] == pytest.approx(0.3)
+    assert result["gap_sec"] is None
 
 
 def test_calc_gap_basic(mock_neighbors):
@@ -47,6 +72,33 @@ def test_calc_gap_corrects_start_finish_wraparound(
         other_est_time=dist * 100,
     )
     assert result["gap_pct"] == pytest.approx(expected_pct)
+    assert result["gap_sec"] == pytest.approx(expected_sec)
+
+
+@pytest.mark.parametrize(
+    "my_dist,other_dist,other_est_time,expected_sec",
+    [
+        (0.98, 0.02, 1.6, 4.0),
+        (0.02, 0.98, 78.4, -4.0),
+    ],
+)
+def test_calc_gap_normalizes_cross_class_time_across_start_finish(
+    mock_neighbors,
+    my_dist,
+    other_dist,
+    other_est_time,
+    expected_sec,
+):
+    result = calc_gap(
+        mock_neighbors,
+        my_dist=my_dist,
+        my_est_time=my_dist * 100.0,
+        my_est_lap_time=100.0,
+        dist=other_dist,
+        other_est_time=other_est_time,
+        other_est_lap_time=80.0,
+        same_class=False,
+    )
     assert result["gap_sec"] == pytest.approx(expected_sec)
 
 
@@ -154,12 +206,20 @@ def test_multiclass_traffic_is_separated_but_kept_in_neighbors(
         drivers=[
             {"UserName": "me", "CarClassID": 1, "CarClassEstLapTime": 100.0},
             {"UserName": "same_class", "CarClassID": 1},
-            {"UserName": "traffic_ahead", "CarClassID": 2},
-            {"UserName": "traffic_behind", "CarClassID": 2},
+            {
+                "UserName": "traffic_ahead",
+                "CarClassID": 2,
+                "CarClassEstLapTime": 80.0,
+            },
+            {
+                "UserName": "traffic_behind",
+                "CarClassID": 2,
+                "CarClassEstLapTime": 80.0,
+            },
         ],
         lap_dist_pct=[0.5, 0.6, 0.7, 0.4],
         laps_started=[5, 5, 5, 5],
-        est_times=[50.0, 60.0, 70.0, 40.0],
+        est_times=[50.0, 60.0, 56.0, 32.0],
         positions=[1, 2, 3, 4],
         class_positions=[1, 2, 1, 2],
         last_lap_times=[80.0] * 4,
@@ -182,6 +242,7 @@ def test_multiclass_traffic_is_separated_but_kept_in_neighbors(
     ]
     assert neighbors["physical_ahead"][0]["same_class"] is False
     assert neighbors["physical_ahead"][0]["racing_relevance"] == "traffic"
+    assert neighbors["physical_ahead"][0]["gap_sec"] == pytest.approx(20.0)
 
 
 def test_collect_candidates_skips_missing_or_invalid_telemetry(mock_neighbors, mock_ctx):
