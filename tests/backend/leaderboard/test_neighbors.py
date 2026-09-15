@@ -13,6 +13,8 @@ def calc_gap(mock_neighbors, **overrides):
         "dist": 0.5,
         "other_laps": 5,
         "other_est_time": 40.0,
+        "other_est_lap_time": 80.0,
+        "same_class": True,
     }
     values.update(overrides)
     return mock_neighbors._calc_gap(**values)
@@ -35,7 +37,7 @@ def test_calc_gap_normalizes_estimated_time_between_classes(mock_neighbors):
 def test_calc_gap_omits_cross_class_time_without_class_lap_estimate(
     mock_neighbors,
 ):
-    result = calc_gap(mock_neighbors, same_class=False)
+    result = calc_gap(mock_neighbors, other_est_lap_time=0.0, same_class=False)
 
     assert result["gap_pct"] == pytest.approx(0.3)
     assert result["gap_sec"] is None
@@ -70,6 +72,33 @@ def test_calc_gap_corrects_start_finish_wraparound(
         other_est_time=dist * 100,
     )
     assert result["gap_pct"] == pytest.approx(expected_pct)
+    assert result["gap_sec"] == pytest.approx(expected_sec)
+
+
+@pytest.mark.parametrize(
+    "my_dist,other_dist,other_est_time,expected_sec",
+    [
+        (0.98, 0.02, 1.6, 4.0),
+        (0.02, 0.98, 78.4, -4.0),
+    ],
+)
+def test_calc_gap_normalizes_cross_class_time_across_start_finish(
+    mock_neighbors,
+    my_dist,
+    other_dist,
+    other_est_time,
+    expected_sec,
+):
+    result = calc_gap(
+        mock_neighbors,
+        my_dist=my_dist,
+        my_est_time=my_dist * 100.0,
+        my_est_lap_time=100.0,
+        dist=other_dist,
+        other_est_time=other_est_time,
+        other_est_lap_time=80.0,
+        same_class=False,
+    )
     assert result["gap_sec"] == pytest.approx(expected_sec)
 
 

@@ -54,7 +54,7 @@ class NeighborsService:
         dist: float,
         other_laps: int,
         other_est_time: float,
-        other_est_lap_time: float = 0.0,
+        other_est_lap_time: float,
         same_class: bool = True,
     ) -> dict[str, float | None] | None:
         """
@@ -79,7 +79,7 @@ class NeighborsService:
         raw = (other_laps + dist) - (my_laps + my_dist)
         gap_pct = self._wrap_gap(raw)
 
-         # Calculate the estimated time gap when both cars have valid telemetry.
+        # Calculate the estimated time gap when both cars have valid telemetry.
         gap_sec = None
 
         if other_est_time > 0 and my_est_time > 0:
@@ -126,40 +126,28 @@ class NeighborsService:
         ctx: LeaderboardContext,
     ) -> tuple[list[dict], list[dict], list[dict], list[dict]]:
         """
-        Collect all cars that can be displayed around the player.
-
-        1. Get player's current state
-        2. Iterate through every driver in the session.
-        3. Skip drivers that are the player or have incomplete telemetry.
-        4. Calculate gap between player and candidate car.
-        5. Add metadata:
-            - lap_diff: Shows whether another car is on another lap.
-            - same_class: Indicates if car belongs to the same racing class.
-            - racing_relevance: direct racing competitor = class; another class, physical traffic only = traffic.
-        6. Add candidate into:
-            - ahead / behind: All physically nearby cars.
-            - physical_ahead / physical_behind: Only multiclass traffic cars.
+        Collect cars around the player and group them by relative
+        track position and racing relevance.
         """
+        # Validate the player's required telemetry arrays.
         if not self._has_required_arrays(player_idx, ctx):
             return [], [], [], []
 
         my_dist = ctx.lap_dist_pct[player_idx]
         my_laps = ctx.laps_started[player_idx]
+        my_est_time = ctx.est_times[player_idx]
+
         my_driver = ctx.drivers[player_idx]
         my_class_id = my_driver.get("CarClassID")
         my_est_lap_time = my_driver.get("CarClassEstLapTime") or 0.0
 
-        my_est_time = (
-            ctx.est_times[player_idx]
-            if player_idx < len(ctx.est_times)
-            else 0.0
-        )
-
+        # Prepare collections for racing neighbors and multiclass traffic.
         ahead = []
         behind = []
         physical_ahead = []
         physical_behind = []
 
+        # Collect valid cars around the player.
         for idx in range(len(ctx.drivers)):
             if idx == player_idx:
                 continue
@@ -172,9 +160,18 @@ class NeighborsService:
                 continue
 
             other_driver = ctx.drivers[idx]
-            same_class = other_driver.get("CarClassID") == my_class_id
+            other_class_id = other_driver.get("CarClassID")
+            same_class = (
+                my_class_id is not None
+                and other_class_id is not None
+                and other_class_id == my_class_id
+            )
             other_laps = ctx.laps_started[idx]
+            other_est_lap_time = (
+                other_driver.get("CarClassEstLapTime") or 0.0
+            )
 
+            # Calculate the physical and estimated time gaps.
             gap = self._calc_gap(
                 my_dist=my_dist,
                 my_laps=my_laps,
@@ -183,18 +180,20 @@ class NeighborsService:
                 dist=ctx.lap_dist_pct[idx],
                 other_laps=other_laps,
                 other_est_time=ctx.est_times[idx],
-                other_est_lap_time=other_driver.get("CarClassEstLapTime"),
+                other_est_lap_time=other_est_lap_time,
                 same_class=same_class,
             )
 
             if not gap or gap["gap_pct"] == 0:
                 continue
 
+            # Add racing and multiclass metadata.
             car_data["lap_diff"] = self._get_lap_diff(my_laps, other_laps)
             car_data["same_class"] = same_class
             car_data["racing_relevance"] = "class" if same_class else "traffic"
 
             candidate = {"car": car_data, **gap}
+            # Add the car to the main physical neighbor collection.
             target = ahead if gap["gap_pct"] > 0 else behind
             target.append(candidate)
 
