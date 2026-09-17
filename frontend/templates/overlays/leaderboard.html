@@ -32,7 +32,7 @@
                     <span class="ir-delta">--</span>
                 </div>
             </div>
-            <div class="time">--:--.---</div>
+            <div class="time">-:--.---</div>
             <div class="gap">--</div>
         </div>
 
@@ -54,7 +54,7 @@
                     <span class="ir-delta">--</span>
                 </div>
             </div>
-            <div class="time">--:--.---</div>
+            <div class="time">-:--.---</div>
             <div class="gap">--</div>
         </div>
 
@@ -76,7 +76,7 @@
                     <span class="ir-delta">--</span>
                 </div>
             </div>
-            <div class="time">--:--.---</div>
+            <div class="time">-:--.---</div>
             <div class="gap">--</div>
         </div>
 
@@ -99,7 +99,7 @@
                     <span class="ir-delta">--</span>
                 </div>
             </div>
-            <div class="time">--:--.---</div>
+            <div class="time">-:--.---</div>
             <div class="gap">0.0</div>
         </div>
 
@@ -122,7 +122,7 @@
                     <span class="ir-delta">--</span>
                 </div>
             </div>
-            <div class="time">--:--.---</div>
+            <div class="time">-:--.---</div>
             <div class="gap">--</div>
         </div>
 
@@ -144,7 +144,7 @@
                     <span class="ir-delta">--</span>
                 </div>
             </div>
-            <div class="time">--:--.---</div>
+            <div class="time">-:--.---</div>
             <div class="gap">--</div>
         </div>
 
@@ -166,7 +166,7 @@
                     <span class="ir-delta">--</span>
                 </div>
             </div>
-            <div class="time">--:--.---</div>
+            <div class="time">-:--.---</div>
             <div class="gap">--</div>
         </div>
 
@@ -471,8 +471,14 @@ class LeaderboardUpdater extends BaseUpdater {
         lapElement.textContent = car.last_lap_time_formatted;
         lapElement.className = 'time';
 
+        // Increase spacing only when there is no valid lap time
+        const isEmptyTime = car.last_lap_seconds === -1.0;
+        lapElement.classList.toggle('empty', isEmptyTime);
+
         const color = this._resolveLapColor(car);
-        if (color) lapElement.classList.add(color);
+        if (color) {
+            lapElement.classList.add(color);
+        }
     }
 
     _resolveLapColor(car) {

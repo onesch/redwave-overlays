@@ -6,8 +6,8 @@ from backend.services.leaderboard.service import TimeFormatter
     "seconds,expected",
     [
         (75.123, "01:15.123"),
-        (0, "--:--.---"),
-        (None, "--:--.---"),
+        (0, "-:--.---"),
+        (None, "-:--.---"),
     ],
 )
 def test_format_lap_time(seconds, expected):
