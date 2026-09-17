@@ -10,7 +10,6 @@
         rgba(var(--m3-surface-top), 0.6) 0%,
         rgba(var(--m3-surface-bottom), 0.6) 100%
     );
-
     --m3-surface-bg: 37, 37, 46;
     --m3-surface-bg-light: 65, 65, 72;
     --m3-on-surface: #e0e0e0;
@@ -23,7 +22,6 @@
     --track-linear-line: rgba(235, 235, 235, 0.8);
     --track-finish: #d82520;
 
-    /* Car */
     --car-text: #fff;
     --car-shadow: rgba(0, 0, 0, 0.5);
     --car-shadow-inner: rgba(0, 0, 0, 0.3);
@@ -36,6 +34,7 @@
     --fs-body: 16px;
     --pad-4: 6px;
     --row-height: 27px;
+    --data-cell-height: 21px;
 
     /* Telemetry colors */
     --thr-color: rgba(92, 214, 51);
