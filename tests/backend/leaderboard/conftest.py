@@ -75,6 +75,7 @@ def mock_ctx(mock_values: Callable) -> LeaderboardContext:
         "irating_deltas": {},
         "starting_positions": {0: 2, 1: 3, 2: 1},
         "starting_class_positions": {0: 2, 1: 3, 2: 1},
+        "radio_transmit_car_idx": values.get_value("RadioTransmitCarIdx"),
     }
 
     def _make_ctx(**overrides):
@@ -94,6 +95,7 @@ def mock_values(irsdk_mock_factory):
     def _factory(is_multiclass: bool = False) -> dict:
         drivers = [
             {
+                "CarIdx": 0,
                 "UserID": 101,
                 "UserName": "Driver1",
                 "IRating": 2000,
@@ -104,6 +106,7 @@ def mock_values(irsdk_mock_factory):
                 "CarClassEstLapTime": 80.0,
             },
             {
+                "CarIdx": 1,
                 "UserID": 102,
                 "UserName": "Driver2",
                 "IRating": 1800,
@@ -114,6 +117,7 @@ def mock_values(irsdk_mock_factory):
                 "CarClassEstLapTime": 80.0,
             },
             {
+                "CarIdx": 2,
                 "UserID": 103,
                 "UserName": "Driver3",
                 "IRating": 1700,
@@ -135,6 +139,7 @@ def mock_values(irsdk_mock_factory):
             "CarIdxEstTime": [48.0, 24.0, 72.0],
             "CarIdxOnPitRoad": [False, False, False],
             "PlayerCarIdx": 0,
+            "RadioTransmitCarIdx": -1,
             "SessionTime": 100.0,
             "SessionTimeTotal": 100.0,
             "QualifyResultsInfo": {

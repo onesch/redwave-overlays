@@ -31,7 +31,10 @@ class LeaderboardContext(SessionStateContext):
         starting_class_positions (dict[int, int]):
             Starting class positions by car index from
             QualifyResultsInfo.
-
+        radio_transmit_car_idx (int):
+            Car index of the currently transmitting driver, or -1 when the
+            radio is idle.
+            
     Used by NeighborsService, CarDataBuilder and Leaderboard to construct
     and sort leaderboard telemetry data.
     """
@@ -48,3 +51,4 @@ class LeaderboardContext(SessionStateContext):
     sof: int = 0
     starting_positions: dict[int, int] = field(default_factory=dict)
     starting_class_positions: dict[int, int] = field(default_factory=dict)
+    radio_transmit_car_idx: int = -1

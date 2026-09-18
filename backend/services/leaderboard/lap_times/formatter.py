@@ -12,7 +12,7 @@ class TimeFormatter:
         """
 
         if seconds is None or seconds <= 0:
-            return "-:--.---"
+            return "--:--.---"
 
         total_ms = int(seconds * 1000)
 

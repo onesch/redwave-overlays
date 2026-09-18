@@ -56,13 +56,12 @@ class Leaderboard(BaseService):
             starting_class_positions=starting_class_positions,
             last_lap_times=self.irsdk.get_value("CarIdxLastLapTime") or [],
             best_lap_times=self.irsdk.get_value("CarIdxBestLapTime") or [],
-            laps_started=self._normalize_laps_started(
-                self.irsdk.get_value("CarIdxLap") or []
-            ),
+            laps_started=self._normalize_laps_started(self.irsdk.get_value("CarIdxLap") or []),
             lap_dist_pct=self.irsdk.get_value("CarIdxLapDistPct") or [],
             is_pitroad=self.irsdk.get_value("CarIdxOnPitRoad") or [],
             multiclass=self._is_multiclass(drivers),
             est_times=self.irsdk.get_value("CarIdxEstTime") or [],
+            radio_transmit_car_idx=self.irsdk.get_value("RadioTransmitCarIdx"),
         )
 
         ctx.session_fastest_lap = self.lap_times.session_fastest_lap(ctx)
