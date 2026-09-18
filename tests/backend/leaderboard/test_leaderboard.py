@@ -133,6 +133,7 @@ def test_build_context_success(mock_service):
     assert ctx.sof == 1829
     assert ctx.starting_positions == {0: 2, 1: 3, 2: 1}
     assert ctx.starting_class_positions == {0: 2, 1: 3, 2: 1}
+    assert ctx.radio_transmit_car_idx == -1
 
 
 def test_build_context_multiclass(mock_values):

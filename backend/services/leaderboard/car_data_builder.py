@@ -41,6 +41,7 @@ class CarDataBuilder(BaseCarBuilder):
             "name": self._get_first_name(driver),
             "irating": driver.get("IRating"),
             "license": driver.get("LicString"),
+            "is_radio_transmitting": self._is_radio_transmitting(driver, ctx),
             "car_class_color": driver.get("CarClassColor"),
             "lap_dist_pct": self._format_lap_dist(idx, ctx),
             "last_pit_lap": self._get_last_pit_lap(idx, ctx.laps_started, ctx.is_pitroad),
@@ -203,3 +204,14 @@ class CarDataBuilder(BaseCarBuilder):
             return f"L{self._last_pit_laps[idx]}"
 
         return None
+
+    @staticmethod
+    def _is_radio_transmitting(
+        driver: dict[str, Any],
+        ctx: LeaderboardContext,
+    ) -> bool:
+        """Return whether the driver is transmitting over the radio."""
+        if ctx.radio_transmit_car_idx == -1:
+            return False
+
+        return driver.get("CarIdx") == ctx.radio_transmit_car_idx

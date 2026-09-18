@@ -410,3 +410,43 @@ def test_get_irating_drivers_excludes_zero_irating(
             "started": True,
         }
     ]
+
+
+@pytest.mark.parametrize(
+    "radio_car_idx,driver,expected",
+    [
+        (1, {"CarIdx": 1}, True),
+        (1, {"CarIdx": 2}, False),
+        (-1, {"CarIdx": 1}, False),
+        (-1, {"CarIdx": -1}, False),
+        (1, {}, False),
+    ],
+    ids=[
+        "matching-driver",
+        "different-driver",
+        "no-transmission",
+        "minus-one-is-not-a-driver",
+        "missing-car-index",
+    ],
+)
+def test_is_radio_transmitting(
+    mock_builder,
+    mock_ctx,
+    radio_car_idx,
+    driver,
+    expected,
+):
+    ctx = mock_ctx(radio_transmit_car_idx=radio_car_idx)
+
+    result = mock_builder._is_radio_transmitting(driver, ctx)
+
+    assert result is expected
+
+
+def test_build_matches_radio_by_driver_car_idx(mock_builder, mock_ctx):
+    ctx = mock_ctx(radio_transmit_car_idx=42)
+    ctx.drivers[1]["CarIdx"] = 42
+
+    result = mock_builder.build(1, ctx)
+
+    assert result["is_radio_transmitting"] is True
