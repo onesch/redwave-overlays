@@ -11,6 +11,7 @@ const { registerOverlayDisplayModeHandlers } = require('../utils/overlays/displa
 const { registerOverlayAutoStartModeHandlers } = require('../utils/overlays/auto_start_mode');
 const { registerOverlayMovementHandlers } = require('../utils/overlays/overlay_movement');
 const { registerOverlayRadarVisibilityHandlers } = require('../utils/overlays/radar_visibility_mode');
+const { registerLastLapFormatHandlers } = require('../utils/overlays/last_lap_format');
 
 const overlays = {};
 let overlayCount = 0;
@@ -24,6 +25,7 @@ registerOverlayDisplayModeHandlers(overlays);
 registerOverlayAutoStartModeHandlers(overlays);
 registerOverlayMovementHandlers(overlays);
 registerOverlayRadarVisibilityHandlers(overlays);
+registerLastLapFormatHandlers(overlays);
 
 function createOverlay(route, options = {}) {
   if (overlays[route] && !overlays[route].isDestroyed()) {

@@ -4,6 +4,7 @@
   "version": "3.4.1",
   "main": "frontend/main.js",
   "scripts": {
+    "test:frontend": "node --test",
     "build": "electron-builder",
     "start:dev": "cross-env NODE_ENV=development concurrently \"uvicorn backend.main:app --reload --port 8000\" \"electron .\"",
     "start:prod": "cross-env NODE_ENV=production electron ."

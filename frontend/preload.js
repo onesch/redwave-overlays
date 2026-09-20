@@ -64,6 +64,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onRadarVisibilityUpdate: (callback) =>
     ipcRenderer.on('update-radar-visibility', (_, value) => callback(value)),
 
+  // Leaderboard last lap format
+  setLastLapFormat: (overlayName, value) =>
+    ipcRenderer.send('set-last-lap-format', { overlayName, value }),
+  getLastLapFormat: (overlayName) =>
+    ipcRenderer.invoke('get-last-lap-format', overlayName),
+  onLastLapFormatUpdate: (callback) =>
+    ipcRenderer.on('update-last-lap-format', (_, value) => callback(value)),
+
   // Reset overlay settings
   resetOverlaySettings: () =>
     ipcRenderer.send('reset-overlay-settings'),

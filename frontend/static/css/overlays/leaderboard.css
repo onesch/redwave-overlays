@@ -6,6 +6,8 @@
  }
 
 .card {
+  --driver-column-width: 105px;
+  --time-column-width: 80px;
   border-radius: var(--m3-radius-lg);
   border: 1px solid var(--m3-outline-variant);
   overflow: clip;
@@ -21,7 +23,7 @@
 
 .thead, .row {
   display: grid;
-  grid-template-columns: 60px 105px 110px 80px 35px;
+  grid-template-columns: 60px var(--driver-column-width) 110px var(--time-column-width) 35px;
   align-items: center;
   column-gap: 12px;
 }
@@ -171,7 +173,6 @@
 }
 
 .time {
-  min-width: 80px;
   height: var(--data-cell-height);
   box-sizing: border-box;
   display: flex;

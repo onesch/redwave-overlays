@@ -3,6 +3,17 @@
 {% block title %}Overlays - {{ card_data.title }}{% endblock %}
 
 {% block additional_settings %}
+<div class="setting-container">
+  <label class="setting-label" for="lastLapFormat">Last Lap:</label>
+  <div class="setting-value">
+    <select id="lastLapFormat" aria-label="Last lap time format">
+      <option value="MM:SS.sss">MM:SS.sss</option>
+      <option value="MM:SS.ss">MM:SS.ss</option>
+      <option value="SS.sss">SS.sss</option>
+      <option value="SS.ss">SS.ss</option>
+    </select>
+  </div>
+</div>
 <div class="range-container">
   <label for="opacityRange">
     Opacity: <span id="opacityValue">1.0</span>
@@ -21,9 +32,15 @@
 
 {% block overlay_scripts %}
 <script>
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const overlayName = 'leaderboard';
     const overlay = new OverlayBase(overlayName);
+    const lastLapFormat = document.getElementById('lastLapFormat');
+
+    lastLapFormat.value = await window.electronAPI.getLastLapFormat(overlayName);
+    lastLapFormat.addEventListener('change', () => {
+        window.electronAPI.setLastLapFormat(overlayName, lastLapFormat.value);
+    });
 
     document.getElementById('OpenBtn').addEventListener('click', () => {
         window.electronAPI.openOverlay(overlayName);

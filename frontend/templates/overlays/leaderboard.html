@@ -9,7 +9,7 @@
             <div>Pos</div>
             <div>Driver</div>
             <div>Rating</div>
-            <div>Last Lap</div>
+            <div id="last-lap-header">Last Lap</div>
             <div>Gap</div>
         </div>
 
@@ -227,15 +227,53 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="{{ url_for('static', path='/js/last_lap_time.js') }}"></script>
 <script>
 // Handles fetching data and rendering the leaderboard overlay
 class LeaderboardUpdater extends BaseUpdater {
     constructor() {
         super({ endpoint: '/api/leaderboard', updateInterval: 100, overlayName: 'leaderboard' });
+        this.lastLapFormat = LastLapTime.DEFAULT_FORMAT;
     }
 
     async init() {
+        const format = await window.electronAPI.getLastLapFormat?.(this.overlayName);
+        this.lastLapFormat = LastLapTime.normalizeFormat(format);
+        this.updateColumnWidths();
+        this.updateLastLapHeader();
+        this.updateEmptyTimePlaceholders();
+
+        window.electronAPI.onLastLapFormatUpdate?.((value) => {
+            this.lastLapFormat = LastLapTime.normalizeFormat(value);
+            this.updateColumnWidths();
+            this.updateLastLapHeader();
+            this.updateEmptyTimePlaceholders();
+            if (this.data) this.renderLeaderboard(this.data);
+        });
         await super.init();
+    }
+
+    updateColumnWidths() {
+        const card = document.querySelector('.card');
+        if (!card) return;
+
+        const widths = LastLapTime.columnWidths(this.lastLapFormat);
+        card.style.setProperty('--driver-column-width', widths.driver);
+        card.style.setProperty('--time-column-width', widths.time);
+    }
+
+    updateLastLapHeader() {
+        const header = document.getElementById('last-lap-header');
+        if (header) header.textContent = LastLapTime.headerLabel(this.lastLapFormat);
+    }
+
+    updateEmptyTimePlaceholders() {
+        const emptyTime = LastLapTime.placeholder(this.lastLapFormat);
+        document.querySelectorAll('.time').forEach((element) => {
+            if (element.classList.contains('empty') || element.textContent.startsWith('--')) {
+                element.textContent = emptyTime;
+            }
+        });
     }
 
     async renderOverlay(data) {
@@ -521,7 +559,7 @@ class LeaderboardUpdater extends BaseUpdater {
         const lapElement = row.querySelector('.time');
         if (!lapElement) return;
 
-        lapElement.textContent = car.last_lap_time_formatted;
+        lapElement.textContent = LastLapTime.format(car.last_lap_seconds, this.lastLapFormat);
         lapElement.className = 'time';
 
         // Increase spacing only when there is no valid lap time
