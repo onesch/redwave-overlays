@@ -1,4 +1,4 @@
-@import url('base.css');
+@import url('/static/css/overlays/base.css');
 
 .app {
   max-width: 470px;

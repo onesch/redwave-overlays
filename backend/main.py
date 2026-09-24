@@ -30,6 +30,12 @@ app.mount(
     name="static",
 )
 
+app.mount(
+    "/overlays",
+    StaticFiles(directory=BASE_PATH / "frontend" / "overlays"),
+    name="overlays",
+)
+
 app.include_router(main_views.router)
 app.include_router(overlay_window_views.router)
 app.include_router(apis.router)

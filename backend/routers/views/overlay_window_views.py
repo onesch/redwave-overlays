@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 
 from backend.utils.templates import templates
 
@@ -13,11 +13,9 @@ async def radar_window_view(request: Request):
     )
 
 
-@router.get("/leaderboard", response_class=HTMLResponse)
-async def leaderboard_window_view(request: Request):
-    return templates.TemplateResponse(
-        request, "overlays/leaderboard.html"
-    )
+@router.get("/leaderboard", response_class=RedirectResponse)
+async def leaderboard_window_view():
+    return RedirectResponse("/overlays/leaderboard/leaderboard.html")
 
 
 @router.get("/track-map", response_class=HTMLResponse)
