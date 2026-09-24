@@ -1,238 +1,221 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Leaderboard</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:opsz,wght@6..144,1..1000&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,1,0">
-  <link rel="stylesheet" href="/overlays/leaderboard/leaderboard.css">
-</head>
-<body>
-  <div class="overlay-body">
-    <div class="app">
-        <section class="card overlay-bg-opacity-target">
-            <div class="thead">
-                <div>Pos</div>
-                <div>Driver</div>
-                <div>Rating</div>
-                <div id="last-lap-header">Last Lap</div>
-                <div>Gap</div>
-            </div>
+<div class="app">
+    <section class="card overlay-bg-opacity-target">
+        <div class="thead">
+            <div>Pos</div>
+            <div>Driver</div>
+            <div>Rating</div>
+            <div id="last-lap-header">Last Lap</div>
+            <div>Gap</div>
+        </div>
 
-            <!-- Ahead Cars (up to 3) -->
-            <div id="ahead-row-1" class="row ahead slot s-3" style="display: none;">
-                <div class="pos-car-badge">
-                    <div class="pos">--</div>
-                    <div class="car">
-                        <span class="num">--</span>
-                    </div>
+        <!-- Ahead Cars (up to 3) -->
+        <div id="ahead-row-1" class="row ahead slot s-3" style="display: none;">
+            <div class="pos-car-badge">
+                <div class="pos">--</div>
+                <div class="car">
+                    <span class="num">--</span>
                 </div>
-                <div class="driver">
-                    <div class="name">Loading...</div>
-                    <div class="status-indicators">
-                        <div class="pit-flag" style="display:none;">PIT</div>
-                        <div class="radio-flag" style="display:none;" aria-label="Radio transmitting">
-                            <span class="material-symbols-outlined" aria-hidden="true">mic</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="lic-column">
-                    <div class="lic-container">
-                        <span class="lic">--</span>
-                        <span class="ir">--</span>
-                        <span class="ir-delta">--</span>
-                    </div>
-                </div>
-                <div class="time">--:--.---</div>
-                <div class="gap">--</div>
             </div>
+            <div class="driver">
+                <div class="name">Loading...</div>
+                <div class="status-indicators">
+                    <div class="pit-flag" style="display:none;">PIT</div>
+                    <div class="radio-flag" style="display:none;" aria-label="Radio transmitting">
+                        <span class="material-symbols-outlined" aria-hidden="true">mic</span>
+                    </div>
+                </div>
+            </div>
+            <div class="lic-column">
+                <div class="lic-container">
+                    <span class="lic">--</span>
+                    <span class="ir">--</span>
+                    <span class="ir-delta">--</span>
+                </div>
+            </div>
+            <div class="time">--:--.---</div>
+            <div class="gap">--</div>
+        </div>
 
-            <div id="ahead-row-2" class="row ahead slot s-2" style="display: none;">
-                <div class="pos-car-badge">
-                    <div class="pos">--</div>
-                    <div class="car">
-                        <span class="num">--</span>
-                    </div>
+        <div id="ahead-row-2" class="row ahead slot s-2" style="display: none;">
+            <div class="pos-car-badge">
+                <div class="pos">--</div>
+                <div class="car">
+                    <span class="num">--</span>
                 </div>
-                <div class="driver">
-                    <div class="name">Loading...</div>
-                    <div class="status-indicators">
-                        <div class="pit-flag" style="display:none;">PIT</div>
-                        <div class="radio-flag" style="display:none;" aria-label="Radio transmitting">
-                            <span class="material-symbols-outlined" aria-hidden="true">mic</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="lic-column">
-                    <div class="lic-container">
-                        <span class="lic">--</span>
-                        <span class="ir">--</span>
-                        <span class="ir-delta">--</span>
-                    </div>
-                </div>
-                <div class="time">--:--.---</div>
-                <div class="gap">--</div>
             </div>
+            <div class="driver">
+                <div class="name">Loading...</div>
+                <div class="status-indicators">
+                    <div class="pit-flag" style="display:none;">PIT</div>
+                    <div class="radio-flag" style="display:none;" aria-label="Radio transmitting">
+                        <span class="material-symbols-outlined" aria-hidden="true">mic</span>
+                    </div>
+                </div>
+            </div>
+            <div class="lic-column">
+                <div class="lic-container">
+                    <span class="lic">--</span>
+                    <span class="ir">--</span>
+                    <span class="ir-delta">--</span>
+                </div>
+            </div>
+            <div class="time">--:--.---</div>
+            <div class="gap">--</div>
+        </div>
 
-            <div id="ahead-row-3" class="row ahead slot s-1" style="display: none;">
-                <div class="pos-car-badge">
-                    <div class="pos">--</div>
-                    <div class="car">
-                        <span class="num">--</span>
-                    </div>
+        <div id="ahead-row-3" class="row ahead slot s-1" style="display: none;">
+            <div class="pos-car-badge">
+                <div class="pos">--</div>
+                <div class="car">
+                    <span class="num">--</span>
                 </div>
-                <div class="driver">
-                    <div class="name">Loading...</div>
-                    <div class="status-indicators">
-                        <div class="pit-flag" style="display:none;">PIT</div>
-                        <div class="radio-flag" style="display:none;" aria-label="Radio transmitting">
-                            <span class="material-symbols-outlined" aria-hidden="true">mic</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="lic-column">
-                    <div class="lic-container">
-                        <span class="lic">--</span>
-                        <span class="ir">--</span>
-                        <span class="ir-delta">--</span>
-                    </div>
-                </div>
-                <div class="time">--:--.---</div>
-                <div class="gap">--</div>
             </div>
+            <div class="driver">
+                <div class="name">Loading...</div>
+                <div class="status-indicators">
+                    <div class="pit-flag" style="display:none;">PIT</div>
+                    <div class="radio-flag" style="display:none;" aria-label="Radio transmitting">
+                        <span class="material-symbols-outlined" aria-hidden="true">mic</span>
+                    </div>
+                </div>
+            </div>
+            <div class="lic-column">
+                <div class="lic-container">
+                    <span class="lic">--</span>
+                    <span class="ir">--</span>
+                    <span class="ir-delta">--</span>
+                </div>
+            </div>
+            <div class="time">--:--.---</div>
+            <div class="gap">--</div>
+        </div>
 
-            <!-- Player Car -->
-            <div id="player-row" class="row me">
-                <div class="pos-car-badge">
-                    <div class="pos me">--</div>
-                    <div class="car">
-                        <span class="num">--</span>
-                    </div>
+        <!-- Player Car -->
+        <div id="player-row" class="row me">
+            <div class="pos-car-badge">
+                <div class="pos me">--</div>
+                <div class="car">
+                    <span class="num">--</span>
                 </div>
-                <div class="driver">
-                    <div class="name">Loading...</div>
-                    <div class="status-indicators">
-                        <div class="pit-flag" style="display:none;">PIT</div>
-                        <div class="radio-flag" style="display:none;" aria-label="Radio transmitting">
-                            <span class="material-symbols-outlined" aria-hidden="true">mic</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="lic-column">
-                    <div class="lic-container">
-                        <span class="lic">--</span>
-                        <span class="ir">--</span>
-                        <span class="ir-delta">--</span>
-                    </div>
-                </div>
-                <div class="time">--:--.---</div>
-                <div class="gap">0.0</div>
             </div>
+            <div class="driver">
+                <div class="name">Loading...</div>
+                <div class="status-indicators">
+                    <div class="pit-flag" style="display:none;">PIT</div>
+                    <div class="radio-flag" style="display:none;" aria-label="Radio transmitting">
+                        <span class="material-symbols-outlined" aria-hidden="true">mic</span>
+                    </div>
+                </div>
+            </div>
+            <div class="lic-column">
+                <div class="lic-container">
+                    <span class="lic">--</span>
+                    <span class="ir">--</span>
+                    <span class="ir-delta">--</span>
+                </div>
+            </div>
+            <div class="time">--:--.---</div>
+            <div class="gap">0.0</div>
+        </div>
 
-            <!-- Behind Cars (up to 3) -->
-            <div id="behind-row-1" class="row behind slot s1" style="display: none;">
-                <div class="pos-car-badge">
-                    <div class="pos">--</div>
-                    <div class="car">
-                        <span class="num">--</span>
-                    </div>
+        <!-- Behind Cars (up to 3) -->
+        <div id="behind-row-1" class="row behind slot s1" style="display: none;">
+            <div class="pos-car-badge">
+                <div class="pos">--</div>
+                <div class="car">
+                    <span class="num">--</span>
                 </div>
-                <div class="driver">
-                    <div class="name">Loading...</div>
-                    <div class="status-indicators">
-                        <div class="pit-flag" style="display:none;">PIT</div>
-                        <div class="radio-flag" style="display:none;" aria-label="Radio transmitting">
-                            <span class="material-symbols-outlined" aria-hidden="true">mic</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="lic-column">
-                    <div class="lic-container">
-                        <span class="lic">--</span>
-                        <span class="ir">--</span>
-                        <span class="ir-delta">--</span>
-                    </div>
-                </div>
-                <div class="time">--:--.---</div>
-                <div class="gap">--</div>
             </div>
+            <div class="driver">
+                <div class="name">Loading...</div>
+                <div class="status-indicators">
+                    <div class="pit-flag" style="display:none;">PIT</div>
+                    <div class="radio-flag" style="display:none;" aria-label="Radio transmitting">
+                        <span class="material-symbols-outlined" aria-hidden="true">mic</span>
+                    </div>
+                </div>
+            </div>
+            <div class="lic-column">
+                <div class="lic-container">
+                    <span class="lic">--</span>
+                    <span class="ir">--</span>
+                    <span class="ir-delta">--</span>
+                </div>
+            </div>
+            <div class="time">--:--.---</div>
+            <div class="gap">--</div>
+        </div>
 
-            <div id="behind-row-2" class="row behind slot s2" style="display: none;">
-                <div class="pos-car-badge">
-                    <div class="pos">--</div>
-                    <div class="car">
-                        <span class="num">--</span>
-                    </div>
+        <div id="behind-row-2" class="row behind slot s2" style="display: none;">
+            <div class="pos-car-badge">
+                <div class="pos">--</div>
+                <div class="car">
+                    <span class="num">--</span>
                 </div>
-                <div class="driver">
-                    <div class="name">Loading...</div>
-                    <div class="status-indicators">
-                        <div class="pit-flag" style="display:none;">PIT</div>
-                        <div class="radio-flag" style="display:none;" aria-label="Radio transmitting">
-                            <span class="material-symbols-outlined" aria-hidden="true">mic</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="lic-column">
-                    <div class="lic-container">
-                        <span class="lic">--</span>
-                        <span class="ir">--</span>
-                        <span class="ir-delta">--</span>
-                    </div>
-                </div>
-                <div class="time">--:--.---</div>
-                <div class="gap">--</div>
             </div>
+            <div class="driver">
+                <div class="name">Loading...</div>
+                <div class="status-indicators">
+                    <div class="pit-flag" style="display:none;">PIT</div>
+                    <div class="radio-flag" style="display:none;" aria-label="Radio transmitting">
+                        <span class="material-symbols-outlined" aria-hidden="true">mic</span>
+                    </div>
+                </div>
+            </div>
+            <div class="lic-column">
+                <div class="lic-container">
+                    <span class="lic">--</span>
+                    <span class="ir">--</span>
+                    <span class="ir-delta">--</span>
+                </div>
+            </div>
+            <div class="time">--:--.---</div>
+            <div class="gap">--</div>
+        </div>
 
-            <div id="behind-row-3" class="row behind slot s3" style="display: none;">
-                <div class="pos-car-badge">
-                    <div class="pos">--</div>
-                    <div class="car">
-                        <span class="num">--</span>
-                    </div>
+        <div id="behind-row-3" class="row behind slot s3" style="display: none;">
+            <div class="pos-car-badge">
+                <div class="pos">--</div>
+                <div class="car">
+                    <span class="num">--</span>
                 </div>
-                <div class="driver">
-                    <div class="name">Loading...</div>
-                    <div class="status-indicators">
-                        <div class="pit-flag" style="display:none;">PIT</div>
-                        <div class="radio-flag" style="display:none;" aria-label="Radio transmitting">
-                            <span class="material-symbols-outlined" aria-hidden="true">mic</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="lic-column">
-                    <div class="lic-container">
-                        <span class="lic">--</span>
-                        <span class="ir">--</span>
-                        <span class="ir-delta">--</span>
-                    </div>
-                </div>
-                <div class="time">--:--.---</div>
-                <div class="gap">--</div>
             </div>
+            <div class="driver">
+                <div class="name">Loading...</div>
+                <div class="status-indicators">
+                    <div class="pit-flag" style="display:none;">PIT</div>
+                    <div class="radio-flag" style="display:none;" aria-label="Radio transmitting">
+                        <span class="material-symbols-outlined" aria-hidden="true">mic</span>
+                    </div>
+                </div>
+            </div>
+            <div class="lic-column">
+                <div class="lic-container">
+                    <span class="lic">--</span>
+                    <span class="ir">--</span>
+                    <span class="ir-delta">--</span>
+                </div>
+            </div>
+            <div class="time">--:--.---</div>
+            <div class="gap">--</div>
+        </div>
 
-            <div class="tfoot">
-                <div class="race-stats">
-                    <span class="label">LAPS</span>
-                    <span id="laps-current" class="value">--</span>
-                    <span class="sep">/</span>
-                    <span id="laps-total" class="value">--</span>
-                </div>
-                <div class="race-stats">
-                    <span class="label">SOF</span>
-                    <span id="sof" class="value">--</span>
-                </div>
-                <div class="race-stats">
-                    <span id="time-current" class="value">--</span>
-                    <span class="sep">/</span>
-                    <span id="time-total" class="value">--</span>
-                </div>
+        <div class="tfoot">
+            <div class="race-stats">
+                <span class="label">LAPS</span>
+                <span id="laps-current" class="value">--</span>
+                <span class="sep">/</span>
+                <span id="laps-total" class="value">--</span>
             </div>
-        </section>
-    </div>
-  </div>
-  <script type="module" src="/overlays/leaderboard/index.js"></script>
-</body>
-</html>
+            <div class="race-stats">
+                <span class="label">SOF</span>
+                <span id="sof" class="value">--</span>
+            </div>
+            <div class="race-stats">
+                <span id="time-current" class="value">--</span>
+                <span class="sep">/</span>
+                <span id="time-total" class="value">--</span>
+            </div>
+        </div>
+    </section>
+</div>

@@ -15,7 +15,9 @@ async def radar_window_view(request: Request):
 
 @router.get("/leaderboard", response_class=RedirectResponse)
 async def leaderboard_window_view():
-    return RedirectResponse("/overlays/leaderboard/leaderboard.html")
+    return RedirectResponse(
+        "/overlays/shared/baseOverlay.html?feature=leaderboard"
+    )
 
 
 @router.get("/track-map", response_class=HTMLResponse)
