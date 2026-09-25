@@ -14,59 +14,22 @@ export class BaseUpdater {
         this.timer = timer;
         this.logger = logger;
         this.displayMode = 'all_time';
-        this.timerId = null;
     }
 
+    // Initialize shared overlay state and start the update loop.
     async start() {
         await this.initDisplayMode();
         await this.initBackgroundOpacity();
         await this.initFeature();
         await this.update();
 
-        this.timerId = this.timer.setInterval(() => {
+        // Poll overlay data at the configured interval.
+        this.timer.setInterval(() => {
             this.update();
         }, this.updateInterval);
     }
 
-    stop() {
-        if (this.timerId === null) return;
-
-        this.timer.clearInterval(this.timerId);
-        this.timerId = null;
-    }
-
-    async initDisplayMode() {
-        if (!this.overlayName) return;
-
-        const mode = await this.electronAPI.getDisplayMode?.(this.overlayName);
-        this.displayMode = mode ?? 'all_time';
-
-        this.electronAPI.onDisplayModeUpdate?.((value) => {
-            this.displayMode = value;
-        });
-    }
-
-    async initBackgroundOpacity() {
-        if (!this.overlayName) return;
-
-        const opacity = await this.electronAPI.getOverlayBgOpacity?.(this.overlayName);
-        if (opacity != null) this.renderer.setBackgroundOpacity?.(opacity);
-
-        this.electronAPI.onOverlayBgOpacityUpdate?.((value) => {
-            this.renderer.setBackgroundOpacity?.(value);
-        });
-    }
-
-    async initFeature() {}
-
-    async getDto() {
-        throw new Error('Concrete updater must implement getDto()');
-    }
-
-    async handleDto(_dto) {
-        throw new Error('Concrete updater must implement handleDto()');
-    }
-
+    // Fetch, validate, and render the latest overlay DTO.
     async update() {
         try {
             const dto = await this.getDto();
@@ -79,10 +42,59 @@ export class BaseUpdater {
                 this.logger.error('Error:', dto.error);
                 return;
             }
+            // Hide the overlay while waiting or when display mode does not match.
+            if (
+                (dto.status === 'waiting' && dto.location === undefined) ||
+                !this.isVisible(dto.location)
+            ) {
+                this.renderer.setVisible(false);
+                return;
+            }
 
-            await this.handleDto(dto);
+            // Render valid and visible overlay data.
+            this.renderer.setVisible(true);
+            this.renderer.render(dto);
         } catch (error) {
             this.logger.error('Error:', error);
         }
     }
+
+    // Must be implemented by each concrete overlay updater.
+    async getDto() {
+        throw new Error('Concrete updater must implement getDto()');
+    }
+
+    // Check whether the overlay should be visible for the current location.
+    isVisible(location) {
+        if (!location) return true;
+        if (this.displayMode === 'all_time') return true;
+        return this.displayMode === location;
+    }
+
+    // Load display mode and subscribe to runtime updates.
+    async initDisplayMode() {
+        if (!this.overlayName) return;
+
+        const mode = await this.electronAPI.getDisplayMode?.(this.overlayName);
+        this.displayMode = mode ?? 'all_time';
+
+        this.electronAPI.onDisplayModeUpdate?.((value) => {
+            this.displayMode = value;
+        });
+    }
+
+    // Load background opacity and forward changes to the renderer.
+    async initBackgroundOpacity() {
+        if (!this.overlayName) return;
+
+        const opacity = await this.electronAPI.getOverlayBgOpacity?.(this.overlayName);
+        if (opacity != null) this.renderer.setBackgroundOpacity?.(opacity);
+
+        this.electronAPI.onOverlayBgOpacityUpdate?.((value) => {
+            this.renderer.setBackgroundOpacity?.(value);
+        });
+    }
+
+    // Optional hook for overlay-specific initialization.
+    async initFeature() {}
 }

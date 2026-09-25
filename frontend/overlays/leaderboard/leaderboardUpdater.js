@@ -24,21 +24,4 @@ export class LeaderboardUpdater extends BaseUpdater {
     async getDto() {
         return this.api.getLeaderboard();
     }
-
-    isVisible(location) {
-        if (!location) return true;
-        if (this.displayMode === 'all_time') return true;
-        return this.displayMode === location;
-    }
-
-    async handleDto(dto) {
-        if ((dto.status === 'waiting' && dto.location === undefined) ||
-            !this.isVisible(dto.location)) {
-            this.renderer.setVisible(false);
-            return;
-        }
-
-        this.renderer.setVisible(true);
-        this.renderer.render(dto);
-    }
 }
