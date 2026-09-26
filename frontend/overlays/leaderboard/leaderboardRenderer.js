@@ -1,3 +1,4 @@
+import { BaseRenderer } from '../shared/baseRenderer.js';
 import {
     DEFAULT_FORMAT,
     columnWidths,
@@ -7,13 +8,13 @@ import {
     placeholder,
 } from './lastLapTime.js';
 
-export class LeaderboardRenderer {
+export class LeaderboardRenderer extends BaseRenderer {
     constructor(document) {
-        this.document = document;
+        super(document);
+
         this.lastLapFormat = DEFAULT_FORMAT;
         this.data = null;
     }
-
 
     render(data) {
         this.data = data;
@@ -72,11 +73,6 @@ export class LeaderboardRenderer {
         this.updateEmptyTimePlaceholders();
 
         if (this.data) this.render(this.data);
-    }
-
-    setVisible(visible) {
-        const body = this.document.querySelector('.overlay-body');
-        if (body) body.style.visibility = visible ? 'visible' : 'hidden';
     }
 
     setBackgroundOpacity(value) {

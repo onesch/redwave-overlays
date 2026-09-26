@@ -6,10 +6,10 @@ from backend.utils.templates import templates
 router = APIRouter()
 
 
-@router.get("/radar", response_class=HTMLResponse)
-async def radar_window_view(request: Request):
-    return templates.TemplateResponse(
-        request, "overlays/radar.html"
+@router.get("/radar", response_class=RedirectResponse)
+async def radar_window_view():
+    return RedirectResponse(
+        "/overlays/shared/baseOverlay.html?feature=radar"
     )
 
 
