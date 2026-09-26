@@ -1,32 +1,35 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
-const LastLapTime = require('../../frontend/static/js/last_lap_time');
-
-test('formats a lap in every supported display format', () => {
+test('formats a lap in every supported display format', async () => {
+  const LastLapTime = await import('../../frontend/overlays/leaderboard/lastLapTime.js');
   assert.equal(LastLapTime.format(83.456, 'MM:SS.sss'), '01:23.456');
   assert.equal(LastLapTime.format(83.456, 'MM:SS.ss'), '01:23.45');
   assert.equal(LastLapTime.format(83.331, 'SS.sss'), '23.331');
   assert.equal(LastLapTime.format(83.331, 'SS.ss'), '23.33');
 });
 
-test('seconds-only formats drop complete minutes', () => {
+test('seconds-only formats drop complete minutes', async () => {
+  const LastLapTime = await import('../../frontend/overlays/leaderboard/lastLapTime.js');
   assert.equal(LastLapTime.format(143.009, 'SS.sss'), '23.009');
 });
 
-test('empty placeholders match their selected formats', () => {
+test('empty placeholders match their selected formats', async () => {
+  const LastLapTime = await import('../../frontend/overlays/leaderboard/lastLapTime.js');
   assert.equal(LastLapTime.format(-1, 'MM:SS.sss'), '--:--.---');
   assert.equal(LastLapTime.format(null, 'MM:SS.ss'), '--:--.--');
   assert.equal(LastLapTime.format(0, 'SS.sss'), '--.---');
   assert.equal(LastLapTime.format(undefined, 'SS.ss'), '--.--');
 });
 
-test('unknown formats fall back to the default', () => {
+test('unknown formats fall back to the default', async () => {
+  const LastLapTime = await import('../../frontend/overlays/leaderboard/lastLapTime.js');
   assert.equal(LastLapTime.normalizeFormat('invalid'), LastLapTime.DEFAULT_FORMAT);
   assert.equal(LastLapTime.format(83.456, 'invalid'), '01:23.456');
 });
 
-test('provides balanced driver and time column widths for every format', () => {
+test('provides balanced driver and time column widths for every format', async () => {
+  const LastLapTime = await import('../../frontend/overlays/leaderboard/lastLapTime.js');
   assert.deepEqual(
     LastLapTime.columnWidths('MM:SS.sss'),
     { driver: '105px', time: '80px' },
@@ -49,7 +52,8 @@ test('provides balanced driver and time column widths for every format', () => {
   }
 });
 
-test('provides a header label appropriate for each format width', () => {
+test('provides a header label appropriate for each format width', async () => {
+  const LastLapTime = await import('../../frontend/overlays/leaderboard/lastLapTime.js');
   assert.equal(LastLapTime.headerLabel('MM:SS.sss'), 'Last Lap');
   assert.equal(LastLapTime.headerLabel('MM:SS.ss'), 'Last Lap');
   assert.equal(LastLapTime.headerLabel('SS.sss'), 'Last Lp');
