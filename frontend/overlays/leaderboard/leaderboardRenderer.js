@@ -75,11 +75,6 @@ export class LeaderboardRenderer extends BaseRenderer {
         if (this.data) this.render(this.data);
     }
 
-    setBackgroundOpacity(value) {
-        const card = this.document.querySelector('.overlay-bg-opacity-target');
-        if (card) card.style.setProperty('--overlay-bg-opacity', value);
-    }
-
     updateColumnWidths() {
         const card = this.document.querySelector('.card');
         if (!card) return;

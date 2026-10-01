@@ -192,26 +192,35 @@
 .driver {
   position: relative;
   display: flex;
-  flex-direction: row;
   align-items: center;
   overflow: hidden;
   gap: 6px;
 }
 .driver .name {
+  flex: 1;
+  min-width: 0;
   font-weight: 500;
-  margin-right: 6px;
   font-size: var(--fs-body);
   white-space: nowrap;
   overflow: hidden;
 }
 .name.with-flag {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: clip !important;
+  text-overflow: clip;
 }
 .name.gradient {
-  -webkit-mask-image: linear-gradient(to right, black 70%, transparent);
-  mask-image: linear-gradient(to right, black 70%, transparent);
+  -webkit-mask-image: linear-gradient(
+    to right,
+    black 0,
+    black calc(100% - 16px),
+    transparent 100%
+  );
+
+  mask-image: linear-gradient(
+    to right,
+    black 0,
+    black calc(100% - 16px),
+    transparent 100%
+  );
 }
 .name.in-pit {
   opacity: 0.6;
@@ -281,8 +290,8 @@
 .gap.in-pit { opacity: 0.6; }
 
 .status-indicators {
-  position: absolute;
-  right: 0;
+  flex: 0 0 auto;
+
   height: var(--data-cell-height);
   display: inline-flex;
   align-items: center;

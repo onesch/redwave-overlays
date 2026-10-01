@@ -27,8 +27,8 @@ async def track_map_window_view(request: Request):
     )
 
 
-@router.get("/telemetry", response_class=HTMLResponse)
-async def telemetry_window_view(request: Request):
-    return templates.TemplateResponse(
-        request, "overlays/telemetry.html"
+@router.get("/telemetry", response_class=RedirectResponse)
+async def telemetry_window_view():
+    return RedirectResponse(
+        "/overlays/shared/baseOverlay.html?feature=telemetry"
     )
