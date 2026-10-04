@@ -1,7 +1,5 @@
-from fastapi import APIRouter, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
-
-from backend.utils.templates import templates
+from fastapi import APIRouter
+from fastapi.responses import RedirectResponse
 
 router = APIRouter()
 
@@ -20,10 +18,10 @@ async def leaderboard_window_view():
     )
 
 
-@router.get("/track-map", response_class=HTMLResponse)
-async def track_map_window_view(request: Request):
-    return templates.TemplateResponse(
-        request, "overlays/track_map.html"
+@router.get("/track-map", response_class=RedirectResponse)
+async def track_map_window_view():
+    return RedirectResponse(
+        "/overlays/shared/baseOverlay.html?feature=track-map"
     )
 
 
