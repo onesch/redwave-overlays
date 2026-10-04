@@ -1,26 +1,15 @@
-{% extends "base/base_overlay.html" %}
+import { BaseRenderer } from '../shared/baseRenderer.js';
 
-{% block title %}Track Map{% endblock %}
-
-{% block content %}
-<div id="track-container">
-    <div id="track-line"></div>
-</div>
-{% endblock %}
-
-{% block scripts %}
-<script>
-// Handles fetching data and rendering the track map overlay
-class TrackMapUpdater extends BaseUpdater {
-    constructor() {
-        super({endpoint: '/api/track-map', updateInterval: 100, overlayName: 'track-map' });
+export class TrackMapRenderer extends BaseRenderer {
+    constructor(document) {
+        super(document);
     
         this.trackType = 'linear';
         this.finishLine = null;
         this.cars = {}; // key: player_id, value: div
 
-        this.trackContainer = document.getElementById('track-container');
-        this.trackLine = document.getElementById('track-line');
+        this.trackContainer = this.document.getElementById('track-container');
+        this.trackLine = this.document.getElementById('track-line');
 
         // SVG track state
         this._lastTrackSvg = null;
@@ -38,20 +27,7 @@ class TrackMapUpdater extends BaseUpdater {
         this._direction = 1;
     }
 
-    async init() {
-        await super.init();
-
-        // Set track type from the electronAPI
-        const type = await window.electronAPI.getTrackType?.('track-map');
-        if (type) this.setTrackType(type);
-
-        // Real-time track type update
-        window.electronAPI.onTrackTypeUpdate?.((type) => {
-            this.setTrackType(type);
-        });
-    }
-
-    async renderOverlay(data) {
+    render(data) {
         if (data.status === 'ok' && data.is_session_changed) {
             this.resetTrackMap();
         }
@@ -88,7 +64,7 @@ class TrackMapUpdater extends BaseUpdater {
         svg.querySelectorAll('path, polyline, polygon').forEach(el => {
             const parent = el.parentNode;
 
-            const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            const group = this.document.createElementNS('http://www.w3.org/2000/svg', 'g');
 
             const outer = el.cloneNode(true);
             outer.setAttribute('class', 'track outer');
@@ -115,7 +91,7 @@ class TrackMapUpdater extends BaseUpdater {
 
             const defs = sfSvg.querySelector('defs');
             if (defs) {
-                const cleanDefs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+                const cleanDefs = this.document.createElementNS('http://www.w3.org/2000/svg', 'defs');
                 for (const el of defs.children) {
                     if (el.tagName.toLowerCase() !== 'style') {
                         cleanDefs.appendChild(el.cloneNode(true));
@@ -124,7 +100,7 @@ class TrackMapUpdater extends BaseUpdater {
                 if (cleanDefs.children.length > 0) svg.appendChild(cleanDefs);
             }
 
-            const wrapper = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            const wrapper = this.document.createElementNS('http://www.w3.org/2000/svg', 'g');
             wrapper.id = '_sf_group';
 
             for (const el of sfSvg.children) {
@@ -192,14 +168,14 @@ class TrackMapUpdater extends BaseUpdater {
 
         const viewBox = svg.getAttribute('viewBox');
 
-        const measureSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        const measureSvg = this.document.createElementNS('http://www.w3.org/2000/svg', 'svg');
         measureSvg.style.cssText = 'position:absolute;opacity:0;pointer-events:none;width:1920px;height:1080px';
         measureSvg.setAttribute('viewBox', viewBox);
 
         // Copy only symbols from defs (without style)
         const defs = svg.querySelector('defs');
         if (defs) {
-            const cleanDefs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+            const cleanDefs = this.document.createElementNS('http://www.w3.org/2000/svg', 'defs');
             for (const el of defs.children) {
                 if (el.tagName.toLowerCase() !== 'style') {
                     cleanDefs.appendChild(el.cloneNode(true));
@@ -217,7 +193,7 @@ class TrackMapUpdater extends BaseUpdater {
             measureSvg.appendChild(measureSfGroup);
         }
 
-        document.body.appendChild(measureSvg);
+        this.document.body.appendChild(measureSvg);
 
         this._trackPathEl = cloned;
         this._measureSvg = measureSvg;
@@ -349,7 +325,7 @@ class TrackMapUpdater extends BaseUpdater {
             const symId = href.replace('#', '');
             // Search for symbol in measureSvg and in the main document
             const sym  = sfGroupEl.closest('svg')?.querySelector(`#${symId}`)
-                    || document.getElementById(symId);
+                    || this.document.getElementById(symId);
             const poly = sym && sym.querySelector('polygon');
 
             if (poly) {
@@ -459,7 +435,7 @@ class TrackMapUpdater extends BaseUpdater {
         if (this.trackType === 'circle') {
             this.trackContainer.style.aspectRatio = '1 / 1';
             // Finish line at the bottom of the circle
-            const finish = document.createElement('div');
+            const finish = this.document.createElement('div');
             finish.className = 'track-finish-line';
             this.trackLine.appendChild(finish);
         } else if (this.trackType === 'linear') {
@@ -470,7 +446,7 @@ class TrackMapUpdater extends BaseUpdater {
     // Change track type and re-render
     setTrackType(type) {
         this.trackType = type;
-        document.body.dataset.trackType = type;
+        this.document.body.dataset.trackType = type;
         if (type === 'track') {
             this.clearCars();
             this.trackLine.innerHTML = '';
@@ -533,7 +509,7 @@ class TrackMapUpdater extends BaseUpdater {
 
     // Create new car DOM element
     createCarDiv(car) {
-        const carDiv = document.createElement('div');
+        const carDiv = this.document.createElement('div');
         carDiv.classList.add('track-map-car');
         carDiv.innerText = car.car_number;
         carDiv.style.setProperty('--car-color', car.color);
@@ -633,11 +609,3 @@ class TrackMapUpdater extends BaseUpdater {
         carDiv.dataset.lastLapPct = lapDistPct;
     }
 }
-
-// Initialize when page loads
-document.addEventListener('DOMContentLoaded', async () => {
-  const updater = new TrackMapUpdater();
-  await updater.init();
-});
-</script>
-{% endblock %}

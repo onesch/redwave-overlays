@@ -1,80 +1,23 @@
-{% extends "base/base_overlay.html" %}
+import { BaseRenderer } from '../shared/baseRenderer.js';
 
-{% block title %}Telemetry{% endblock %}
-
-{% block content %}
-<div class="telemetry-overlay overlay-bg-opacity-target">
-  <!-- header -->
-  <div class="telemetry-header">
-    <span id="speed-header" class="header-speed">0</span>
-    <span id="gear-header" class="header-gear">N</span>
-    <span id="brake-pct-header" class="header-pct brk">0</span>
-    <span id="throttle-pct-header" class="header-pct thr">0</span>
-  </div>
-  <!-- body -->
-  <div class="telemetry-body">
-    <!-- pedal trace -->
-    <div class="telemetry-scope">
-      <canvas id="telemetry-canvas" class="telemetry-canvas"></canvas>
-    </div>
-    <!-- pedal col -->
-    <div class="telemetry-pedals">
-      <!-- brake -->
-      <div class="telemetry-pedal-col">
-        <div class="telemetry-gauge">
-          <div class="gauge-zone zone-peak">
-            <div id="brake-fill-peak" class="telemetry-fill brk"></div>
-          </div>
-          <div class="gauge-zone zone-mid">
-            <div id="brake-fill-mid" class="telemetry-fill brk"></div>
-          </div>
-          <div class="gauge-zone zone-dead">
-            <div id="brake-fill-dead" class="telemetry-fill brk"></div>
-          </div>
-        </div>
-      </div>
-      <!-- throttle -->
-      <div class="telemetry-pedal-col">
-        <div class="telemetry-gauge">
-          <div class="gauge-zone zone-peak">
-            <div id="throttle-fill-peak" class="telemetry-fill thr"></div>
-          </div>
-          <div class="gauge-zone zone-mid">
-            <div id="throttle-fill-mid" class="telemetry-fill thr"></div>
-          </div>
-          <div class="gauge-zone zone-dead">
-            <div id="throttle-fill-dead" class="telemetry-fill thr"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-{% endblock %}
-
-{% block scripts %}
-<script>
-class TelemetryUpdater extends BaseUpdater {
-  constructor() {
-    super({ endpoint: '/api/telemetry', updateInterval: 50, overlayName: 'telemetry' });
+export class TelemetryRenderer extends BaseRenderer {
+  constructor(document, window = globalThis.window) {
+    super(document);
+    this.window = window;
     // number of points in trace (history length)
     this.HIST = 200;
     // sliding window buffers for pedal values
     this.thrHistory = new Array(this.HIST).fill(0);
     this.brkHistory = new Array(this.HIST).fill(0);
     this.brkAbsHistory = new Array(this.HIST).fill(false);
-  }
-
-  async init() {
-    await this.initScope();
-    await super.init();
+    this.initScope();
   }
 
   async initScope() {
-    this.canvas = document.getElementById('telemetry-canvas');
+    this.canvas = this.document.getElementById('telemetry-canvas');
     this.ctx = this.canvas.getContext('2d');
 
-    const style = getComputedStyle(document.documentElement);
+    const style = this.window.getComputedStyle(this.document.documentElement);
     this.thrColor = style.getPropertyValue('--thr-color').trim();
     this.brkColor = style.getPropertyValue('--brk-color').trim();
     this.absColor = style.getPropertyValue('--yellow-primary').trim();
@@ -82,7 +25,7 @@ class TelemetryUpdater extends BaseUpdater {
     // handle canvas resize + HiDPI scaling
     this.resizeScope = () => {
       const r = this.canvas.parentElement.getBoundingClientRect();
-      const dpr = window.devicePixelRatio || 1;
+      const dpr = this.window.devicePixelRatio || 1;
 
       this.scopeWidth = r.width;
       this.scopeHeight = r.height;
@@ -105,10 +48,15 @@ class TelemetryUpdater extends BaseUpdater {
     };
 
     this.resizeScope();
-    window.addEventListener('resize', this.resizeScope);
+    this.window.addEventListener('resize', this.resizeScope);
   }
 
-  async renderOverlay(data) {
+  setBackgroundOpacity(value) {
+    const overlay = this.document.querySelector('.overlay-bg-opacity-target');
+    if (overlay) overlay.style.setProperty('--overlay-bg-opacity', value);
+  }
+
+  render(data) {
     // get incoming values + NaN protection
     const thrRaw = Number(data.throttle);
     const brkRaw = Number(data.brake);
@@ -136,7 +84,7 @@ class TelemetryUpdater extends BaseUpdater {
   }
 
   renderGear(gear) {
-    const el = document.getElementById('gear-header');
+    const el = this.document.getElementById('gear-header');
 
     const g = Number(gear);
 
@@ -152,15 +100,15 @@ class TelemetryUpdater extends BaseUpdater {
   }
 
   renderSpeed(speedKm) {
-    const el = document.getElementById('speed-header');
+    const el = this.document.getElementById('speed-header');
     el.textContent = Math.round(speedKm);
   }
 
   renderPedal(type, rawValue, pctValue) {
-    const value = document.getElementById(`${type}-pct-header`);
-    const fillPeak = document.getElementById(`${type}-fill-peak`);
-    const fillMid = document.getElementById(`${type}-fill-mid`);
-    const fillDead = document.getElementById(`${type}-fill-dead`);
+    const value = this.document.getElementById(`${type}-pct-header`);
+    const fillPeak = this.document.getElementById(`${type}-fill-peak`);
+    const fillMid = this.document.getElementById(`${type}-fill-mid`);
+    const fillDead = this.document.getElementById(`${type}-fill-dead`);
 
     // normalize raw input
     const normalized = Math.max(0, Math.min(1, Number(rawValue) || 0));
@@ -257,10 +205,3 @@ class TelemetryUpdater extends BaseUpdater {
     drawBrakeTrace();
   }
 }
-
-document.addEventListener('DOMContentLoaded', async () => {
-  const updater = new TelemetryUpdater();
-  await updater.init();
-});
-</script>
-{% endblock %}

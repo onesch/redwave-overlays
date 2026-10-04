@@ -1,0 +1,47 @@
+<div class="telemetry-overlay overlay-bg-opacity-target">
+  <!-- header -->
+  <div class="telemetry-header">
+    <span id="speed-header" class="header-speed">0</span>
+    <span id="gear-header" class="header-gear">N</span>
+    <span id="brake-pct-header" class="header-pct brk">0</span>
+    <span id="throttle-pct-header" class="header-pct thr">0</span>
+  </div>
+  <!-- body -->
+  <div class="telemetry-body">
+    <!-- pedal trace -->
+    <div class="telemetry-scope">
+      <canvas id="telemetry-canvas" class="telemetry-canvas"></canvas>
+    </div>
+    <!-- pedal col -->
+    <div class="telemetry-pedals">
+      <!-- brake -->
+      <div class="telemetry-pedal-col">
+        <div class="telemetry-gauge">
+          <div class="gauge-zone zone-peak">
+            <div id="brake-fill-peak" class="telemetry-fill brk"></div>
+          </div>
+          <div class="gauge-zone zone-mid">
+            <div id="brake-fill-mid" class="telemetry-fill brk"></div>
+          </div>
+          <div class="gauge-zone zone-dead">
+            <div id="brake-fill-dead" class="telemetry-fill brk"></div>
+          </div>
+        </div>
+      </div>
+      <!-- throttle -->
+      <div class="telemetry-pedal-col">
+        <div class="telemetry-gauge">
+          <div class="gauge-zone zone-peak">
+            <div id="throttle-fill-peak" class="telemetry-fill thr"></div>
+          </div>
+          <div class="gauge-zone zone-mid">
+            <div id="throttle-fill-mid" class="telemetry-fill thr"></div>
+          </div>
+          <div class="gauge-zone zone-dead">
+            <div id="throttle-fill-dead" class="telemetry-fill thr"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,5 +1,3 @@
-@import url('base.css');
-
 .telemetry-overlay {
   display: flex;
   flex-direction: column;

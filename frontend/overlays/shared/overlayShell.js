@@ -34,7 +34,10 @@ export async function mountOverlayFeature(document, featureName, {
     }
 
     // Mount the feature markup into the shared overlay document.
-    document.title = featureName.charAt(0).toUpperCase() + featureName.slice(1);
+    document.title = featureName
+        .split('-')
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
     overlayBody.innerHTML = await response.text();
 
      // Attach the feature-specific stylesheet.
