@@ -1,4 +1,4 @@
-const { registerOverlaySetting } = require('../base_handler');
+const { registerOverlaySetting } = require('../../base_handler');
 
 function registerOverlayOpacityHandlers(overlays) {
   registerOverlaySetting({

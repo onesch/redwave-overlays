@@ -1,6 +1,6 @@
-const { registerOverlaySetting } = require('../base_handler');
-const { applyOverlaySize } = require('./overlay_size');
-const { currentZoomFactors, currentTrackTypes } = require('./zoom_store');
+const { registerOverlaySetting } = require('../../base_handler');
+const { applyOverlaySize } = require('../../overlay_size');
+const { currentZoomFactors, currentTrackTypes } = require('../shared/zoom_store');
 
 function getTrackType(overlayName, settings) {
   if (overlayName !== 'track-map') return undefined;
