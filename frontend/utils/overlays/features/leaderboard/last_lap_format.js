@@ -1,4 +1,4 @@
-const { registerOverlaySetting } = require('./base_handler');
+const { registerOverlaySetting } = require('../../base_handler');
 
 const DEFAULT_LAST_LAP_FORMAT = 'MM:SS.sss';
 const LAST_LAP_FORMATS = new Set([

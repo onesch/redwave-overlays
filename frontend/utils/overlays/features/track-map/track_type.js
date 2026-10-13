@@ -1,4 +1,4 @@
-const { registerOverlaySetting } = require('./base_handler');
+const { registerOverlaySetting } = require('../base_handler');
 const { applyOverlaySize } = require('./overlay_size');
 const { currentZoomFactors, currentTrackTypes } = require('./zoom_store');
 

@@ -59,7 +59,7 @@ function updateOverlayMovementState(overlays) {
       // Broadcast updated movement state to all renderer windows.
       // The settings pages keep their movement toggle icon in sync
       // with this event (see createMovementToggle in
-      // frontend/static/js/page_detail/overlayControls.js).
+      // frontend/static/js/page_detail/overlayWindowControls.js).
       win.webContents.send('overlay-movement-state-updated', overlayMovementEnabled);
     }
   });

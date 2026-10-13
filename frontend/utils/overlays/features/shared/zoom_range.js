@@ -1,7 +1,7 @@
-const { registerOverlaySetting } = require('./base_handler');
-const { loadSettings } = require('./overlay_settings');
-const { applyOverlaySize } = require('./overlay_size');
-const { getTrackType } = require('./track_type');
+const { registerOverlaySetting } = require('../base_handler');
+const { loadSettings } = require('../overlay_settings');
+const { applyOverlaySize } = require('../overlay_size');
+const { getTrackType } = require('../track-map/track_type');
 const { currentZoomFactors, currentTrackTypes } = require('./zoom_store');
 
 // Register IPC handlers for managing overlay zoom.
