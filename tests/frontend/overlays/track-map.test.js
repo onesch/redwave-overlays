@@ -3,11 +3,11 @@ const assert = require('node:assert/strict');
 
 const { FakeDocument } = require('../helpers/dom');
 const { describeApiContract } = require('../helpers/api_contract');
+const { BASE_UPDATER } = require('../helpers/modules');
 
 const TRACK_MAP_API = '../../../frontend/overlays/track-map/track-mapApi.js';
 const TRACK_MAP_UPDATER = '../../../frontend/overlays/track-map/track-mapUpdater.js';
 const TRACK_MAP_RENDERER = '../../../frontend/overlays/track-map/track-mapRenderer.js';
-const BASE_UPDATER = '../../../frontend/overlays/shared/baseUpdater.js';
 
 describeApiContract({
   title: 'TrackMapApi',

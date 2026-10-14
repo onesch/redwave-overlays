@@ -3,11 +3,11 @@ const assert = require('node:assert/strict');
 
 const { FakeDocument } = require('../helpers/dom');
 const { describeApiContract } = require('../helpers/api_contract');
+const { BASE_UPDATER } = require('../helpers/modules');
 
 const RADAR_API = '../../../frontend/overlays/radar/radarApi.js';
 const RADAR_UPDATER = '../../../frontend/overlays/radar/radarUpdater.js';
 const RADAR_RENDERER = '../../../frontend/overlays/radar/radarRenderer.js';
-const BASE_UPDATER = '../../../frontend/overlays/shared/baseUpdater.js';
 
 describeApiContract({
   title: 'RadarApi',

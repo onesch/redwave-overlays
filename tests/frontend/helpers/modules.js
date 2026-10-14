@@ -4,6 +4,7 @@
 const path = require('node:path');
 
 const FRONTEND_DIR = path.join(__dirname, '..', '..', '..', 'frontend');
+const BASE_UPDATER = '../../../frontend/overlays/shared/baseUpdater.js';
 
 function purgeFrontendModules() {
   const prefix = `${FRONTEND_DIR}${path.sep}`;
@@ -17,4 +18,4 @@ function loadFrontendModule(relativePath) {
   return require(path.join(FRONTEND_DIR, relativePath));
 }
 
-module.exports = { FRONTEND_DIR, loadFrontendModule, purgeFrontendModules };
+module.exports = { FRONTEND_DIR, loadFrontendModule, purgeFrontendModules, BASE_UPDATER };

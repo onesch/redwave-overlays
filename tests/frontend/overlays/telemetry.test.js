@@ -3,11 +3,11 @@ const assert = require('node:assert/strict');
 
 const { FakeDocument, FakeWindow } = require('../helpers/dom');
 const { describeApiContract } = require('../helpers/api_contract');
+const { BASE_UPDATER } = require('../helpers/modules');
 
 const TELEMETRY_API = '../../../frontend/overlays/telemetry/telemetryApi.js';
 const TELEMETRY_UPDATER = '../../../frontend/overlays/telemetry/telemetryUpdater.js';
 const TELEMETRY_RENDERER = '../../../frontend/overlays/telemetry/telemetryRenderer.js';
-const BASE_UPDATER = '../../../frontend/overlays/shared/baseUpdater.js';
 
 describeApiContract({
   title: 'TelemetryApi',

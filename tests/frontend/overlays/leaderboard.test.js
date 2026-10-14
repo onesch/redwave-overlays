@@ -2,11 +2,11 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 
 const { describeApiContract } = require('../helpers/api_contract');
+const { BASE_UPDATER } = require('../helpers/modules');
 
 const LEADERBOARD_API = '../../../frontend/overlays/leaderboard/leaderboardApi.js';
 const LEADERBOARD_UPDATER = '../../../frontend/overlays/leaderboard/leaderboardUpdater.js';
 const LAST_LAP_TIME = '../../../frontend/overlays/leaderboard/lastLapTime.js';
-const BASE_UPDATER = '../../../frontend/overlays/shared/baseUpdater.js';
 
 describeApiContract({
   title: 'LeaderboardApi',
