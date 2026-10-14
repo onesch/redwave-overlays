@@ -1,3 +1,6 @@
+// Shared helpers for loading frontend modules and clearing their require cache
+// to isolate tests from previously loaded modules.
+
 const path = require('node:path');
 
 const FRONTEND_DIR = path.join(__dirname, '..', '..', '..', 'frontend');

@@ -1,3 +1,6 @@
+// Fake `electron` module, installed for a test file with `useElectronMock()`: `electron.ipcMain`,
+// `electron.readSettings()` and `createOverlayWindow()` drive the modules under test.
+
 const fs = require('node:fs');
 const Module = require('node:module');
 const os = require('node:os');

@@ -1,3 +1,6 @@
+// Recording stub of the `createSettingsApi()` facade: `createSettingsApiStub(values)` feeds the
+// loaded values, and the mount tests assert on `api.calls` / `api.lastCall()`.
+
 const READ_METHODS = [
   'openOverlay',
   'getZoom', 'setZoom',

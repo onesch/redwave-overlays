@@ -15,7 +15,7 @@ function createZoomFields() {
   return { document, input, label };
 }
 
-test('slider field renders a loaded value and reports user input', async () => {
+test('Setting widgets slider field renders a loaded value and reports user input', async () => {
   const { createSliderField } = await import(SETTING_WIDGETS);
   const { input, label } = createZoomFields();
   const field = createSliderField({ input, label, format: (value) => `${value}%` });
@@ -32,7 +32,7 @@ test('slider field renders a loaded value and reports user input', async () => {
   assert.equal(label.textContent, '150%');
 });
 
-test('slider field keeps a late load reply from overwriting user input', async () => {
+test('Setting widgets slider field keeps a late load reply from overwriting user input', async () => {
   const { createSliderField } = await import(SETTING_WIDGETS);
   const { input, label } = createZoomFields();
   const field = createSliderField({ input, label, format: (value) => `${value}%` });
@@ -45,7 +45,7 @@ test('slider field keeps a late load reply from overwriting user input', async (
   assert.equal(label.textContent, '80%');
 });
 
-test('button group highlights one value and stops reacting to loads after a click', async () => {
+test('Setting widgets button group highlights one value and stops reacting to loads after a click', async () => {
   const { createButtonGroup } = await import(SETTING_WIDGETS);
   const document = new FakeDocument({ hideBtn: '', dimBtn: '', showBtn: '' });
   const ids = ['hideBtn', 'dimBtn', 'showBtn'];

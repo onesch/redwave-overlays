@@ -1,7 +1,9 @@
+// `describeApiContract()` registers the two tests every overlay API client shares: the default
+// endpoint is requested and the parsed DTO returned unchanged, while HTTP errors reject.
+
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
-// Shared contract of the overlay API clients
 function describeApiContract({ title, loadApi, method, endpoint }) {
   test(`${title} requests ${endpoint} and returns the parsed DTO`, async () => {
     const Api = await loadApi();

@@ -1,3 +1,6 @@
+// Minimal DOM doubles for renderer and settings-page tests: `new FakeDocument({ id: 'class' })`
+// builds the markup under test, then `element.click()` / `setValue()` drive it like the real DOM.
+
 class FakeClassList {
   constructor(names = '') {
     this.names = new Set(names.split(/\s+/).filter(Boolean));
