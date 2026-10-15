@@ -31,20 +31,15 @@
 {% endblock %}
 
 {% block overlay_scripts %}
-<script>
-document.addEventListener('DOMContentLoaded', async () => {
-    const overlayName = 'leaderboard';
-    const overlay = new OverlayBase(overlayName);
-    const lastLapFormat = document.getElementById('lastLapFormat');
+<script type="module">
+  import {
+    mountOverlaySettings,
+    createLastLapFormatSetting,
+  } from "{{ url_for('static', path='/js/page_detail/index.js') }}";
 
-    lastLapFormat.value = await window.electronAPI.getLastLapFormat(overlayName);
-    lastLapFormat.addEventListener('change', () => {
-        window.electronAPI.setLastLapFormat(overlayName, lastLapFormat.value);
-    });
-
-    document.getElementById('OpenBtn').addEventListener('click', () => {
-        window.electronAPI.openOverlay(overlayName);
-    });
-});
+  mountOverlaySettings({
+    overlayName: 'leaderboard',
+    settings: [createLastLapFormatSetting],
+  });
 </script>
 {% endblock %}

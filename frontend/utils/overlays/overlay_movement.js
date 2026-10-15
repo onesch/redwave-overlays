@@ -56,9 +56,10 @@ function updateOverlayMovementState(overlays) {
 
   BrowserWindow.getAllWindows().forEach((win) => {
     if (!win.isDestroyed()) {
-      // Broadcast updated movement state to all renderer windows
-      // Used by OverlayBase.applyOverlayMovementState in base_detail.js
-      // (its needed to visually update the icons in the UI).
+      // Broadcast updated movement state to all renderer windows.
+      // The settings pages keep their movement toggle icon in sync
+      // with this event (see createMovementToggle in
+      // frontend/static/js/page_detail/overlayWindowControls.js).
       win.webContents.send('overlay-movement-state-updated', overlayMovementEnabled);
     }
   });

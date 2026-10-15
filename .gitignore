@@ -10,3 +10,4 @@ build/
 backend_run/
 TODOLIST.md
 .venv/
+coverage/
