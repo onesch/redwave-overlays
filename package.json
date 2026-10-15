@@ -30,7 +30,7 @@
   },
   "author": "onesch",
   "license": "GPL-3.0",
-  "description": "",
+  "description": "RedWave Overlays is a lightweight desktop application designed to display live iRacing telemetry.",
   "allowScripts": {
     "electron@41.10.7": true,
     "electron-winstaller@5.4.0": true
