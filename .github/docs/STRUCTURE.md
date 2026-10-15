@@ -1,6 +1,7 @@
 [Go back to CONTRIBUTING.md](https://github.com/onesch/redwave-overlays/blob/master/docs/CONTRIBUTING.md)
 
-# 🗂️ Project Structure
+# Project Structure
+
 The project is structured to clearly separate frontend and backend logic, making it easier to maintain and extend.
 
 ```shell
