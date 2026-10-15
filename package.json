@@ -4,6 +4,8 @@
   "version": "3.4.1",
   "main": "frontend/main.js",
   "scripts": {
+    "test:frontend": "node --test",
+    "coverage:frontend": "c8 node --test",
     "build": "electron-builder",
     "start:dev": "cross-env NODE_ENV=development concurrently \"uvicorn backend.main:app --reload --port 8000\" \"electron .\"",
     "start:prod": "cross-env NODE_ENV=production electron ."
@@ -20,6 +22,7 @@
     }
   },
   "devDependencies": {
+    "c8": "^12.0.0",
     "concurrently": "^9.2.1",
     "cross-env": "^10.0.0",
     "electron": "^41.0.0",
@@ -27,5 +30,9 @@
   },
   "author": "onesch",
   "license": "GPL-3.0",
-  "description": ""
+  "description": "",
+  "allowScripts": {
+    "electron@41.10.7": true,
+    "electron-winstaller@5.4.0": true
+  }
 }

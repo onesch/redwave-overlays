@@ -5,7 +5,7 @@ const fs = require('fs');
 const { execFile } = require('child_process');
 const { resetSettings } = require('../utils/overlays/overlay_settings');
 const { overlays } = require('../windows/overlayWindow');
-const { clearZoomCache } = require('../utils/overlays/zoom_range');
+const { clearZoomCache } = require('../utils/overlays/features/shared/zoom_range');
 
 function registerSettingsEvents() {
   ipcMain.on('reset-overlay-settings', () => {

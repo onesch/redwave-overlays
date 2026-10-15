@@ -20,14 +20,13 @@
 {% endblock %}
 
 {% block overlay_scripts %}
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-    const overlayName = 'telemetry';
-    const overlay = new OverlayBase(overlayName);
+<script type="module">
+  import {
+    mountOverlaySettings
+  } from "{{ url_for('static', path='/js/page_detail/index.js') }}";
 
-    document.getElementById('OpenBtn').addEventListener('click', () => {
-        window.electronAPI.openOverlay(overlayName);
-    });
-});
+  mountOverlaySettings({
+    overlayName: 'telemetry'
+  });
 </script>
 {% endblock %}

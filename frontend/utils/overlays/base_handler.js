@@ -11,6 +11,7 @@ function registerOverlaySetting({
   updateEvent,
   afterSet,
   afterGet,
+  normalizeValue,
 }) {
   // Handle request to get a setting value for an overlay.
   ipcMain.handle(getChannel, (e, overlayName) => {
@@ -30,6 +31,10 @@ function registerOverlaySetting({
   // Handle request to update a setting value.
   ipcMain.on(setChannel, (e, { overlayName, value }) => {
     const settings = loadSettings();
+
+    if (normalizeValue) {
+      value = normalizeValue(value);
+    }
 
     // Ensure overlay settings object exists.
     settings[overlayName] ||= {};

@@ -23,6 +23,15 @@
   font-size: 0.875rem;
   font-weight: 500;
 }
+.setting-value select {
+  min-width: 120px;
+  padding: 6px 8px;
+  color: var(--text-primary);
+  background: #333;
+  border: 1px solid #555;
+  border-radius: var(--border-radius-sm);
+  font: inherit;
+}
 
 /* Range container styles */
 .range-container {
