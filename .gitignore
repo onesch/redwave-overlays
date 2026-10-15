@@ -11,3 +11,4 @@ backend_run/
 TODOLIST.md
 .venv/
 coverage/
+coverage_stats.py
