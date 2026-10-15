@@ -179,12 +179,16 @@ export class LeaderboardRenderer extends BaseRenderer {
         const radioFlag = rowElement.querySelector('.driver .radio-flag');
 
         if (car.is_radio_transmitting) {
-            radioFlag.style.display = 'inline-flex';
+            radioFlag.style.removeProperty('display');
             nameElement.classList.add('with-flag', 'gradient');
-            return;
         }
 
-        radioFlag.style.display = 'none';
+        // Toggle the transmitting state on every render.
+        // CSS handles the indicator's visibility and delayed fade-out.
+        radioFlag.classList.toggle(
+            'is-transmitting',
+            !!car.is_radio_transmitting
+        );
     }
 
     renderPitFlag(rowElement, car) {

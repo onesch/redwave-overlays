@@ -320,6 +320,19 @@
   width: var(--data-cell-height);
   padding: 0;
   flex: 0 0 var(--data-cell-height);
+  --radio-linger: 3s;
+  display: none;
+  opacity: 0;
+  transition:
+    opacity 0.25s ease var(--radio-linger),
+    display 0s linear calc(var(--radio-linger) + 0.25s);
+  transition-behavior: allow-discrete;
+}
+
+.radio-flag.is-transmitting {
+  display: inline-flex;
+  opacity: 1;
+  transition: none;
 }
 .radio-flag .material-symbols-outlined {
   position: relative;
@@ -336,7 +349,6 @@
   clip-path: inset(100% 0 0 0);
   animation: radio-mic-fill 1.2s ease-in-out infinite alternate;
 }
-
 @keyframes radio-mic-fill {
   from {
       clip-path: inset(100% 0 0 0);
