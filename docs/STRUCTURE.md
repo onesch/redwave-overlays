@@ -20,6 +20,9 @@ The project is structured to clearly separate frontend and backend logic, making
 │
 ├── frontend/                        # Electron frontend app.
 │   ├── ipc/                         # IPC event handlers.
+│   ├── overlays/                    # Self-contained overlay frontends.
+│   │   ├── shared/                  # Shared overlay base, renderer, updater, shell.
+│   │   ├── <overlay>/               # feature overlay.
 │   ├── static/                      # Frontend static and JavaScript.
 │   ├── templates/                   # Jinja2 HTML views.
 │   │   ├── base/                    # Base and shared components/templates.

@@ -36,11 +36,15 @@ npm run start:prod
 ```bash
 # Run the full test suite
 python -m pytest -vv
+
+npm run test:frontend
 ```
 ```bash
 # Generate a coverage report
 coverage run -m pytest
 coverage report -m
+
+npm run coverage:frontend
 ```
 
 ## 🗂️ Project Structure
