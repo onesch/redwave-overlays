@@ -1,6 +1,7 @@
 <img width="100" alt="image" src="frontend/static/images/app_icon.png" />
 
-Lightweight desktop application designed to **display live iRacing telemetry**. Powered by **FastAPI** & **Electron** and **completely free**.
+RedWave Overlays is a desktop app for iRacing drivers that shows live telemetry as clean, customizable on-screen overlays.  
+It runs locally, stays lightweight, and is free to use.
 
 [![Release](https://img.shields.io/github/v/release/onesch/redwave-overlays?style=flat&logo=github&logoColor=white&label=release&color=689C35)](https://github.com/onesch/redwave-overlays/releases)
 ![Downloads](https://img.shields.io/github/downloads/onesch/redwave-overlays/total?style=flat&label=downloads&color=3976B8&logo=github&logoColor=white)
