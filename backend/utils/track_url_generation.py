@@ -69,6 +69,8 @@ OVERRIDES = {
     468: {'shortname_override': 'virginia'},
     469: {'shortname_override': 'virginia'},
     256: {'shortname_override': 'southernnational'},
+    268: {'shortname_override': 'lemans'},
+    269: {'shortname_override': 'lemans'},
 }
 
 # On some tracks, it is necessary to rewrite the direction to avoid problems
