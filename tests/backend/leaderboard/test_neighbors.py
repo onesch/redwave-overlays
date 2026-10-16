@@ -10,7 +10,7 @@ def calc_gap(mock_neighbors, **overrides):
         "my_laps": 5,
         "my_est_time": 16.0,
         "my_est_lap_time": 80.0,
-        "dist": 0.5,
+        "other_dist": 0.5,
         "other_laps": 5,
         "other_est_time": 40.0,
         "other_est_lap_time": 80.0,
@@ -28,7 +28,7 @@ def test_calc_gap_normalizes_estimated_time_between_classes(mock_neighbors):
         my_dist=0.5,
         other_est_time=40.8,
         other_est_lap_time=80.0,
-        dist=0.51,
+        other_dist=0.51,
         same_class=False,
     )
     assert result["gap_sec"] == pytest.approx(1.0)
@@ -50,7 +50,7 @@ def test_calc_gap_basic(mock_neighbors):
 
 
 @pytest.mark.parametrize(
-    "my_dist,dist,expected_pct,expected_sec",
+    "my_dist,other_dist,expected_pct,expected_sec",
     [
         (0.98, 0.02, 0.04, 4.0),
         (0.02, 0.98, -0.04, -4.0),
@@ -59,7 +59,7 @@ def test_calc_gap_basic(mock_neighbors):
 def test_calc_gap_corrects_start_finish_wraparound(
     mock_neighbors,
     my_dist,
-    dist,
+    other_dist,
     expected_pct,
     expected_sec,
 ):
@@ -68,8 +68,8 @@ def test_calc_gap_corrects_start_finish_wraparound(
         my_dist=my_dist,
         my_est_time=my_dist * 100,
         my_est_lap_time=100.0,
-        dist=dist,
-        other_est_time=dist * 100,
+        other_dist=other_dist,
+        other_est_time=other_dist * 100,
     )
     assert result["gap_pct"] == pytest.approx(expected_pct)
     assert result["gap_sec"] == pytest.approx(expected_sec)
@@ -94,7 +94,7 @@ def test_calc_gap_normalizes_cross_class_time_across_start_finish(
         my_dist=my_dist,
         my_est_time=my_dist * 100.0,
         my_est_lap_time=100.0,
-        dist=other_dist,
+        other_dist=other_dist,
         other_est_time=other_est_time,
         other_est_lap_time=80.0,
         same_class=False,
@@ -105,9 +105,9 @@ def test_calc_gap_normalizes_cross_class_time_across_start_finish(
 @pytest.mark.parametrize(
     "field,value",
     [
-        ("dist", -1),
-        ("dist", "abc"),
-        ("dist", None),
+        ("other_dist", -1),
+        ("other_dist", "abc"),
+        ("other_dist", None),
         ("my_dist", -1),
         ("my_dist", "abc"),
         ("my_dist", None),
