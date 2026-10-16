@@ -51,7 +51,7 @@ class NeighborsService:
         my_laps: int,
         my_est_time: float,
         my_est_lap_time: float,
-        dist: float,
+        other_dist: float,
         other_laps: int,
         other_est_time: float,
         other_est_lap_time: float,
@@ -69,14 +69,14 @@ class NeighborsService:
             so cars from another class must first be normalized
             to the player's class time scale before comparison.
         """
-        if not self._is_valid_distance(dist):
+        if not self._is_valid_distance(other_dist):
             return None
 
         if not self._is_valid_distance(my_dist):
             return None
 
         # Calculate the shortest physical gap between the cars on the track.
-        raw = (other_laps + dist) - (my_laps + my_dist)
+        raw = (other_laps + other_dist) - (my_laps + my_dist)
         gap_pct = self._wrap_gap(raw)
 
         # Calculate the estimated time gap when both cars have valid telemetry.
@@ -167,6 +167,7 @@ class NeighborsService:
                 and other_class_id == my_class_id
             )
             other_laps = ctx.laps_started[idx]
+            other_dist = ctx.lap_dist_pct[idx]
             other_est_lap_time = (
                 other_driver.get("CarClassEstLapTime") or 0.0
             )
@@ -177,7 +178,7 @@ class NeighborsService:
                 my_laps=my_laps,
                 my_est_time=my_est_time,
                 my_est_lap_time=my_est_lap_time,
-                dist=ctx.lap_dist_pct[idx],
+                other_dist=other_dist,
                 other_laps=other_laps,
                 other_est_time=ctx.est_times[idx],
                 other_est_lap_time=other_est_lap_time,
@@ -188,7 +189,12 @@ class NeighborsService:
                 continue
 
             # Add racing and multiclass metadata.
-            car_data["lap_diff"] = self._get_lap_diff(my_laps, other_laps)
+            car_data["lap_diff"] = self._get_lap_diff(
+                player_laps=my_laps,
+                player_dist=my_dist,
+                other_laps=other_laps,
+                other_dist=other_dist,
+            )
             car_data["same_class"] = same_class
             car_data["racing_relevance"] = "class" if same_class else "traffic"
 
@@ -210,12 +216,17 @@ class NeighborsService:
     @staticmethod
     def _get_lap_diff(
         player_laps: int,
+        player_dist: float,
         other_laps: int,
+        other_dist: float,
     ) -> str | None:
         """
         Determine lap relation between the player and another car.
         """
-        lap_diff = other_laps - player_laps
+        covered_diff = (other_laps + other_dist) - (player_laps + player_dist)
+        lap_diff = round(
+            covered_diff - NeighborsService._wrap_gap(covered_diff)
+        )
 
         if lap_diff > 0:
             return "ahead_lap"

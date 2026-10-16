@@ -325,3 +325,117 @@ def test_get_neighbors_returns_expected_keys(mock_neighbors, mock_ctx):
         "physical_behind",
     }
     assert all("name" in c for c in neighbors["ahead"] + neighbors["behind"])
+
+
+# --- _get_lap_diff ---
+
+
+def lap_diff(mock_neighbors, **overrides):
+    values = {
+        "player_laps": 5,
+        "player_dist": 0.5,
+        "other_laps": 5,
+        "other_dist": 0.6,
+    }
+    values.update(overrides)
+    return mock_neighbors._get_lap_diff(**values)
+
+
+def test_get_lap_diff_same_lap_returns_none(mock_neighbors):
+    assert lap_diff(mock_neighbors) is None
+
+
+def test_get_lap_diff_car_ahead_on_higher_lap(mock_neighbors):
+    # The other car is more than half a lap up the road on the next lap.
+    result = lap_diff(mock_neighbors, other_laps=6, other_dist=0.6)
+    assert result == "ahead_lap"
+
+
+def test_get_lap_diff_car_behind_on_lower_lap(mock_neighbors):
+    # The other car is more than half a lap behind on the previous lap.
+    result = lap_diff(mock_neighbors, other_laps=4, other_dist=0.4)
+    assert result == "behind_lap"
+
+
+def test_get_lap_diff_car_ahead_across_start_finish_is_not_a_lap_ahead(
+    mock_neighbors,
+):
+    # Lap counts differ only because the other car already crossed the line
+    # while the player is still 0.02 lap before it.
+    result = lap_diff(
+        mock_neighbors,
+        player_laps=5,
+        player_dist=0.98,
+        other_laps=6,
+        other_dist=0.02,
+    )
+
+    assert result is None
+
+
+def test_get_lap_diff_car_behind_across_start_finish_is_not_a_lap_behind(
+    mock_neighbors,
+):
+    # Lap counts differ only because the player already crossed the line
+    # while the other car is still 0.02 lap before it.
+    result = lap_diff(
+        mock_neighbors,
+        player_laps=6,
+        player_dist=0.02,
+        other_laps=5,
+        other_dist=0.98,
+    )
+
+    assert result is None
+
+
+@pytest.mark.parametrize(
+    "other_laps,other_dist,expected",
+    [
+        # A lap ahead while physically just behind the player: about to lap it.
+        (6, 0.45, "ahead_lap"),
+        # A lap behind while physically just ahead: being lapped by the player.
+        (4, 0.55, "behind_lap"),
+    ],
+)
+def test_get_lap_diff_keeps_close_cars_on_adjacent_laps(
+    mock_neighbors,
+    other_laps,
+    other_dist,
+    expected,
+):
+    result = lap_diff(
+        mock_neighbors,
+        player_laps=5,
+        player_dist=0.5,
+        other_laps=other_laps,
+        other_dist=other_dist,
+    )
+
+    assert result == expected
+
+
+@pytest.mark.parametrize(
+    "other_laps,other_dist,expected",
+    [
+        # The other car is a whole lap ahead and right next to the player.
+        (7, 0.03, "ahead_lap"),
+        # The other car is a whole lap behind and right next to the player.
+        (3, 0.03, "behind_lap"),
+    ],
+)
+def test_get_lap_diff_keeps_whole_lap_at_start_finish(
+    mock_neighbors,
+    other_laps,
+    other_dist,
+    expected,
+):
+    result = lap_diff(
+        mock_neighbors,
+        player_laps=5,
+        player_dist=0.02,
+        other_laps=other_laps,
+        other_dist=other_dist,
+    )
+
+    assert result == expected
