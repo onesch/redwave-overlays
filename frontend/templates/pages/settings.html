@@ -18,34 +18,39 @@
 
 <div class="settings-list">
   <div class="setting-item">
-    <div>
+    <div class="setting-info">
       <span class="setting-name">Application updates</span>
-      <p id="update-status" class="update-status">Checking for updates…</p>
+      <p id="update-status" class="setting-desc">Checking for updates…</p>
     </div>
-    <div class="button-section">
-      <button id="check-updates" class="button primary-btn">Check</button>
+
+    <div class="button-section setting-buttons">
       <button id="download-update" class="button primary-btn" hidden>Download</button>
-      <button id="install-update" class="button primary-btn" hidden>Restart</button>
       <button id="open-update-release" class="button primary-btn" hidden>View release</button>
     </div>
   </div>
 
   <div class="setting-item">
-    <span class="setting-name">Reset overlays settings</span>
-    <button id="reset-overlay-settings" class="button primary-btn" style="width: auto;">Reset</button>
+    <div class="setting-info">
+      <span class="setting-name">Reset overlays settings</span>
+      <p class="setting-desc">Reset all overlay settings to their defaults.</p>
+    </div>
+
+    <button id="reset-overlay-settings" class="button primary-btn">Reset</button>
   </div>
 
   <div class="setting-item">
-    <span class="setting-name">Uninstall application</span>
-    <button id="uninstall-app" class="button primary-btn" style="width: auto;">Uninstall</button>
+    <div class="setting-info">
+      <span class="setting-name">Uninstall application</span>
+      <p class="setting-desc">Uninstall the application and remove all associated files.</p>
+    </div>
+
+    <button id="uninstall-app" class="button primary-btn">Uninstall</button>
   </div>
 </div>
 
 <script>
   const updateStatus = document.getElementById('update-status');
-  const checkUpdates = document.getElementById('check-updates');
   const downloadUpdate = document.getElementById('download-update');
-  const installUpdate = document.getElementById('install-update');
   const openUpdateRelease = document.getElementById('open-update-release');
 
   function renderUpdateStatus(status) {
@@ -55,45 +60,62 @@
       case 'checking':
         updateStatus.textContent = 'Checking for updates…';
         break;
+
       case 'available':
-        updateStatus.textContent = status.message || `Version${latest} is available.`;
+        updateStatus.innerHTML = `
+          <span class="update-info available">
+            ${status.message || `Version${latest} is available.`}
+            <span class="material-symbols-outlined">cached</span>
+          </span>
+        `;
         break;
+
       case 'downloading':
-        updateStatus.textContent = `Downloading update${latest}… ${status.progress}%`;
+        updateStatus.innerHTML = `
+          <span class="update-info downloading">
+            Downloading update${latest}… ${status.progress}%
+            <span class="material-symbols-outlined">cached</span>
+          </span>
+        `;
         break;
+
       case 'downloaded':
-        updateStatus.textContent = `Version${latest} is ready to install. Restart the app to finish.`;
+        updateStatus.innerHTML = `
+          <span class="update-info success">
+            ${status.message || `Version${latest} is restarting to install the update…`}
+            <span class="material-symbols-outlined">arrow_downward</span>
+          </span>
+        `;
         break;
+
       case 'not-available':
-        updateStatus.textContent = `Version ${status.currentVersion} is up to date.`;
+        updateStatus.innerHTML = `
+          <span class="update-info success">
+            You’re all up to date!
+            <span class="material-symbols-outlined">check</span>
+          </span>
+        `;
         break;
+
       case 'error':
-        updateStatus.textContent = status.message;
+        updateStatus.innerHTML = `
+          <span class="update-info error">
+            ${status.message}
+            <span class="material-symbols-outlined">close</span>
+          </span>
+        `;
         break;
+
       default:
-        updateStatus.textContent = 'Check for a newer version.';
+        updateStatus.textContent = 'Updates are checked automatically at startup.';
     }
 
-    const busy = status.state === 'checking' || status.state === 'downloading';
-    checkUpdates.disabled = busy;
     downloadUpdate.hidden = !(status.state === 'available' && status.canDownload);
-    installUpdate.hidden = !(status.state === 'downloaded' && status.canInstall);
     openUpdateRelease.hidden = status.state !== 'available' || !status.releaseUrl;
   }
 
-  checkUpdates.addEventListener('click', async () => {
-    renderUpdateStatus(await window.electronAPI.checkForUpdates());
-  });
-
   downloadUpdate.addEventListener('click', async () => {
     const result = await window.electronAPI.downloadUpdate();
-    if (!result.ok) updateStatus.textContent = result.message;
-  });
-
-  installUpdate.addEventListener('click', async () => {
-    if (!confirm('Restart RedWave overlays and install the update?')) return;
-
-    const result = await window.electronAPI.installUpdate();
     if (!result.ok) updateStatus.textContent = result.message;
   });
 

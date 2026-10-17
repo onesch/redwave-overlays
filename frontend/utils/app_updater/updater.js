@@ -1,8 +1,5 @@
 const path = require('node:path');
-
-const { version: currentVersion } = require(
-    path.resolve(__dirname, '../../../package.json')
-);
+const { version: currentVersion } = require(path.resolve(__dirname, '../../../package.json'));
 
 const RELEASES_API_URL =
   'https://api.github.com/repos/onesch/redwave-overlays/releases/latest';
@@ -45,7 +42,6 @@ function createUpdateService(app) {
     progress: 0,
     message: null,
     canDownload: false,
-    canInstall: false,
   };
   let checkPromise = null;
   const listeners = new Set();
@@ -62,7 +58,6 @@ function createUpdateService(app) {
       progress: 0,
       message,
       canDownload: app.isPackaged,
-      canInstall: false,
     });
   };
 
@@ -84,10 +79,12 @@ function createUpdateService(app) {
       state: 'downloaded',
       latestVersion: info.version ?? status.latestVersion,
       progress: 100,
-      message: null,
+      message: 'Update downloaded. Restarting to install it…',
       canDownload: false,
-      canInstall: true,
     });
+
+    // The user already chose Download, so finish the update immediately.
+    autoUpdater.quitAndInstall(false, true);
   });
 
   autoUpdater.on('error', (error) => {
@@ -106,7 +103,6 @@ function createUpdateService(app) {
         progress: 0,
         message: null,
         canDownload: false,
-        canInstall: false,
       });
 
       try {
@@ -132,7 +128,6 @@ function createUpdateService(app) {
             progress: 0,
             message: null,
             canDownload: false,
-            canInstall: false,
           });
         }
 
@@ -143,7 +138,6 @@ function createUpdateService(app) {
           progress: 0,
           message: null,
           canDownload: app.isPackaged,
-          canInstall: false,
         });
       } catch (error) {
         console.error('Unable to check for updates:', error);
@@ -152,7 +146,6 @@ function createUpdateService(app) {
           progress: 0,
           message: 'Unable to check for updates. Please try again later.',
           canDownload: false,
-          canInstall: false,
         });
       } finally {
         checkPromise = null;
@@ -188,9 +181,9 @@ function createUpdateService(app) {
         publish({
           state: 'downloaded',
           progress: 100,
-          message: null,
-          canInstall: true,
+          message: 'Update downloaded. Restarting to install it…',
         });
+        autoUpdater.quitAndInstall(false, true);
       }
 
       return { ok: true };
@@ -201,19 +194,9 @@ function createUpdateService(app) {
     }
   }
 
-  function installUpdate() {
-    if (status.state !== 'downloaded' || !status.canInstall) {
-      return { ok: false, message: 'Download the update before installing it.' };
-    }
-
-    autoUpdater.quitAndInstall(false, true);
-    return { ok: true };
-  }
-
   return {
     checkForUpdates,
     downloadUpdate,
-    installUpdate,
     getStatus: () => ({ ...status }),
     onStatusChange: (listener) => listeners.add(listener),
   };

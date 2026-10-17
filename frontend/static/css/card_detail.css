@@ -102,7 +102,7 @@
 
 /* Hover/Active Thumb */
 .range-control::-webkit-slider-thumb:hover {
-  background: #e5e5e5;
+  background: var(--button-hover);
   transform: scale(1.2);
 }
 
