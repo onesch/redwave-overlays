@@ -543,3 +543,14 @@ body.no-scroll {
 .update-info.error .material-symbols-outlined {
   color: var(--red-error);
 }
+
+/* UPDATE LINK */
+.version-update-link {
+  color: var(--orange-info);
+  font-weight: 500;
+  text-decoration: none;
+}
+.version-update-link:hover,
+.version-update-link:focus-visible {
+  text-decoration: underline;
+}
