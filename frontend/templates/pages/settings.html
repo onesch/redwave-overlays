@@ -24,8 +24,8 @@
     </div>
 
     <div class="button-section setting-buttons">
-      <button id="download-update" class="button primary-btn" hidden>Download</button>
-      <button id="open-update-release" class="button primary-btn" hidden>View release</button>
+      <button id="download-update" class="button primary-btn">Download</button>
+      <button id="open-update-release" class="button primary-btn">View release</button>
     </div>
   </div>
 
@@ -68,6 +68,7 @@
             <span class="material-symbols-outlined">cached</span>
           </span>
         `;
+        downloadUpdate.style.display = status.canDownload ? 'flex' : 'none';
         break;
 
       case 'downloading':
@@ -95,6 +96,7 @@
             <span class="material-symbols-outlined">check</span>
           </span>
         `;
+        downloadUpdate.style.display = 'none';
         break;
 
       case 'error':
@@ -109,9 +111,6 @@
       default:
         updateStatus.textContent = 'Updates are checked automatically at startup.';
     }
-
-    downloadUpdate.hidden = !(status.state === 'available' && status.canDownload);
-    openUpdateRelease.hidden = status.state !== 'available' || !status.releaseUrl;
   }
 
   downloadUpdate.addEventListener('click', async () => {
