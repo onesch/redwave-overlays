@@ -31,13 +31,8 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt pyinstaller
 
-      - name: Build backend executable
-        run: |
-          pyinstaller --onefile --noconsole --icon=frontend/static/images/app_icon.ico --add-data "frontend/templates;frontend/templates" --add-data "frontend/static;frontend/static" --add-data "frontend/overlays;frontend/overlays" --add-data "backend/database/*.json;backend/database" backend/main.py
-          New-Item -ItemType Directory -Force -Path backend_run | Out-Null
-          Move-Item -Force dist/main.exe backend_run/main.exe
-          if (Test-Path build) { Remove-Item -Recurse -Force build }
-          if (Test-Path dist) { Remove-Item -Recurse -Force dist }
+      - name: Run backend tests
+        run: python -m pytest -vv
 
       - name: Set up Node
         uses: actions/setup-node@v4
@@ -47,6 +42,17 @@ jobs:
 
       - name: Install frontend dependencies
         run: npm ci
+
+      - name: Run frontend tests
+        run: npm run test:frontend
+
+      - name: Build backend executable
+        run: |
+          pyinstaller --onefile --noconsole --icon=frontend/static/images/app_icon.ico --add-data "frontend/templates;frontend/templates" --add-data "frontend/static;frontend/static" --add-data "frontend/overlays;frontend/overlays" --add-data "backend/database/*.json;backend/database" backend/main.py
+          New-Item -ItemType Directory -Force -Path backend_run | Out-Null
+          Move-Item -Force dist/main.exe backend_run/main.exe
+          if (Test-Path build) { Remove-Item -Recurse -Force build }
+          if (Test-Path dist) { Remove-Item -Recurse -Force dist }
 
       - name: Build and publish the installer
         run: npm run build:publish
