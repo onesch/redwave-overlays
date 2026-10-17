@@ -76,7 +76,19 @@ contextBridge.exposeInMainWorld('electronAPI', {
   resetOverlaySettings: () =>
     ipcRenderer.send('reset-overlay-settings'),
 
+  // Open installation directory
+  openInstallDir: () =>
+    ipcRenderer.send('open-install-dir'),
+
   // Uninstall app
   uninstallApp: () =>
-    ipcRenderer.send('uninstall-app')
+    ipcRenderer.send('uninstall-app'),
+
+  // Application updates
+  getUpdateStatus: () => ipcRenderer.invoke('get-update-status'),
+  downloadUpdate: () => ipcRenderer.invoke('download-update'),
+  cancelUpdateDownload: () => ipcRenderer.invoke('cancel-update-download'),
+  openUpdateRelease: () => ipcRenderer.invoke('open-update-release'),
+  onUpdateStatus: (callback) =>
+    ipcRenderer.on('update-status', (_, status) => callback(status))
 });

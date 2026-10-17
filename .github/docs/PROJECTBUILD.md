@@ -27,7 +27,7 @@ Explanation:
 1. The `main.exe` file is **moved** to the root folder (create if needed) `backend_run/` from the `dist/` folder.
 2. The `dist/` and `build/` folders from PyInstaller are **deleted** to keep the project clean.
 
-## <i class="material-icons" style="vertical-align: middle;">web</i> 2. Frontend Packaging (Electron)
+## Frontend Packaging (Electron)
 
 The frontend is an Electron app.
 

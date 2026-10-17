@@ -9,8 +9,12 @@ const { resetOverlayMovementStateOnAppStart } = require('./utils/overlays/overla
 
 const { registerAllOverlayEvents } = require('./ipc/OverlayEvents');
 const registerSettingsEvents = require('./ipc/SettingsEvents');
+const registerUpdateEvents = require('./ipc/UpdateEvents');
+const { createUpdateService } = require('./utils/app_updater/updater');
 
 let mainWindow = null;
+let updateEventsRegistered = false;
+const updateService = createUpdateService(app);
 
 // Launches overlays that have AutoStart enabled
 function autoStartOverlays() {
@@ -43,11 +47,20 @@ async function createWindow() {
   // Registers IPC event for reset overlay settings
   registerSettingsEvents();
 
+  // Register update IPC handlers once, then check GitHub in the background.
+  if (!updateEventsRegistered) {
+    registerUpdateEvents(updateService);
+    updateEventsRegistered = true;
+  }
+
   // Always start overlays in locked mode
   resetOverlayMovementStateOnAppStart();
 
   // Open overlays marked as auto-start in settings
   autoStartOverlays();
+
+  // The settings page will show a prompt when GitHub reports a newer version.
+  void updateService.checkForUpdates();
 
   mainWindow.on('closed', () => {
     mainWindow = null;
