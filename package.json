@@ -1,12 +1,13 @@
 {
   "name": "redwave_overlays",
   "productName": "RedWave overlays",
-  "version": "3.4.1",
+  "version": "3.4.3",
   "main": "frontend/main.js",
   "scripts": {
     "test:frontend": "node --test",
     "coverage:frontend": "c8 node --test",
     "build": "electron-builder",
+    "build:publish": "electron-builder --publish always",
     "start:dev": "cross-env NODE_ENV=development concurrently \"uvicorn backend.main:app --reload --port 8000\" \"electron .\"",
     "start:prod": "cross-env NODE_ENV=production electron ."
   },
@@ -17,9 +18,23 @@
       "frontend/**",
       "backend_run/**"
     ],
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "onesch",
+        "repo": "redwave-overlays"
+      }
+    ],
     "win": {
-      "icon": "frontend/static/images/app_icon.ico"
+      "icon": "frontend/static/images/app_icon.ico",
+      "target": "nsis"
+    },
+    "nsis": {
+      "artifactName": "${productName}.Setup.${version}.${ext}"
     }
+  },
+  "dependencies": {
+    "electron-updater": "^6.8.9"
   },
   "devDependencies": {
     "c8": "^12.0.0",

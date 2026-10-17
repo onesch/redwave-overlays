@@ -1,0 +1,54 @@
+name: Release
+
+# Builds the Windows installer and publishes it to GitHub Releases.
+# `electron-builder --publish always` also uploads `latest.yml`, the manifest
+# the in-app updater reads to discover a newer version.
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install backend dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt pyinstaller
+
+      - name: Build backend executable
+        run: |
+          pyinstaller --onefile --noconsole --icon=frontend/static/images/app_icon.ico --add-data "frontend/templates;frontend/templates" --add-data "frontend/static;frontend/static" --add-data "frontend/overlays;frontend/overlays" --add-data "backend/database/*.json;backend/database" backend/main.py
+          New-Item -ItemType Directory -Force -Path backend_run | Out-Null
+          Move-Item -Force dist/main.exe backend_run/main.exe
+          if (Test-Path build) { Remove-Item -Recurse -Force build }
+          if (Test-Path dist) { Remove-Item -Recurse -Force dist }
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Build and publish the installer
+        run: npm run build:publish
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -304,6 +304,12 @@ body.no-scroll {
   font-weight: 300;
 }
 
+.update-status {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  margin: var(--spacing-xs) 0 0;
+}
+
 /* Buttons */
 .button {
   padding: var(--spacing-sm) var(--spacing-lg);

@@ -78,5 +78,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // Uninstall app
   uninstallApp: () =>
-    ipcRenderer.send('uninstall-app')
+    ipcRenderer.send('uninstall-app'),
+
+  // Application updates
+  getUpdateStatus: () => ipcRenderer.invoke('get-update-status'),
+  checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),
+  downloadUpdate: () => ipcRenderer.invoke('download-update'),
+  installUpdate: () => ipcRenderer.invoke('install-update'),
+  openUpdateRelease: () => ipcRenderer.invoke('open-update-release'),
+  onUpdateStatus: (callback) =>
+    ipcRenderer.on('update-status', (_, status) => callback(status))
 });
