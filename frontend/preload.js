@@ -83,6 +83,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Application updates
   getUpdateStatus: () => ipcRenderer.invoke('get-update-status'),
   downloadUpdate: () => ipcRenderer.invoke('download-update'),
+  cancelUpdateDownload: () => ipcRenderer.invoke('cancel-update-download'),
   openUpdateRelease: () => ipcRenderer.invoke('open-update-release'),
   onUpdateStatus: (callback) =>
     ipcRenderer.on('update-status', (_, status) => callback(status))

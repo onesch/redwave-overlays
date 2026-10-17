@@ -25,6 +25,7 @@
 
     <div class="button-section setting-buttons">
       <button id="download-update" class="button primary-btn">Download</button>
+      <button id="cancel-update" class="button primary-btn">Cancel</button>
       <button id="open-update-release" class="button primary-btn">View release</button>
     </div>
   </div>
@@ -51,10 +52,15 @@
 <script>
   const updateStatus = document.getElementById('update-status');
   const downloadUpdate = document.getElementById('download-update');
+  const cancelUpdate = document.getElementById('cancel-update');
   const openUpdateRelease = document.getElementById('open-update-release');
 
   function renderUpdateStatus(status) {
     const latest = status.latestVersion ? ` ${status.latestVersion}` : '';
+
+    // Hide Cancel by default; show it only while downloading.
+    cancelUpdate.style.display = 'none';
+    cancelUpdate.disabled = false;
 
     switch (status.state) {
       case 'checking':
@@ -78,6 +84,8 @@
             <span class="material-symbols-outlined">cached</span>
           </span>
         `;
+        downloadUpdate.style.display = 'none';
+        cancelUpdate.style.display = 'flex';
         break;
 
       case 'downloaded':
@@ -87,6 +95,7 @@
             <span class="material-symbols-outlined">arrow_downward</span>
           </span>
         `;
+        downloadUpdate.style.display = 'none';
         break;
 
       case 'not-available':
@@ -106,18 +115,42 @@
             <span class="material-symbols-outlined">close</span>
           </span>
         `;
+        downloadUpdate.style.display = 'none';
         break;
 
       default:
         updateStatus.textContent = 'Updates are checked automatically at startup.';
+        downloadUpdate.style.display = 'none';
     }
   }
 
   downloadUpdate.addEventListener('click', async () => {
     const result = await window.electronAPI.downloadUpdate();
-    if (!result.ok) updateStatus.textContent = result.message;
+
+    if (!result.ok && !result.cancelled) {
+      updateStatus.textContent = result.message;
+    }
   });
 
+  cancelUpdate.addEventListener('click', async () => {
+    // Prevent repeated cancellation requests while waiting for confirmation.
+    cancelUpdate.disabled = true;
+
+    try {
+      const result = await window.electronAPI.cancelUpdateDownload();
+
+      if (!result.ok && !result.cancelled) {
+        updateStatus.textContent = result.message;
+      }
+    } catch (error) {
+      updateStatus.textContent = 'Failed to cancel the update download.';
+      console.error('Failed to cancel update download:', error);
+    } finally {
+      cancelUpdate.disabled = false;
+    }
+  });
+
+  // Keep View release available at all times.
   openUpdateRelease.addEventListener('click', () => {
     window.electronAPI.openUpdateRelease();
   });
@@ -133,7 +166,6 @@
       }
 
       window.electronAPI.resetOverlaySettings();
-
       alert('Overlay settings have been reset');
     });
 

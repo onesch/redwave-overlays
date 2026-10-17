@@ -14,6 +14,7 @@ function broadcastUpdateStatus(status) {
 function registerUpdateEvents(updateService) {
   ipcMain.handle('get-update-status', () => updateService.getStatus());
   ipcMain.handle('download-update', () => updateService.downloadUpdate());
+  ipcMain.handle('cancel-update-download', () => updateService.cancelDownload());
   ipcMain.handle('open-update-release', () =>
     shell.openExternal(updateService.getStatus().releaseUrl ?? RELEASES_PAGE_URL),
   );

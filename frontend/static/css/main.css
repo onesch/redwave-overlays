@@ -373,6 +373,9 @@ body.no-scroll {
   font-size: 0.875rem;
 }
 /* Settings buttons */
+.setting-buttons [hidden] {
+  display: none;
+}
 .setting-buttons .button {
   padding: var(--spacing-sm) var(--spacing-lg);
   font-size: 0.875rem;
