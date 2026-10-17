@@ -389,6 +389,19 @@ body.no-scroll {
   background-color: var(--button-hover);
   color: var(--bg-primary);
 }
+.setting-buttons .icon-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 32px;
+  padding: 0;
+  flex-shrink: 0;
+}
+.setting-buttons .icon-button .material-symbols-outlined {
+  font-size: 20px;
+  line-height: 1;
+}
 
 /* Detail View */
 .overlays-layout {

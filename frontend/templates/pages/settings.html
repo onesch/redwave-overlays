@@ -45,7 +45,17 @@
       <p class="setting-desc">Uninstall the application and remove all associated files.</p>
     </div>
 
-    <button id="uninstall-app" class="button primary-btn">Uninstall</button>
+    <div class="button-section setting-buttons">
+      <button
+        id="open-install-dir"
+        class="button primary-btn icon-button"
+        aria-label="Open installation folder"
+        title="Open installation folder"
+      >
+        <span class="material-symbols-outlined">folder_open</span>
+      </button>
+      <button id="uninstall-app" class="button primary-btn">Uninstall</button>
+    </div>
   </div>
 </div>
 
@@ -167,6 +177,12 @@
 
       window.electronAPI.resetOverlaySettings();
       alert('Overlay settings have been reset');
+    });
+
+  document
+    .getElementById('open-install-dir')
+    .addEventListener('click', () => {
+      window.electronAPI.openInstallDir();
     });
 
   document

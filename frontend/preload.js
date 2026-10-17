@@ -76,6 +76,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   resetOverlaySettings: () =>
     ipcRenderer.send('reset-overlay-settings'),
 
+  // Open installation directory
+  openInstallDir: () =>
+    ipcRenderer.send('open-install-dir'),
+
   // Uninstall app
   uninstallApp: () =>
     ipcRenderer.send('uninstall-app'),
