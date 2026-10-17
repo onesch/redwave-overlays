@@ -1,5 +1,4 @@
-const path = require('node:path');
-const { version: currentVersion } = require(path.resolve(__dirname, '../../../package.json'));
+const { version: currentVersion } = require('../../../package.json');
 
 const RELEASES_API_URL =
   'https://api.github.com/repos/onesch/redwave-overlays/releases/latest';
