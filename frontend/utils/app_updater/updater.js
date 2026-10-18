@@ -49,6 +49,7 @@ function createUpdateService(app) {
   let activeDownload = null;
   const listeners = new Set();
 
+  // The `publish` function updates the current status and notifies all registered listeners of the change. It merges the new status with the existing one and returns the updated status.
   const publish = (nextStatus) => {
     status = { ...status, ...nextStatus };
     for (const listener of listeners) listener(status);
