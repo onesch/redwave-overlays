@@ -76,6 +76,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
   resetOverlaySettings: () =>
     ipcRenderer.send('reset-overlay-settings'),
 
+  // Custom title bar of the main window
+  minimizeWindow: () => ipcRenderer.send('window-minimize'),
+  closeWindow: () => ipcRenderer.send('window-close'),
+  startWindowDrag: () => ipcRenderer.send('window-drag-start'),
+  dragWindow: () => ipcRenderer.send('window-drag-move'),
+  endWindowDrag: () => ipcRenderer.send('window-drag-end'),
+
   // Open installation directory
   openInstallDir: () =>
     ipcRenderer.send('open-install-dir'),
