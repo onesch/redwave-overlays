@@ -1,0 +1,95 @@
+/* Custom title bar for the frameless main window. */
+.title-bar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+  width: 100%;
+  height: var(--title-bar-height);
+  padding-left: var(--spacing-md);
+  background-color: #0f0f0f;
+  border-bottom: 1px solid var(--border-primary);
+  cursor: default;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-app-region: drag;
+}
+
+.title-bar-drag {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  min-width: 0;
+  height: 100%;
+}
+
+.title-bar-icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.title-bar-title {
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.title-bar-controls {
+  display: flex;
+  align-items: stretch;
+  flex: 0 0 auto;
+  height: 100%;
+}
+
+.title-bar-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--title-bar-button-width);
+  height: 100%;
+  padding: 0;
+  border: none;
+  background-color: transparent;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  transition: background-color var(--transition), color var(--transition);
+  -webkit-app-region: no-drag;
+}
+
+.title-bar-button:hover {
+  background-color: var(--border-primary);
+  color: var(--text-primary);
+}
+
+.title-bar-button:focus-visible {
+  outline: 1px solid var(--info);
+  outline-offset: -2px;
+}
+
+/* Windows-like close button: red hover, white glyph. */
+.title-bar-button--close:hover {
+  background-color: var(--close-hover);
+  color: var(--text-primary);
+}
+
+.title-bar-button svg {
+  width: 10px;
+  height: 10px;
+  display: block;
+}
+
+/* The tooltips of the window controls sit above the page content. */
+.title-bar .tooltip::before {
+  z-index: 1;
+}

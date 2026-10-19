@@ -11,8 +11,10 @@ const { registerAllOverlayEvents } = require('./ipc/OverlayEvents');
 const registerSettingsEvents = require('./ipc/SettingsEvents');
 const registerUpdateEvents = require('./ipc/UpdateEvents');
 const { createUpdateService } = require('./utils/app_updater/updater');
+const { registerWindowEvents } = require('./ipc/WindowEvents');
 
 let mainWindow = null;
+let windowEventsRegistered = false;
 let updateEventsRegistered = false;
 const updateService = createUpdateService(app);
 
@@ -47,7 +49,13 @@ async function createWindow() {
   // Registers IPC event for reset overlay settings
   registerSettingsEvents();
 
-  // Register update IPC handlers once, then check GitHub in the background.
+  // Registers custom title bar IPC events once
+  if (!windowEventsRegistered) {
+    registerWindowEvents(() => mainWindow);
+    windowEventsRegistered = true;
+  }
+
+  // Register update IPC handlers once, then check GitHub in the background
   if (!updateEventsRegistered) {
     registerUpdateEvents(updateService);
     updateEventsRegistered = true;
@@ -59,7 +67,7 @@ async function createWindow() {
   // Open overlays marked as auto-start in settings
   autoStartOverlays();
 
-  // The settings page will show a prompt when GitHub reports a newer version.
+  // The settings page will show a prompt when GitHub reports a newer version
   void updateService.checkForUpdates();
 
   mainWindow.on('closed', () => {

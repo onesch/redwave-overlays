@@ -12,6 +12,9 @@
   --info: #3b82f6;
   --green-success: #22c55e;
   --orange-info: #e9a23b;
+  --title-bar-height: 36px;
+  --title-bar-button-width: 46px;
+  --close-hover: #c42b1c;
   --font-family: "Google Sans Flex", sans-serif;
   --border-radius-sm: 6px;
   --border-radius-md: 8px;
@@ -42,7 +45,7 @@
 body {
   font-family: var(--font-family);
   min-height: 100vh;
-  padding: var(--spacing-2xl);
+  padding: 0;
   background-color: var(--bg-primary);
   display: flex;
   flex-direction: column;
@@ -50,6 +53,12 @@ body {
 }
 body.no-scroll {
   overflow: hidden;
+}
+
+/* The page content sits below the (sticky) custom title bar. */
+main {
+  flex: 1 1 auto;
+  padding: var(--spacing-2xl);
 }
 
 .header {

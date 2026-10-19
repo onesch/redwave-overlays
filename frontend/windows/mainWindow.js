@@ -8,6 +8,8 @@ function createMainWindow() {
   const win = new BrowserWindow({
     width: 800,
     height: 600,
+    frame: false,
+    backgroundColor: '#0a0a0a',
     autoHideMenuBar: true,
     webPreferences: {
       contextIsolation: true,
