@@ -1,5 +1,5 @@
 // Fake `electron` module, installed for a test file with `useElectronMock()`: `electron.ipcMain`,
-// `electron.readSettings()` and `createOverlayWindow()` drive the modules under test.
+// `electron.screen`, `electron.readSettings()` and `createOverlayWindow()` drive the modules under test.
 
 const fs = require('node:fs');
 const Module = require('node:module');
@@ -36,6 +36,8 @@ class FakeOverlayWindow {
     this.animate = null;
     this.menuBarVisible = false;
     this.autoHideMenuBar = true;
+    this.minimized = false;
+    this.closed = false;
     this.sent = []; // IPC messages pushed to the renderer
 
     const windowEvents = createEmitter();
@@ -56,6 +58,11 @@ class FakeOverlayWindow {
 
   isDestroyed() { return this.destroyed; }
   destroy() { this.destroyed = true; }
+
+  minimize() { this.minimized = true; }
+  close() { this.closed = true; }
+  getPosition() { return [this.bounds.x, this.bounds.y]; }
+  setPosition(x, y) { this.bounds = { ...this.bounds, x, y }; }
 
   setIgnoreMouseEvents(value) { this.ignoreMouseEvents = value; }
   setMovable(value) { this.movable = value; }
@@ -129,10 +136,31 @@ function installElectronMock() {
       },
     },
 
+    // The app object is used by the main process to get the userData path and quit the app.
     app: {
       getPath: (name) => (name === 'userData' ? userDataDir : path.join(userDataDir, name)),
       whenReady: () => Promise.resolve(),
       quit: () => { mock.app.quitCalled = true; },
+    },
+
+    // Cursor position, moved by tests that drag a window.
+    screen: {
+      cursor: { x: 0, y: 0 },
+      getCursorScreenPoint() { return { ...this.cursor }; },
+    },
+
+    // Renderer side of the preload bridge: `sent` records `send()` calls,
+    // and `exposedApi` is what `preload.js` passes to `exposeInMainWorld`.
+    ipcRenderer: {
+      sent: [],
+      send(channel, ...args) { this.sent.push({ channel, args }); },
+      invoke: () => Promise.resolve(),
+      on: () => {},
+    },
+
+    contextBridge: {
+      exposedApi: null,
+      exposeInMainWorld: (name, api) => { mock.contextBridge.exposedApi = api; },
     },
 
     globalShortcut: {
@@ -152,6 +180,9 @@ function installElectronMock() {
       shortcuts.clear();
       windows.length = 0;
       mock.app.quitCalled = false;
+      mock.screen.cursor = { x: 0, y: 0 };
+      mock.ipcRenderer.sent.length = 0;
+      mock.contextBridge.exposedApi = null;
       fs.rmSync(settingsFile, { force: true });
     },
   };
