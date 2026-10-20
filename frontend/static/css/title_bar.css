@@ -1,3 +1,5 @@
+@import url('base.css');
+
 /* Custom title bar for the frameless main window. */
 .title-bar {
   position: sticky;
@@ -6,90 +8,84 @@
   flex: 0 0 auto;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--spacing-md);
   width: 100%;
-  height: var(--title-bar-height);
-  padding-left: var(--spacing-md);
-  background-color: #0f0f0f;
-  border-bottom: 1px solid var(--border-primary);
+  height: 48px;
+  box-sizing: border-box;
+  padding-left: 16px;
+  background-color: var(--bg-primary);
   cursor: default;
   user-select: none;
   -webkit-user-select: none;
   -webkit-app-region: drag;
 }
-
 .title-bar-drag {
   display: flex;
   align-items: center;
-  gap: var(--spacing-sm);
+  gap: 12px;
   min-width: 0;
   height: 100%;
 }
-
 .title-bar-icon {
-  width: 16px;
-  height: 16px;
+  width: 22px;
+  height: 22px;
   flex-shrink: 0;
   object-fit: contain;
   pointer-events: none;
 }
-
 .title-bar-title {
-  color: var(--text-secondary);
-  font-size: 0.75rem;
-  font-weight: 400;
-  letter-spacing: 0.02em;
+  min-width: 0;
+  color: #e3e3e3;
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: normal;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-
 .title-bar-controls {
   display: flex;
   align-items: stretch;
   flex: 0 0 auto;
   height: 100%;
+  margin-left: auto;
 }
-
 .title-bar-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: var(--title-bar-button-width);
+  width: 46px;
   height: 100%;
   padding: 0;
+  flex: 0 0 auto;
   border: none;
+  border-radius: 0;
   background-color: transparent;
-  color: var(--text-tertiary);
+  color: #c4c7c5;
   cursor: pointer;
-  transition: background-color var(--transition), color var(--transition);
+  transition:
+    background-color 150ms ease,
+    color 150ms ease;
   -webkit-app-region: no-drag;
 }
-
 .title-bar-button:hover {
-  background-color: var(--border-primary);
-  color: var(--text-primary);
+  background-color: #303134;
+  color: #e3e3e3;
 }
-
 .title-bar-button:focus-visible {
-  outline: 1px solid var(--info);
+  outline: 1px solid var(--info, #8ab4f8);
   outline-offset: -2px;
 }
-
-/* Windows-like close button: red hover, white glyph. */
 .title-bar-button--close:hover {
-  background-color: var(--close-hover);
-  color: var(--text-primary);
+  background-color: #d93025;
+  color: #ffffff;
 }
-
 .title-bar-button svg {
-  width: 10px;
-  height: 10px;
   display: block;
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
 }
-
-/* The tooltips of the window controls sit above the page content. */
+/* Keep tooltips above page content if they are used elsewhere. */
 .title-bar .tooltip::before {
-  z-index: 1;
+  z-index: 101;
 }
