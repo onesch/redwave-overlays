@@ -1,24 +1,6 @@
 {% block card_detail %}
-<div class="section-header">
-  <h2>{{ card_data.title }}</h2>
-  <p>{{ card_data.desc }}</p>
-</div>
-
-<div>
-  <div class="text-column action-buttons">
-    <button id="OpenBtn" class="button primary-btn">Open</button>
-    <button
-      id="ToggleMovementBtn"
-      class="button icon-button tooltip tooltip-top"
-      data-tooltip="toggle overlay movement mode (same as ctrl+shift+P)"
-    >
-      <span class="material-symbols-outlined">
-        lock
-      </span>
-    </button>
-  </div>
-  <div>
-
+<div class="detail-top">
+  <div class="detail-image">
     <img
       id="trackImage"
       src="{{ card_data.images.main }}"
@@ -31,6 +13,22 @@
       {% endfor %}
     >
   </div>
+  <div class="detail-info">
+    <div class="section-header">
+      <h2>{{ card_data.title }}</h2>
+      <p>{{ card_data.desc }}</p>
+    </div>
+    <div class="action-buttons">
+      <button id="OpenBtn" class="button primary-btn">Open</button>
+      <button
+        id="ToggleMovementBtn"
+        class="button icon-button tooltip tooltip-top"
+        data-tooltip="toggle overlay movement mode (same as ctrl+shift+P)"
+      >
+        <span class="material-symbols-outlined">lock</span>
+      </button>
+    </div>
+  </div>
 </div>
 
 <div id="settings-header" class="section-header">
@@ -38,39 +36,41 @@
   <span class="info-icon tooltip tooltip-right" data-tooltip="customize overlay behavior and appearance"><span class="material-symbols-outlined">info</span></span>
 </div>
 
-<div class="range-container">
-  <label for="zoomRange">
-    Zoom: <span id="zoomValue">100%</span>
-  </label>
-  <input
-    id="zoomRange"
-    class="range-control"
-    type="range"
-    min="50"
-    max="200"
-    step="10"
-    value="100"
-  >
-</div>
-
-<div class="setting-container">
-  <div class="setting-label">Display:</div>
-  <div class="setting-value button-section">
-    <button id="DisplayAllTimeBtn" class="active">All Time</button>
-    <button id="DisplayTrackBtn">Track</button>
-    <button id="DisplayGarageBtn">Garage</button>
+<div class="settings-container">
+  <div class="range-container">
+    <label for="zoomRange">
+      Zoom: <span id="zoomValue">100%</span>
+    </label>
+    <input
+      id="zoomRange"
+      class="range-control"
+      type="range"
+      min="50"
+      max="200"
+      step="10"
+      value="100"
+    >
   </div>
-</div>
 
-<div class="setting-container">
-  <div class="setting-label">Auto-Start:</div>
-  <div class="setting-value button-section">
-    <button id="AutoStartOnBtn">On</button>
-    <button id="AutoStartOffBtn" class="active">Off</button>
+  <div class="setting-container">
+    <div class="setting-label">Display:</div>
+    <div class="setting-value button-section">
+      <button id="DisplayAllTimeBtn" class="active">All Time</button>
+      <button id="DisplayTrackBtn">Track</button>
+      <button id="DisplayGarageBtn">Garage</button>
+    </div>
   </div>
-</div>
 
-{% block additional_settings %}{% endblock %}
+  <div class="setting-container">
+    <div class="setting-label">Auto-Start:</div>
+    <div class="setting-value button-section">
+      <button id="AutoStartOnBtn">On</button>
+      <button id="AutoStartOffBtn" class="active">Off</button>
+    </div>
+  </div>
+
+  {% block additional_settings %}{% endblock %}
+</div>
 
 {% block overlay_scripts %}{% endblock %}
 
