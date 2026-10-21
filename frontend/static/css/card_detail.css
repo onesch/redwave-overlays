@@ -1,12 +1,56 @@
 @import url('base.css');
 
+/* Settings container */
+.settings-container {
+  width: 450px;
+  height: 180px;
+  flex: 0 0 180px;
+  box-sizing: border-box;
+
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  padding-right: 8px;
+  scrollbar-width: thin;
+  scrollbar-color: #555 transparent;
+}
+
+.settings-container > * {
+  flex-shrink: 0;
+  max-width: 100%;
+}
+
+.settings-container .setting-container,
+.settings-container .range-container {
+  width: 310px;
+  box-sizing: border-box;
+}
+
+/* Scrollbar */
+.settings-container::-webkit-scrollbar {
+  width: 5px;
+}
+
+.settings-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.settings-container::-webkit-scrollbar-thumb {
+  background: #555;
+  border-radius: 4px;
+}
+
+.settings-container::-webkit-scrollbar-thumb:hover {
+  background: #777;
+}
+
 /* Setting container styles */
 .setting-container {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: var(--spacing-lg);
-  width: 300px;
+  width: 310px;
 }
 
 /* Setting label */
@@ -23,6 +67,7 @@
   font-size: 0.875rem;
   font-weight: 500;
 }
+
 .setting-value select {
   min-width: 120px;
   padding: 6px 8px;
@@ -40,7 +85,7 @@
   column-gap: 16px;
   align-items: center;
   margin-bottom: var(--spacing-lg);
-  width: 300px;
+  width: 310px;
 }
 
 /* Label container */
@@ -144,6 +189,7 @@
   margin-bottom: var(--spacing-2xl);
   min-width: 0;
 }
+
 .detail-image {
   flex-shrink: 0;
   width: 180px;
@@ -151,11 +197,13 @@
   background-color: var(--bg-secondary);
   border-radius: var(--border-radius-md);
 }
+
 .detail-image img {
   width: 100%;
   height: 100%;
   object-fit: contain;
 }
+
 .detail-info {
   display: flex;
   flex-direction: column;
