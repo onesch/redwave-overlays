@@ -1,5 +1,48 @@
 @import url('base.css');
 
+/* Settings container */
+.settings-container {
+  width: 450px;
+  height: auto;
+  flex: 0 0 auto;
+  box-sizing: border-box;
+  overflow-x: hidden;
+  overflow-y: hidden;
+  padding: 5px 8px 0 0;
+  scrollbar-width: thin;
+  scrollbar-color: #555 transparent;
+  /* Snap scrolling */
+  scroll-snap-type: y mandatory;
+  overscroll-behavior-y: contain;
+}
+.settings-container > * {
+  flex-shrink: 0;
+  max-width: 100%;
+}
+
+/* Each setting occupies one scroll step */
+.settings-container > .setting-container,
+.settings-container > .range-container {
+  width: 310px;
+  box-sizing: border-box;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+}
+/* Scrollbar */
+.settings-container::-webkit-scrollbar {
+  width: 5px;
+}
+.settings-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+.settings-container::-webkit-scrollbar-thumb {
+  background: #555;
+  border-radius: 4px;
+}
+.settings-container::-webkit-scrollbar-thumb:hover {
+  background: #777;
+}
+
 /* Setting container styles */
 .setting-container {
   display: flex;
