@@ -556,3 +556,15 @@
   color: var(--text-secondary);
   font-size: 0.875rem;
 }
+
+/* Update Release link Icon */
+#open-update-release {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+#open-update-release .material-symbols-outlined {
+  font-size: 16px;
+  line-height: 1;
+}
