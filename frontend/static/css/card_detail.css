@@ -2,7 +2,7 @@
 
 /* Settings container */
 .settings-container {
-  width: 450px;
+  width: 100%;
   height: auto;
   flex: 0 0 auto;
   box-sizing: border-box;
@@ -23,7 +23,6 @@
 /* Each setting occupies one scroll step */
 .settings-container > .setting-container,
 .settings-container > .range-container {
-  width: 310px;
   box-sizing: border-box;
   scroll-snap-align: start;
   scroll-snap-stop: always;
@@ -49,7 +48,6 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: var(--spacing-lg);
-  width: 300px;
 }
 
 /* Setting label */
@@ -83,15 +81,26 @@
   column-gap: 16px;
   align-items: center;
   margin-bottom: var(--spacing-lg);
-  width: 300px;
+}
+
+.range-control-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.range-control-wrapper span {
+  min-width: 40px;
+  color: var(--text-primary);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.875rem;
+  font-weight: 500;
 }
 
 /* Label container */
 .range-container label {
-  display: flex;
-  align-items: center;
   color: var(--text-primary);
-  justify-content: space-between;
   white-space: nowrap;
   font-size: 0.875rem;
 }
@@ -108,11 +117,12 @@
 
 /* Range */
 .range-control {
-  width: 100%;
+  width: 110px;
+  flex-shrink: 0;
   cursor: pointer;
   -webkit-appearance: none;
   appearance: none;
-  height: 8px;
+  height: 6px;
   border-radius: var(--border-radius-sm);
   background: #444;
   transition: background 0.3s;
@@ -154,14 +164,21 @@
   outline: none;
 }
 
-/* Detail page buttons section */
+/* Action buttons */
 .action-buttons {
   display: flex;
-  gap: 12px;
+  gap: 8px;
   align-items: center;
+  width: 100%;
 }
 
-/* Open button */
+/* Open button fills available space */
+.action-buttons .primary-btn {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Fixed-size icon button */
 .action-buttons .icon-button {
   flex: 0 0 36px;
   width: 36px;
@@ -173,7 +190,7 @@
   align-items: center;
 }
 
-/* Lock/unlock icon button */
+/* Lock/unlock icon */
 .icon-button .material-symbols-outlined {
   font-size: 20px;
   line-height: 1;

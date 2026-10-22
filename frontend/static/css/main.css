@@ -166,7 +166,6 @@
 }
 
 #settings-header {
-  max-width: 300px;
   display: flex;
   flex-direction: row;
   align-items: center;

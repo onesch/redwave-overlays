@@ -22,7 +22,7 @@
       <button id="OpenBtn" class="button primary-btn">Open</button>
       <button
         id="ToggleMovementBtn"
-        class="button icon-button tooltip tooltip-top"
+        class="button icon-button tooltip tooltip-left"
         data-tooltip="toggle overlay movement mode (same as ctrl+shift+P)"
       >
         <span class="material-symbols-outlined">lock</span>
@@ -38,18 +38,20 @@
 
 <div class="settings-container">
   <div class="range-container">
-    <label for="zoomRange">
-      Zoom: <span id="zoomValue">100%</span>
-    </label>
-    <input
-      id="zoomRange"
-      class="range-control"
-      type="range"
-      min="50"
-      max="200"
-      step="10"
-      value="100"
-    >
+    <label for="zoomRange">Zoom:</label>
+
+    <div class="range-control-wrapper">
+      <span id="zoomValue">100%</span>
+      <input
+        id="zoomRange"
+        class="range-control"
+        type="range"
+        min="50"
+        max="200"
+        step="10"
+        value="100"
+      >
+    </div>
   </div>
 
   <div class="setting-container">
