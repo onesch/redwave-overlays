@@ -236,17 +236,12 @@
   display: flex;
   flex-direction: column;
   gap: var(--spacing-xl);
+  width: 735px;
 }
 
 .date {
   font-size: 0.875rem;
   color: var(--text-secondary);
-}
-
-.changelog-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-xl);
 }
 
 .changelog-item img {
