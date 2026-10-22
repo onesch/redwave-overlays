@@ -4,7 +4,9 @@ import { createZoomSetting } from './features/shared/zoomSetting.js';
 import { createBackgroundOpacitySetting } from './features/shared/backgroundOpacitySetting.js';
 import { createDisplayModeSetting } from './features/shared/displayModeSetting.js';
 import { createAutoStartSetting } from './features/shared/autoStartSetting.js';
-export { createSettingsScroll } from './settingsScroll.js';
+import { createSettingsScroll } from './settingsScroll.js';
+
+export { createSettingsScroll };
 
 // Settings shared by every overlay detail page.
 const SHARED_SETTINGS = [
