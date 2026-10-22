@@ -1,0 +1,49 @@
+<!-- Custom title bar -->
+<header id="title-bar" class="title-bar">
+  <div class="title-bar-drag">
+    <img
+      class="title-bar-icon"
+      src="{{ url_for('static', path='images/app_icon.png') }}"
+      alt=""
+      aria-hidden="true"
+    >
+
+    <span class="title-bar-title">
+      {% block title_bar_title %}RedWave Overlays{% endblock %}
+    </span>
+  </div>
+
+  <div class="title-bar-controls">
+    <button
+      id="title-bar-minimize"
+      class="title-bar-button"
+      type="button"
+      aria-label="Minimize"
+      title="Minimize"
+    >
+      <svg viewBox="0 0 12 12" aria-hidden="true">
+        <path
+          d="M1 6h10"
+          stroke="currentColor"
+          stroke-width="1.3"
+        />
+      </svg>
+    </button>
+
+    <button
+      id="title-bar-close"
+      class="title-bar-button title-bar-button--close"
+      type="button"
+      aria-label="Close"
+      title="Close"
+    >
+      <svg viewBox="0 0 12 12" aria-hidden="true">
+        <path
+          d="M1 1l10 10M11 1L1 11"
+          stroke="currentColor"
+          stroke-width="1.3"
+        />
+      </svg>
+    </button>
+  </div>
+</header>

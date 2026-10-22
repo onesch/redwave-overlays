@@ -4,7 +4,6 @@ from fastapi.responses import HTMLResponse
 from backend.utils.templates import templates
 from backend.utils.paths import get_base_path
 from backend.database.data_loader import (
-    get_app_version,
     get_overlays_card_data,
     get_changelog_images,
 )
@@ -15,10 +14,7 @@ BASE_PATH = get_base_path()
 
 @router.get("/main", response_class=HTMLResponse, name="main")
 async def main_view(request: Request):
-    app_version = get_app_version()
-    return templates.TemplateResponse(
-        request, "pages/main.html", {"app_version": app_version}
-    )
+    return templates.TemplateResponse(request, "pages/main.html")
 
 
 @router.get("/changelog", response_class=HTMLResponse, name="changelog")

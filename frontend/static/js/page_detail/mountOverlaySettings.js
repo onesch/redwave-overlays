@@ -4,6 +4,9 @@ import { createZoomSetting } from './features/shared/zoomSetting.js';
 import { createBackgroundOpacitySetting } from './features/shared/backgroundOpacitySetting.js';
 import { createDisplayModeSetting } from './features/shared/displayModeSetting.js';
 import { createAutoStartSetting } from './features/shared/autoStartSetting.js';
+import { createSettingsScroll } from './settingsScroll.js';
+
+export { createSettingsScroll };
 
 // Settings shared by every overlay detail page.
 const SHARED_SETTINGS = [
@@ -21,14 +24,16 @@ export async function mountOverlaySettings({
   overlayName,
   settings = [],
   document = globalThis.document,
+  window = globalThis.window,
   api = createSettingsApi(),
 } = {}) {
-  const context = { api, overlayName, document };
+  const context = { api, overlayName, document, window };
   const features = [
     ...SHARED_SETTINGS.map((createSetting) => createSetting(context)),
     ...settings.map((createSetting) => createSetting(context)),
     createOpenOverlayControl(context),
     createMovementToggle(context),
+    createSettingsScroll(context),
   ];
 
   const results = await Promise.allSettled(
