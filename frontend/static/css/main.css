@@ -37,18 +37,15 @@
 .main-layout {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: flex-start;
   min-height: calc(100vh - var(--title-bar-height) - 40px);
   box-sizing: border-box;
   padding: var(--spacing-2xl);
   gap: var(--spacing-2xl);
 }
 
-.main-bottom {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-xl);
-  margin-top: auto;
+.menu-section {
+  margin-top: var(--spacing-lg);
 }
 
 .menu-grid {
@@ -539,22 +536,6 @@
   font-size: 1.25rem;
   font-weight: 300;
   margin: 0;
-}
-
-/* Last Race */
-.last-race-card {
-  display: flex;
-  align-items: center;
-  min-height: 100px;
-  padding: var(--spacing-xl);
-  background-color: var(--bg-secondary);
-  border: 1px solid var(--border-primary);
-  border-radius: var(--border-radius-xl);
-  box-sizing: border-box;
-}
-.last-race-placeholder {
-  color: var(--text-secondary);
-  font-size: 0.875rem;
 }
 
 /* Update Release link Icon */
