@@ -41,7 +41,7 @@ function createOverlay(route, options = {}) {
     alwaysOnTop: true,
     frame: options.frame ?? false,
     transparent: options.transparent ?? true,
-    resizable: true,
+    resizable: isDev,
     movable: false,
     focusable: true,
     hasShadow: false,
@@ -78,8 +78,18 @@ function createOverlay(route, options = {}) {
   return overlay;
 }
 
+// Close every open overlay, e.g. when the main window goes away.
+// Overlays save their position on close, so this must use close(), not destroy().
+function closeAllOverlays() {
+  Object.values(overlays).forEach((overlay) => {
+    if (!overlay.isDestroyed()) {
+      overlay.close();
+    }
+  });
+}
+
 app.whenReady().then(() => {
   registerOverlayMoveShortcuts(app, overlays);
 });
 
-module.exports = { createOverlay, overlays };
+module.exports = { createOverlay, closeAllOverlays, overlays };

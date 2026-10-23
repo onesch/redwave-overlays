@@ -9,6 +9,7 @@ function createMainWindow() {
     width: 800,
     height: 600,
     frame: false,
+    resizable: isDev,
     backgroundColor: '#0a0a0a',
     autoHideMenuBar: true,
     webPreferences: {
