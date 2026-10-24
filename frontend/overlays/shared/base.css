@@ -1,6 +1,8 @@
 :root {
     /* Base colors */
     --yellow-primary: #FFCC00;
+    --overlay-drag-border: rgba(1, 89, 207, 0.85);
+    --overlay-drag-glow: rgba(1, 89, 207, 0.22);
 
     /* Leaderboard colors */
     --m3-surface-top: 28, 28, 37;
@@ -59,4 +61,22 @@ body {
     color: var(--m3-on-surface);
     -webkit-app-region: drag;
     /* border: 2px solid green; */
+ }
+
+/* Border marking the window as draggable while the global overlay movement
+   mode is enabled (see frontend/overlays/shared/dragModeBorder.js). */
+.overlay-drag-border {
+    position: fixed;
+    inset: 0;
+    border: 2px solid var(--overlay-drag-border);
+    border-radius: 8px;
+    box-shadow: inset 0 0 12px var(--overlay-drag-glow);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.12s ease;
+    z-index: 2147483647;
+ }
+
+body.overlay-drag-mode .overlay-drag-border {
+    opacity: 1;
  }
