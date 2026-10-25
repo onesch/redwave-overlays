@@ -1,7 +1,20 @@
 <div class="telemetry-overlay overlay-bg-opacity-target">
   <!-- header -->
   <div class="telemetry-header">
-    <span id="speed-header" class="header-speed">0</span>
+    <div class="header-metrics">
+      <span class="header-metric">
+        <span class="metric-label">TOP</span>
+        <span id="top-speed-header" class="metric-value">--</span>
+      </span>
+      <span class="header-metric">
+        <span class="metric-label">EXIT</span>
+        <span id="exit-speed-header" class="metric-value">--</span>
+      </span>
+    </div>
+    <span id="speed-header" class="header-speed">
+      <span class="speed-value">0</span>
+      <span id="speed-unit-label" class="speed-label">KM/H</span>
+    </span>
     <span id="gear-header" class="header-gear">N</span>
     <span id="brake-pct-header" class="header-pct brk">0</span>
     <span id="throttle-pct-header" class="header-pct thr">0</span>

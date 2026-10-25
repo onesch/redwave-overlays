@@ -1,9 +1,21 @@
 import { BaseRenderer } from '../shared/baseRenderer.js';
+import {
+  DEFAULT_SPEED_UNIT,
+  normalizeSpeedUnit,
+  speedUnitLabel,
+  toDisplaySpeed,
+} from './speedUnit.js';
 
 export class TelemetryRenderer extends BaseRenderer {
   constructor(document, window = globalThis.window) {
     super(document);
     this.window = window;
+    // Speeds arrive in m/s and are rendered in this unit.
+    this.speedUnit = DEFAULT_SPEED_UNIT;
+    // Last raw m/s values, so a unit change can refresh latched readouts
+    // without waiting for the next telemetry event.
+    this.lastSpeedMs = undefined;
+    this.lastSpeedMetrics = new Map();
     // number of points in trace (history length)
     this.HIST = 200;
     // sliding window buffers for pedal values
@@ -72,7 +84,7 @@ export class TelemetryRenderer extends BaseRenderer {
     this.renderPedal('throttle', data.throttle, data.throttle_pct);
     this.renderPedal('brake', data.brake, data.brake_pct);
     this.renderGear(data.gear);
-    this.renderSpeed(data.speed_km);
+    this.renderSpeeds(data);
 
     // redraw trace
     this.drawScope();
@@ -94,9 +106,56 @@ export class TelemetryRenderer extends BaseRenderer {
       String(g);
   }
 
-  renderSpeed(speedKm) {
-    const el = this.document.getElementById('speed-header');
-    el.textContent = Math.round(speedKm);
+  // All three readouts take raw m/s from the DTO and share one conversion.
+  renderSpeeds(data) {
+    this.renderSpeed(data.speed_ms ?? data.speed);
+    this.renderSpeedMetric('top-speed-header', data.top_speed_ms ?? data.top_speed);
+    this.renderSpeedMetric('exit-speed-header', data.exit_speed_ms ?? data.exit_speed);
+  }
+
+  // Switch the unit of every speed readout and relabel the header. Latched
+  // values are re-rendered from the last raw m/s samples straight away.
+  setSpeedUnit(unit) {
+    this.speedUnit = normalizeSpeedUnit(unit);
+    this.renderSpeedUnitLabel();
+
+    if (this.lastSpeedMs !== undefined) this.renderSpeed(this.lastSpeedMs);
+    for (const [elementId, speedMs] of this.lastSpeedMetrics) {
+      this.renderSpeedMetric(elementId, speedMs);
+    }
+  }
+
+  renderSpeedUnitLabel() {
+    let label = this.document.getElementById('speed-unit-label')
+      ?? this.document.getElementById('speed-label');
+
+    // Class-based lookup covers documents without the label id.
+    if (!label) {
+      try {
+        label = this.document.querySelector('#speed-header .speed-label');
+      } catch {
+        label = null;
+      }
+    }
+    if (label) label.textContent = speedUnitLabel(this.speedUnit);
+  }
+
+  renderSpeed(speedMs) {
+    const el = this.document.querySelector('#speed-header .speed-value');
+    this.lastSpeedMs = speedMs;
+    this.renderSpeedUnitLabel();
+
+    const speed = toDisplaySpeed(speedMs, this.speedUnit);
+    if (el) el.textContent = Number.isFinite(speed) ? Math.round(speed) : '--';
+  }
+
+  // Top and exit speed stay as a placeholder until they have been latched.
+  renderSpeedMetric(elementId, speedMs) {
+    const el = this.document.getElementById(elementId);
+    this.lastSpeedMetrics.set(elementId, speedMs);
+
+    const speed = toDisplaySpeed(speedMs, this.speedUnit);
+    if (el) el.textContent = Number.isFinite(speed) ? Math.round(speed) : '--';
   }
 
   renderPedal(type, rawValue, pctValue) {
@@ -109,11 +168,19 @@ export class TelemetryRenderer extends BaseRenderer {
     const normalized = Math.max(0, Math.min(1, Number(rawValue) || 0));
     const pct = normalized * 100;
 
-    // split pedal into zones:
-    // dead zone (0-1%), mid (1-99%), peak (99-100%)
-    const deadPct = (Math.min(pct, 1) / 1) * 100;
-    const midPct = pct <= 1 ? 0 : pct >= 99 ? 100 : ((pct - 1) / 98) * 100;
-    const peakPct = pct < 99 ? 0 : ((pct - 99) / 1) * 100;
+    // Split pedal into zones:
+    // dead zone (0-0.1%), mid (0.1-99.9%), peak (99.9-100%)
+    const deadPct = (Math.min(pct, 0.1) / 0.1) * 100;
+    const midPct = pct <= 0.1
+      ? 0
+      : pct >= 99.9
+        ? 100
+        : ((pct - 0.1) / 99.8) * 100;
+    const peakPct = pct < 99.9
+      ? 0
+      : pct >= 100
+        ? 100
+        : ((pct - 99.9) / 0.1) * 100;
 
     // update visual fill heights
     fillDead.style.height = `${deadPct}%`;
