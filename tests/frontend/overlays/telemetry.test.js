@@ -18,10 +18,13 @@ describeApiContract({
 
 // Telemetry overlay markup: scope canvas plus pedal, gear and speed readouts.
 function createTelemetryDocument() {
-  return new FakeDocument({
+  const document = new FakeDocument({
     'telemetry-canvas': '',
     'gear-header': '',
     'speed-header': '',
+    'speed-value': '',
+    'top-speed-header': '',
+    'exit-speed-header': '',
     'throttle-pct-header': '',
     'throttle-fill-peak': '',
     'throttle-fill-mid': '',
@@ -31,6 +34,16 @@ function createTelemetryDocument() {
     'brake-fill-mid': '',
     'brake-fill-dead': '',
   });
+
+  document.querySelector = (selector) => {
+    if (selector === '#speed-header .speed-value') {
+      return document.getElementById('speed-value');
+    }
+
+    return null;
+  };
+
+  return document;
 }
 
 test('TelemetryUpdater polls telemetry data on its own interval', async () => {
@@ -66,7 +79,9 @@ test('TelemetryRenderer renders readouts and records pedal history', async () =>
   });
 
   assert.equal(document.getElementById('gear-header').textContent, '3');
-  assert.equal(document.getElementById('speed-header').textContent, 124);
+  assert.equal(document.querySelector('#speed-header .speed-value').textContent, 124);
+  assert.equal(document.getElementById('top-speed-header').textContent, '--');
+  assert.equal(document.getElementById('exit-speed-header').textContent, '--');
   assert.equal(document.getElementById('throttle-pct-header').textContent, '75');
   assert.equal(document.getElementById('brake-pct-header').textContent, '25');
   assert.equal(renderer.thrHistory.at(-1), 0.75);
@@ -78,6 +93,32 @@ test('TelemetryRenderer renders readouts and records pedal history', async () =>
   assert.equal(document.getElementById('gear-header').textContent, 'R');
   renderer.renderGear(0);
   assert.equal(document.getElementById('gear-header').textContent, 'N');
+});
+
+test('TelemetryRenderer shows latched top and exit speed', async () => {
+  const { TelemetryRenderer } = await import(TELEMETRY_RENDERER);
+  const document = createTelemetryDocument();
+  const renderer = new TelemetryRenderer(document, new FakeWindow());
+
+  renderer.render({
+    throttle: 1,
+    throttle_pct: 100,
+    brake: 0,
+    brake_pct: 0,
+    gear: 5,
+    speed_km: 201.4,
+    top_speed_km: 287.6,
+    exit_speed_km: 152.2,
+  });
+
+  assert.equal(document.getElementById('top-speed-header').textContent, 288);
+  assert.equal(document.getElementById('exit-speed-header').textContent, 152);
+
+  // Values are cleared back to the placeholder until they are latched again.
+  renderer.renderSpeedMetric('top-speed-header', null);
+  renderer.renderSpeedMetric('exit-speed-header', undefined);
+  assert.equal(document.getElementById('top-speed-header').textContent, '--');
+  assert.equal(document.getElementById('exit-speed-header').textContent, '--');
 });
 
 test('TelemetryRenderer normalizes pedal values and fills the pedal zones', async () => {

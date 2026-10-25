@@ -2,7 +2,11 @@ from dataclasses import dataclass
 from typing import Any
 
 from backend.services.base import BaseService
+from backend.services.session_tracker import SessionKey, SessionTracker
 
+# Pedal values above these thresholds count as braking / throttle application.
+BRAKE_THRESHOLD = 0.05
+THROTTLE_THRESHOLD = 0.05
 
 @dataclass
 class TelemetryContext:
@@ -21,7 +25,9 @@ class TelemetryService(BaseService):
     """Business logic service working with telemetry data."""
 
     def __init__(self, irsdk_service):
+        self.session_tracker = SessionTracker()
         super().__init__(irsdk_service, builder=None)
+        self._reset_speed_metrics()
 
     def _build_context(self) -> TelemetryContext | None:
         """
@@ -47,6 +53,18 @@ class TelemetryService(BaseService):
         Generates the snapshot for the API.
         Overridden method from BaseService.
         """
+        weekend_info: dict[str, Any] = (
+            self.irsdk.get_value("WeekendInfo") or {}
+        )
+        session_key = SessionKey(
+            session_id=weekend_info.get("SessionID"),
+            session_num=self.irsdk.get_value("SessionNum"),
+        )
+        if self.session_tracker.is_changed(session_key):
+            self._reset_speed_metrics()
+
+        self._track_speed_metrics(ctx)
+
         return {
             "status": "ok",
             "throttle": ctx.throttle,
@@ -55,6 +73,8 @@ class TelemetryService(BaseService):
             "brake_pct": round(ctx.brake * 100, 1),
             "gear": ctx.gear,
             "speed_km": ctx.speed_km,
+            "top_speed_km": self.top_speed_km,
+            "exit_speed_km": self.exit_speed_km,
             "is_brake_abs": ctx.is_brake_abs,
         }
 
@@ -64,3 +84,37 @@ class TelemetryService(BaseService):
         if not isinstance(value, (int, float)):
             return 0.0
         return max(0.0, min(1.0, float(value)))
+
+    def _reset_speed_metrics(self):
+        """Clear Top Speed and Exit Speed tracking state."""
+        self.top_speed_km: float | None = None
+        self.exit_speed_km: float | None = None
+        self._peak_speed_km = 0.0
+        self._is_braking = False
+        self._is_exit_pending = False
+
+    def _track_speed_metrics(self, ctx: TelemetryContext):
+        """
+        Update Top Speed and Exit Speed from the latest sample.
+
+        Top Speed is the peak speed reached since the last brake release,
+        latched when braking starts.
+        Exit Speed is the speed at the first throttle application
+        after braking ends.
+        """
+        if ctx.brake > BRAKE_THRESHOLD:
+            if not self._is_braking:
+                self._is_braking = True
+                self.top_speed_km = self._peak_speed_km
+            return
+
+        if self._is_braking:
+            self._is_braking = False
+            self._peak_speed_km = ctx.speed_km
+            self._is_exit_pending = True
+
+        self._peak_speed_km = max(self._peak_speed_km, ctx.speed_km)
+
+        if self._is_exit_pending and ctx.throttle > THROTTLE_THRESHOLD:
+            self.exit_speed_km = ctx.speed_km
+            self._is_exit_pending = False

@@ -73,6 +73,8 @@ export class TelemetryRenderer extends BaseRenderer {
     this.renderPedal('brake', data.brake, data.brake_pct);
     this.renderGear(data.gear);
     this.renderSpeed(data.speed_km);
+    this.renderSpeedMetric('top-speed-header', data.top_speed_km);
+    this.renderSpeedMetric('exit-speed-header', data.exit_speed_km);
 
     // redraw trace
     this.drawScope();
@@ -95,8 +97,14 @@ export class TelemetryRenderer extends BaseRenderer {
   }
 
   renderSpeed(speedKm) {
-    const el = this.document.getElementById('speed-header');
+    const el = this.document.querySelector('#speed-header .speed-value');
     el.textContent = Math.round(speedKm);
+  }
+
+  // Top and exit speed stay as a placeholder until they have been latched.
+  renderSpeedMetric(elementId, speedKm) {
+    const el = this.document.getElementById(elementId);
+    el.textContent = Number.isFinite(speedKm) ? Math.round(speedKm) : '--';
   }
 
   renderPedal(type, rawValue, pctValue) {
