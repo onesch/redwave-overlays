@@ -9,6 +9,7 @@ const READ_METHODS = [
   'getAutoStartMode', 'setAutoStartMode',
   'getMovementState', 'toggleMovementState',
   'getLastLapFormat', 'setLastLapFormat',
+  'getSpeedUnit', 'setSpeedUnit',
   'getRadarVisibility', 'setRadarVisibility',
   'getTrackType', 'setTrackType',
 ];

@@ -1,9 +1,17 @@
 import { BaseRenderer } from '../shared/baseRenderer.js';
+import {
+  DEFAULT_SPEED_UNIT,
+  normalizeSpeedUnit,
+  speedUnitLabel,
+  toDisplaySpeed,
+} from './speedUnit.js';
 
 export class TelemetryRenderer extends BaseRenderer {
   constructor(document, window = globalThis.window) {
     super(document);
     this.window = window;
+    // speeds are rendered in this unit; the backend always reports km/h
+    this.speedUnit = DEFAULT_SPEED_UNIT;
     // number of points in trace (history length)
     this.HIST = 200;
     // sliding window buffers for pedal values
@@ -80,6 +88,14 @@ export class TelemetryRenderer extends BaseRenderer {
     this.drawScope();
   }
 
+  // Switch the unit of every speed readout and relabel the header.
+  setSpeedUnit(unit) {
+    this.speedUnit = normalizeSpeedUnit(unit);
+
+    const el = this.document.getElementById('speed-unit-label');
+    if (el) el.textContent = speedUnitLabel(this.speedUnit);
+  }
+
   renderGear(gear) {
     const el = this.document.getElementById('gear-header');
 
@@ -98,13 +114,14 @@ export class TelemetryRenderer extends BaseRenderer {
 
   renderSpeed(speedKm) {
     const el = this.document.querySelector('#speed-header .speed-value');
-    el.textContent = Math.round(speedKm);
+    el.textContent = Math.round(toDisplaySpeed(speedKm, this.speedUnit));
   }
 
   // Top and exit speed stay as a placeholder until they have been latched.
   renderSpeedMetric(elementId, speedKm) {
     const el = this.document.getElementById(elementId);
-    el.textContent = Number.isFinite(speedKm) ? Math.round(speedKm) : '--';
+    const speed = toDisplaySpeed(speedKm, this.speedUnit);
+    el.textContent = Number.isFinite(speed) ? Math.round(speed) : '--';
   }
 
   renderPedal(type, rawValue, pctValue) {

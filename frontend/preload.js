@@ -72,6 +72,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onLastLapFormatUpdate: (callback) =>
     ipcRenderer.on('update-last-lap-format', (_, value) => callback(value)),
 
+  // Telemetry speed unit
+  setSpeedUnit: (overlayName, value) =>
+    ipcRenderer.send('set-speed-unit', { overlayName, value }),
+  getSpeedUnit: (overlayName) =>
+    ipcRenderer.invoke('get-speed-unit', overlayName),
+  onSpeedUnitUpdate: (callback) =>
+    ipcRenderer.on('update-speed-unit', (_, value) => callback(value)),
+
   // Reset overlay settings
   resetOverlaySettings: () =>
     ipcRenderer.send('reset-overlay-settings'),

@@ -65,6 +65,12 @@ export function createSettingsApi(
     setRadarVisibility: (overlayName, value) =>
       electronAPI.setRadarVisibility?.(overlayName, value),
 
+    // Telemetry speed unit (kmh / mph).
+    getSpeedUnit: (overlayName) =>
+      electronAPI.getSpeedUnit?.(overlayName),
+    setSpeedUnit: (overlayName, value) =>
+      electronAPI.setSpeedUnit?.(overlayName, value),
+
     // Track-map track type (linear / circle / track).
     getTrackType: (overlayName) =>
       electronAPI.getTrackType?.(overlayName),

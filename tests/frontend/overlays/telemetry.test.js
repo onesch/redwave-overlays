@@ -8,6 +8,7 @@ const { BASE_UPDATER } = require('../helpers/modules');
 const TELEMETRY_API = '../../../frontend/overlays/telemetry/telemetryApi.js';
 const TELEMETRY_UPDATER = '../../../frontend/overlays/telemetry/telemetryUpdater.js';
 const TELEMETRY_RENDERER = '../../../frontend/overlays/telemetry/telemetryRenderer.js';
+const SPEED_UNIT = '../../../frontend/overlays/telemetry/speedUnit.js';
 
 describeApiContract({
   title: 'TelemetryApi',
@@ -23,6 +24,7 @@ function createTelemetryDocument() {
     'gear-header': '',
     'speed-header': '',
     'speed-value': '',
+    'speed-unit-label': 'KM/H',
     'top-speed-header': '',
     'exit-speed-header': '',
     'throttle-pct-header': '',
@@ -63,6 +65,42 @@ test('TelemetryUpdater polls telemetry data on its own interval', async () => {
   assert.equal(await updater.getDto(), dto);
 });
 
+test('TelemetryUpdater loads the speed unit and follows runtime changes', async () => {
+  const { TelemetryUpdater } = await import(TELEMETRY_UPDATER);
+  const units = [];
+  let unitListener;
+
+  const updater = new TelemetryUpdater(
+    { getTelemetry: async () => ({ status: 'ok' }) },
+    { setSpeedUnit: (unit) => units.push(unit) },
+    {
+      electronAPI: {
+        getSpeedUnit: async () => 'mph',
+        onSpeedUnitUpdate: (listener) => { unitListener = listener; },
+      },
+    },
+  );
+
+  await updater.initFeature();
+  unitListener('kmh');
+  assert.deepEqual(units, ['mph', 'kmh']);
+});
+
+test('SpeedUnit converts km/h speeds and labels the readouts', async () => {
+  const SpeedUnit = await import(SPEED_UNIT);
+
+  assert.equal(SpeedUnit.normalizeSpeedUnit('mph'), 'mph');
+  assert.equal(SpeedUnit.normalizeSpeedUnit('bogus'), SpeedUnit.DEFAULT_SPEED_UNIT);
+  assert.equal(SpeedUnit.speedUnitLabel('kmh'), 'KM/H');
+  assert.equal(SpeedUnit.speedUnitLabel('mph'), 'MPH');
+
+  // The backend always reports km/h, so only mph needs converting.
+  assert.equal(SpeedUnit.toDisplaySpeed(100, 'kmh'), 100);
+  assert.ok(Math.abs(SpeedUnit.toDisplaySpeed(100, 'mph') - 62.1371) < 1e-9);
+  // Missing speeds are passed through so they render as a placeholder.
+  assert.equal(SpeedUnit.toDisplaySpeed(undefined, 'mph'), undefined);
+});
+
 test('TelemetryRenderer renders readouts and records pedal history', async () => {
   const { TelemetryRenderer } = await import(TELEMETRY_RENDERER);
   const document = createTelemetryDocument();
@@ -93,6 +131,37 @@ test('TelemetryRenderer renders readouts and records pedal history', async () =>
   assert.equal(document.getElementById('gear-header').textContent, 'R');
   renderer.renderGear(0);
   assert.equal(document.getElementById('gear-header').textContent, 'N');
+});
+
+test('TelemetryRenderer renders every speed readout in the selected unit', async () => {
+  const { TelemetryRenderer } = await import(TELEMETRY_RENDERER);
+  const document = createTelemetryDocument();
+  const renderer = new TelemetryRenderer(document, new FakeWindow());
+
+  renderer.setSpeedUnit('mph');
+  assert.equal(document.getElementById('speed-unit-label').textContent, 'MPH');
+
+  renderer.render({
+    throttle: 1,
+    throttle_pct: 100,
+    brake: 0,
+    brake_pct: 0,
+    gear: 5,
+    speed_km: 123.6,
+    top_speed_km: 287.6,
+    exit_speed_km: 152.2,
+  });
+
+  assert.equal(document.querySelector('#speed-header .speed-value').textContent, 77);
+  assert.equal(document.getElementById('top-speed-header').textContent, 179);
+  assert.equal(document.getElementById('exit-speed-header').textContent, 95);
+
+  // Back to metric, and an unsupported unit falls back to the default.
+  renderer.setSpeedUnit('kmh');
+  assert.equal(document.getElementById('speed-unit-label').textContent, 'KM/H');
+  renderer.setSpeedUnit('furlongs');
+  assert.equal(renderer.speedUnit, 'kmh');
+  assert.equal(document.getElementById('speed-unit-label').textContent, 'KM/H');
 });
 
 test('TelemetryRenderer shows latched top and exit speed', async () => {

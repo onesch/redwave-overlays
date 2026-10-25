@@ -3,6 +3,13 @@
 {% block title %}Overlays - {{ card_data.title }}{% endblock %}
 
 {% block additional_settings %}
+<div class="setting-container">
+  <div class="setting-label">Speed:</div>
+  <div class="setting-value button-section">
+    <button id="kmhBtn" class="active">km/h</button>
+    <button id="mphBtn">mph</button>
+  </div>
+</div>
 <div class="range-container">
   <label for="opacityRange">Opacity:</label>
 
@@ -24,11 +31,13 @@
 {% block overlay_scripts %}
 <script type="module">
   import {
-    mountOverlaySettings
+    mountOverlaySettings,
+    createSpeedUnitSetting,
   } from "{{ url_for('static', path='/js/page_detail/index.js') }}";
 
   mountOverlaySettings({
-    overlayName: 'telemetry'
+    overlayName: 'telemetry',
+    settings: [createSpeedUnitSetting],
   });
 </script>
 {% endblock %}

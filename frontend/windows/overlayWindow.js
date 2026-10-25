@@ -12,6 +12,7 @@ const { registerOverlayAutoStartModeHandlers } = require('../utils/overlays/feat
 const { registerOverlayMovementHandlers } = require('../utils/overlays/overlay_movement');
 const { registerOverlayRadarVisibilityHandlers } = require('../utils/overlays/features/radar/radar_visibility_mode');
 const { registerLastLapFormatHandlers } = require('../utils/overlays/features/leaderboard/last_lap_format');
+const { registerSpeedUnitHandlers } = require('../utils/overlays/features/telemetry/speed_unit');
 
 const overlays = {};
 let overlayCount = 0;
@@ -26,6 +27,7 @@ registerOverlayAutoStartModeHandlers(overlays);
 registerOverlayMovementHandlers(overlays);
 registerOverlayRadarVisibilityHandlers(overlays);
 registerLastLapFormatHandlers(overlays);
+registerSpeedUnitHandlers(overlays);
 
 function createOverlay(route, options = {}) {
   if (overlays[route] && !overlays[route].isDestroyed()) {

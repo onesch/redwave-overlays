@@ -7,6 +7,7 @@ const { createOverlayWindow, useElectronMock } = require('../helpers/electron');
 
 const electron = useElectronMock();
 const LAST_LAP_FORMAT = 'utils/overlays/features/leaderboard/last_lap_format';
+const SPEED_UNIT = 'utils/overlays/features/telemetry/speed_unit';
 
 test('Base handler falls back to the default for missing or unsupported stored values', async () => {
   const { registerLastLapFormatHandlers, DEFAULT_LAST_LAP_FORMAT } =
@@ -93,4 +94,23 @@ test('Base handler recovers from a corrupt settings file instead of failing to l
   } finally {
     console.error = consoleError;
   }
+});
+
+test('Base handler normalizes the telemetry speed unit on read and write', async () => {
+  const { registerSpeedUnitHandlers, DEFAULT_SPEED_UNIT } = loadFrontendModule(SPEED_UNIT);
+  const overlay = createOverlayWindow();
+  registerSpeedUnitHandlers({ telemetry: overlay });
+
+  // Nothing stored yet, and unsupported stored values must not reach the overlay.
+  assert.equal(await electron.ipcMain.invoke('get-speed-unit', 'telemetry'), DEFAULT_SPEED_UNIT);
+
+  electron.writeSettings({ telemetry: { SpeedUnit: 'mph' } });
+  assert.equal(await electron.ipcMain.invoke('get-speed-unit', 'telemetry'), 'mph');
+
+  electron.writeSettings({ telemetry: { SpeedUnit: 'knots' } });
+  assert.equal(await electron.ipcMain.invoke('get-speed-unit', 'telemetry'), DEFAULT_SPEED_UNIT);
+
+  electron.ipcMain.emit('set-speed-unit', { overlayName: 'telemetry', value: 'mph' });
+  assert.equal(electron.readSettings().telemetry.SpeedUnit, 'mph');
+  assert.deepEqual(overlay.sent, [{ channel: 'update-speed-unit', args: ['mph'] }]);
 });
