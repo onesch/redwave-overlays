@@ -168,11 +168,19 @@ export class TelemetryRenderer extends BaseRenderer {
     const normalized = Math.max(0, Math.min(1, Number(rawValue) || 0));
     const pct = normalized * 100;
 
-    // split pedal into zones:
-    // dead zone (0-1%), mid (1-99%), peak (99-100%)
-    const deadPct = (Math.min(pct, 1) / 1) * 100;
-    const midPct = pct <= 1 ? 0 : pct >= 99 ? 100 : ((pct - 1) / 98) * 100;
-    const peakPct = pct < 99 ? 0 : ((pct - 99) / 1) * 100;
+    // Split pedal into zones:
+    // dead zone (0-0.1%), mid (0.1-99.9%), peak (99.9-100%)
+    const deadPct = (Math.min(pct, 0.1) / 0.1) * 100;
+    const midPct = pct <= 0.1
+      ? 0
+      : pct >= 99.9
+        ? 100
+        : ((pct - 0.1) / 99.8) * 100;
+    const peakPct = pct < 99.9
+      ? 0
+      : pct >= 100
+        ? 100
+        : ((pct - 99.9) / 0.1) * 100;
 
     // update visual fill heights
     fillDead.style.height = `${deadPct}%`;
