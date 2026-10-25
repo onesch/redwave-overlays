@@ -1,9 +1,21 @@
 import { BaseRenderer } from '../shared/baseRenderer.js';
+import {
+  DEFAULT_SPEED_UNIT,
+  normalizeSpeedUnit,
+  speedUnitLabel,
+  toDisplaySpeed,
+} from './speedUnit.js';
 
 export class TelemetryRenderer extends BaseRenderer {
   constructor(document, window = globalThis.window) {
     super(document);
     this.window = window;
+    // Speeds arrive in m/s and are rendered in this unit.
+    this.speedUnit = DEFAULT_SPEED_UNIT;
+    // Last raw m/s values, so a unit change can refresh latched readouts
+    // without waiting for the next telemetry event.
+    this.lastSpeedMs = undefined;
+    this.lastSpeedMetrics = new Map();
     // number of points in trace (history length)
     this.HIST = 200;
     // sliding window buffers for pedal values
@@ -72,9 +84,7 @@ export class TelemetryRenderer extends BaseRenderer {
     this.renderPedal('throttle', data.throttle, data.throttle_pct);
     this.renderPedal('brake', data.brake, data.brake_pct);
     this.renderGear(data.gear);
-    this.renderSpeed(data.speed_km);
-    this.renderSpeedMetric('top-speed-header', data.top_speed_km);
-    this.renderSpeedMetric('exit-speed-header', data.exit_speed_km);
+    this.renderSpeeds(data);
 
     // redraw trace
     this.drawScope();
@@ -96,15 +106,56 @@ export class TelemetryRenderer extends BaseRenderer {
       String(g);
   }
 
-  renderSpeed(speedKm) {
+  // All three readouts take raw m/s from the DTO and share one conversion.
+  renderSpeeds(data) {
+    this.renderSpeed(data.speed_ms ?? data.speed);
+    this.renderSpeedMetric('top-speed-header', data.top_speed_ms ?? data.top_speed);
+    this.renderSpeedMetric('exit-speed-header', data.exit_speed_ms ?? data.exit_speed);
+  }
+
+  // Switch the unit of every speed readout and relabel the header. Latched
+  // values are re-rendered from the last raw m/s samples straight away.
+  setSpeedUnit(unit) {
+    this.speedUnit = normalizeSpeedUnit(unit);
+    this.renderSpeedUnitLabel();
+
+    if (this.lastSpeedMs !== undefined) this.renderSpeed(this.lastSpeedMs);
+    for (const [elementId, speedMs] of this.lastSpeedMetrics) {
+      this.renderSpeedMetric(elementId, speedMs);
+    }
+  }
+
+  renderSpeedUnitLabel() {
+    let label = this.document.getElementById('speed-unit-label')
+      ?? this.document.getElementById('speed-label');
+
+    // Class-based lookup covers documents without the label id.
+    if (!label) {
+      try {
+        label = this.document.querySelector('#speed-header .speed-label');
+      } catch {
+        label = null;
+      }
+    }
+    if (label) label.textContent = speedUnitLabel(this.speedUnit);
+  }
+
+  renderSpeed(speedMs) {
     const el = this.document.querySelector('#speed-header .speed-value');
-    el.textContent = Math.round(speedKm);
+    this.lastSpeedMs = speedMs;
+    this.renderSpeedUnitLabel();
+
+    const speed = toDisplaySpeed(speedMs, this.speedUnit);
+    if (el) el.textContent = Number.isFinite(speed) ? Math.round(speed) : '--';
   }
 
   // Top and exit speed stay as a placeholder until they have been latched.
-  renderSpeedMetric(elementId, speedKm) {
+  renderSpeedMetric(elementId, speedMs) {
     const el = this.document.getElementById(elementId);
-    el.textContent = Number.isFinite(speedKm) ? Math.round(speedKm) : '--';
+    this.lastSpeedMetrics.set(elementId, speedMs);
+
+    const speed = toDisplaySpeed(speedMs, this.speedUnit);
+    if (el) el.textContent = Number.isFinite(speed) ? Math.round(speed) : '--';
   }
 
   renderPedal(type, rawValue, pctValue) {

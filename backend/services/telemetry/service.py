@@ -17,7 +17,7 @@ class TelemetryContext:
     throttle: float
     brake: float
     gear: int
-    speed_km: float
+    speed_ms: float
     is_brake_abs: bool
 
 
@@ -36,7 +36,7 @@ class TelemetryService(BaseService):
         """
         throttle: float = self.irsdk.get_value("Throttle")
         brake: float = self.irsdk.get_value("Brake")
-        speed_km: float = self.irsdk.get_speed_kmh()
+        speed_ms: float = self.irsdk.get_speed_ms()
         gear: int = self.irsdk.get_value("Gear")
         is_brake_abs: bool = self.irsdk.get_value("BrakeABSactive")
 
@@ -44,7 +44,7 @@ class TelemetryService(BaseService):
             throttle=self._normalize_pedal(throttle),
             brake=self._normalize_pedal(brake),
             gear=gear,
-            speed_km=speed_km,
+            speed_ms=speed_ms,
             is_brake_abs=is_brake_abs,
         )
 
@@ -72,9 +72,9 @@ class TelemetryService(BaseService):
             "throttle_pct": round(ctx.throttle * 100, 1),
             "brake_pct": round(ctx.brake * 100, 1),
             "gear": ctx.gear,
-            "speed_km": ctx.speed_km,
-            "top_speed_km": self.top_speed_km,
-            "exit_speed_km": self.exit_speed_km,
+            "speed_ms": ctx.speed_ms,
+            "top_speed_ms": self.top_speed_ms,
+            "exit_speed_ms": self.exit_speed_ms,
             "is_brake_abs": ctx.is_brake_abs,
         }
 
@@ -87,9 +87,9 @@ class TelemetryService(BaseService):
 
     def _reset_speed_metrics(self):
         """Clear Top Speed and Exit Speed tracking state."""
-        self.top_speed_km: float | None = None
-        self.exit_speed_km: float | None = None
-        self._peak_speed_km = 0.0
+        self.top_speed_ms: float | None = None
+        self.exit_speed_ms: float | None = None
+        self._peak_speed_ms = 0.0
         self._is_braking = False
         self._is_exit_pending = False
 
@@ -105,16 +105,16 @@ class TelemetryService(BaseService):
         if ctx.brake > BRAKE_THRESHOLD:
             if not self._is_braking:
                 self._is_braking = True
-                self.top_speed_km = self._peak_speed_km
+                self.top_speed_ms = self._peak_speed_ms
             return
 
         if self._is_braking:
             self._is_braking = False
-            self._peak_speed_km = ctx.speed_km
+            self._peak_speed_ms = ctx.speed_ms
             self._is_exit_pending = True
 
-        self._peak_speed_km = max(self._peak_speed_km, ctx.speed_km)
+        self._peak_speed_ms = max(self._peak_speed_ms, ctx.speed_ms)
 
         if self._is_exit_pending and ctx.throttle > THROTTLE_THRESHOLD:
-            self.exit_speed_km = ctx.speed_km
+            self.exit_speed_ms = ctx.speed_ms
             self._is_exit_pending = False

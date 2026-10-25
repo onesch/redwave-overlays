@@ -92,9 +92,10 @@ def test_get_car_rgb(idx, drivers, player_idx, multiclass, expected):
         == expected
     )
 
-def test_get_speed_kmh_valid(mock_irsdk_service):
-    result = mock_irsdk_service.get_speed_kmh()
-    assert result == pytest.approx(36.0)
+def test_get_speed_ms_valid(mock_irsdk_service):
+    # iRacing reports 10 m/s; the backend exposes it without converting.
+    result = mock_irsdk_service.get_speed_ms()
+    assert result == pytest.approx(10.0)
 
 
 # --- Error tests ---
@@ -110,7 +111,7 @@ def test_get_value_when_not_connected(irsdk_mock_factory):
     assert service.get_value("Speed") is None
 
 
-def test_get_speed_kmh_none(irsdk_mock_factory):
+def test_get_speed_ms_none(irsdk_mock_factory):
     service = IRSDKService()
 
     mock_ir = irsdk_mock_factory()
@@ -120,5 +121,12 @@ def test_get_speed_kmh_none(irsdk_mock_factory):
     # override get_value
     service.get_value = lambda key: None
 
-    result = service.get_speed_kmh()
+    result = service.get_speed_ms()
     assert result == 0.0
+
+
+def test_get_speed_ms_invalid(mock_irsdk_service):
+    # A malformed telemetry value must not break the snapshot.
+    mock_irsdk_service.get_value = lambda key: "not a number"
+
+    assert mock_irsdk_service.get_speed_ms() == 0.0

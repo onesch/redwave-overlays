@@ -9,6 +9,7 @@ const PAGE_DETAIL = '../../../frontend/static/js/page_detail/index.js';
 const DISPLAY_BUTTONS = ['DisplayAllTimeBtn', 'DisplayTrackBtn', 'DisplayGarageBtn'];
 const AUTO_START_BUTTONS = ['AutoStartOnBtn', 'AutoStartOffBtn'];
 const RADAR_BUTTONS = ['dimBtn', 'showBtn', 'hideBtn'];
+const SPEED_UNIT_BUTTONS = ['kmhBtn', 'mphBtn'];
 
 const activeIds = (document, ids) =>
   ids.filter((id) => document.getElementById(id).classList.contains('active'));
@@ -127,6 +128,46 @@ test('overlaySettings logs a failing setting without breaking the rest of the pa
   // The remaining settings still mounted.
   assert.equal(document.getElementById('zoomValue').textContent, '100%');
   assert.deepEqual(activeIds(document, RADAR_BUTTONS), ['dimBtn']);
+});
+
+test('overlaySettings loads and saves the telemetry speed unit', async () => {
+  const { mountOverlaySettings, createSpeedUnitSetting } = await import(PAGE_DETAIL);
+  const document = createDetailPageDocument({ kmhBtn: '', mphBtn: '' });
+  const api = createSettingsApiStub({
+    getZoom: 1,
+    getDisplayMode: 'all_time',
+    getAutoStartMode: 'off',
+    getSpeedUnit: 'mph',
+  });
+
+  await mountOverlaySettings({
+    overlayName: 'telemetry',
+    settings: [createSpeedUnitSetting],
+    document,
+    api,
+  });
+
+  assert.deepEqual(activeIds(document, SPEED_UNIT_BUTTONS), ['mphBtn']);
+
+  api.calls.length = 0; // ignore the initial loads
+  document.getElementById('kmhBtn').click();
+
+  assert.deepEqual(api.lastCall('setSpeedUnit'), ['telemetry', 'kmh']);
+  assert.deepEqual(activeIds(document, SPEED_UNIT_BUTTONS), ['kmhBtn']);
+});
+
+test('overlaySettings speed unit keeps the HTML default when the api has no value', async () => {
+  const { mountOverlaySettings, createSpeedUnitSetting } = await import(PAGE_DETAIL);
+  const document = createDetailPageDocument({ kmhBtn: 'active', mphBtn: '' });
+
+  await mountOverlaySettings({
+    overlayName: 'telemetry',
+    settings: [createSpeedUnitSetting],
+    document,
+    api: createSettingsApiStub(),
+  });
+
+  assert.deepEqual(activeIds(document, SPEED_UNIT_BUTTONS), ['kmhBtn']);
 });
 
 test('overlaySettings zoom keeps the HTML defaults when the api has no zoom value', async () => {

@@ -70,5 +70,11 @@ export function createSettingsApi(
       electronAPI.getTrackType?.(overlayName),
     setTrackType: (overlayName, value) =>
       electronAPI.setTrackType?.(overlayName, value),
+
+    // Telemetry speed unit (kmh / mph).
+    getSpeedUnit: (overlayName) =>
+      electronAPI.getSpeedUnit?.(overlayName),
+    setSpeedUnit: (overlayName, value) =>
+      electronAPI.setSpeedUnit?.(overlayName, value),
   };
 }
