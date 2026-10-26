@@ -11,7 +11,7 @@
 [![Release](https://img.shields.io/github/v/release/onesch/redwave-overlays?style=flat&logo=github&logoColor=white&label=release&color=689C35)](https://github.com/onesch/redwave-overlays/releases)
 ![Downloads](https://img.shields.io/github/downloads/onesch/redwave-overlays/total?style=flat&label=downloads&color=3976B8&logo=github&logoColor=white)
 ![License](https://img.shields.io/github/license/onesch/redwave-overlays?style=flat&label=license&color=B86B28&logo=spdx&logoColor=white)
-![Combined Coverage](https://img.shields.io/badge/coverage-80%25-689C35?style=flat&logo=pytest&logoColor=white)
+![Combined Coverage](https://img.shields.io/badge/coverage-81%25-689C35?style=flat&logo=pytest&logoColor=white)
 ![Code Quality](https://img.shields.io/badge/code%20quality-A-087E8B?style=flat&logo=codeclimate&logoColor=white)
 
 <hr />
