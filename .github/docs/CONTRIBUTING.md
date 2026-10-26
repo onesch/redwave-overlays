@@ -51,7 +51,7 @@ Check out [Project structure](https://github.com/onesch/redwave-overlays/blob/ma
 
 ## Build & Packaging
 
-For building the production version of RedWave overlays, see [how to build app](https://github.com/onesch/redwave-overlays/blob/master/.github/docs/PROJECTBUILD.md).
+For building the production version of RedWave overlays, see [How to build app](https://github.com/onesch/redwave-overlays/blob/master/.github/docs/PROJECTBUILD.md).
 
 
 ## Contribution Workflow
