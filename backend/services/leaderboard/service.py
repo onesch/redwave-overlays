@@ -19,6 +19,7 @@ class Leaderboard(BaseService):
         self.neighbors = NeighborsService(builder)
         self.irating_calculator = IRatingCalculator()
         self._last_session_num: int | None = None
+        self._last_session_time: float | None = None
 
     def _build_snapshot(self, ctx: LeaderboardContext) -> dict[str, Any]:
         player_idx: int = self.irsdk.get_value("PlayerCarIdx")
@@ -150,11 +151,10 @@ class Leaderboard(BaseService):
         """Public method returning structured session info for a player."""
         session_info: dict[str, Any] = self.irsdk.get_value("SessionInfo") or {}
         current_session = self._get_current_session(session_info)
-
-        self._reset_pit_status(session_info)
-
         session_laps: int | Literal["unlimited"] = current_session.get("SessionLaps")
         session_time_current: float = self.irsdk.get_value("SessionTime")
+
+        self._reset_pit_status(session_info, session_time_current)
 
         player_lap_time = self.lap_times.car_lap_time(player_idx, ctx)
 
@@ -192,13 +192,26 @@ class Leaderboard(BaseService):
             for lap in raw_laps
         ]
 
-    def _reset_pit_status(self, session_info: dict) -> None:
-        """Reset pit tracking if a new session has started."""
+    def _reset_pit_status(
+        self,
+        session_info: dict,
+        session_time: float,
+    ) -> None:
+        """Reset pit tracking when the session changes or restarts."""
         current_num = session_info.get("CurrentSessionNum", 0)
 
-        if self._last_session_num != current_num:
+        session_changed = self._last_session_num != current_num
+        session_restarted = (
+            session_time is not None
+            and self._last_session_time is not None
+            and session_time < self._last_session_time
+        )
+
+        if session_changed or session_restarted:
             self.builder.reset_pit_data()
-            self._last_session_num = current_num
+
+        self._last_session_num = current_num
+        self._last_session_time = session_time
 
     def _get_current_session(self, session_info: dict) -> dict:
         """Return the current session dictionary from session info."""

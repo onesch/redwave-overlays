@@ -81,18 +81,36 @@ def test_is_multiclass_returns_true_for_multiple_classes(
 
 def test_reset_pit_status_calls_reset_on_new_session(mock_service):
     mock_service._last_session_num = 1
+    mock_service._last_session_time = 100.0
     session_info = {"CurrentSessionNum": 2}
     mock_service.builder.reset_pit_data = MagicMock()
-    mock_service._reset_pit_status(session_info)
+
+    mock_service._reset_pit_status(session_info, session_time=200.0)
+
     mock_service.builder.reset_pit_data.assert_called_once()
 
 
 def test_reset_pit_status_does_not_call_reset_on_same_session(mock_service):
     mock_service._last_session_num = 2
+    mock_service._last_session_time = 100.0
     session_info = {"CurrentSessionNum": 2}
     mock_service.builder.reset_pit_data = MagicMock()
-    mock_service._reset_pit_status(session_info)
+
+    mock_service._reset_pit_status(session_info, session_time=101.0)
+
     mock_service.builder.reset_pit_data.assert_not_called()
+
+
+def test_reset_pit_status_resets_on_same_session_restart(mock_service):
+    mock_service._last_session_num = 2
+    mock_service._last_session_time = 1200.0
+    session_info = {"CurrentSessionNum": 2}
+    mock_service.builder.reset_pit_data = MagicMock()
+
+    mock_service._reset_pit_status(session_info, session_time=0.0)
+
+    mock_service.builder.reset_pit_data.assert_called_once()
+    assert mock_service._last_session_time == 0.0
 
 
 def test_get_current_session_empty_or_out_of_bounds(mock_service):
