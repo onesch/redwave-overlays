@@ -1,4 +1,4 @@
-[Go back to CONTRIBUTING.md](https://github.com/onesch/redwave-overlays/blob/master/docs/CONTRIBUTING.md)
+[Go back to CONTRIBUTING.md](https://github.com/onesch/redwave-overlays/blob/master/.github/docs/CONTRIBUTING.md)
 
 # Project Structure
 

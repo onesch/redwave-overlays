@@ -47,7 +47,7 @@
 
 <div>Contributions are welcome!</div>
 <div>
-  Read the <a href="https://github.com/onesch/redwave-overlays/blob/master/docs/CONTRIBUTING.md">Contributing Guide</a> for details.
+  Read the <a href="https://github.com/onesch/redwave-overlays/blob/master/.github/docs/CONTRIBUTING.md">Contributing Guide</a> for details.
 </div>
 
 <h3>

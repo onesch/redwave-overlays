@@ -47,11 +47,11 @@ npm run coverage:frontend
 ## Project Structure
 
 Want to understand how the project is organized?
-Check out [Project structure](https://github.com/onesch/redwave-overlays/blob/master/docs/STRUCTURE.md).
+Check out [Project structure](https://github.com/onesch/redwave-overlays/blob/master/.github/docs/STRUCTURE.md).
 
 ## Build & Packaging
 
-For building the production version of RedWave overlays, see [how to build app](https://github.com/onesch/redwave-overlays/blob/master/docs/PROJECTBUILD.md).
+For building the production version of RedWave overlays, see [how to build app](https://github.com/onesch/redwave-overlays/blob/master/.github/docs/PROJECTBUILD.md).
 
 
 ## Contribution Workflow
