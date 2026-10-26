@@ -1,34 +1,32 @@
-from fastapi import APIRouter, Request
-from fastapi.responses import HTMLResponse
-
-from backend.utils.templates import templates
+from fastapi import APIRouter
+from fastapi.responses import RedirectResponse
 
 router = APIRouter()
 
 
-@router.get("/radar", response_class=HTMLResponse)
-async def radar_window_view(request: Request):
-    return templates.TemplateResponse(
-        request, "overlays/radar.html"
+@router.get("/radar", response_class=RedirectResponse)
+async def radar_window_view():
+    return RedirectResponse(
+        "/overlays/shared/baseOverlay.html?feature=radar"
     )
 
 
-@router.get("/leaderboard", response_class=HTMLResponse)
-async def leaderboard_window_view(request: Request):
-    return templates.TemplateResponse(
-        request, "overlays/leaderboard.html"
+@router.get("/leaderboard", response_class=RedirectResponse)
+async def leaderboard_window_view():
+    return RedirectResponse(
+        "/overlays/shared/baseOverlay.html?feature=leaderboard"
     )
 
 
-@router.get("/track-map", response_class=HTMLResponse)
-async def track_map_window_view(request: Request):
-    return templates.TemplateResponse(
-        request, "overlays/track_map.html"
+@router.get("/track-map", response_class=RedirectResponse)
+async def track_map_window_view():
+    return RedirectResponse(
+        "/overlays/shared/baseOverlay.html?feature=track-map"
     )
 
 
-@router.get("/telemetry", response_class=HTMLResponse)
-async def telemetry_window_view(request: Request):
-    return templates.TemplateResponse(
-        request, "overlays/telemetry.html"
+@router.get("/telemetry", response_class=RedirectResponse)
+async def telemetry_window_view():
+    return RedirectResponse(
+        "/overlays/shared/baseOverlay.html?feature=telemetry"
     )

@@ -1,0 +1,269 @@
+import { BaseRenderer } from '../shared/baseRenderer.js';
+import {
+  DEFAULT_SPEED_UNIT,
+  normalizeSpeedUnit,
+  speedUnitLabel,
+  toDisplaySpeed,
+} from './speedUnit.js';
+
+export class TelemetryRenderer extends BaseRenderer {
+  constructor(document, window = globalThis.window) {
+    super(document);
+    this.window = window;
+    // Speeds arrive in m/s and are rendered in this unit.
+    this.speedUnit = DEFAULT_SPEED_UNIT;
+    // Last raw m/s values, so a unit change can refresh latched readouts
+    // without waiting for the next telemetry event.
+    this.lastSpeedMs = undefined;
+    this.lastSpeedMetrics = new Map();
+    // number of points in trace (history length)
+    this.HIST = 200;
+    // sliding window buffers for pedal values
+    this.thrHistory = new Array(this.HIST).fill(0);
+    this.brkHistory = new Array(this.HIST).fill(0);
+    this.brkAbsHistory = new Array(this.HIST).fill(false);
+    this.initScope();
+  }
+
+  async initScope() {
+    this.canvas = this.document.getElementById('telemetry-canvas');
+    this.ctx = this.canvas.getContext('2d');
+
+    const style = this.window.getComputedStyle(this.document.documentElement);
+    this.thrColor = style.getPropertyValue('--thr-color').trim();
+    this.brkColor = style.getPropertyValue('--brk-color').trim();
+    this.absColor = style.getPropertyValue('--yellow-primary').trim();
+
+    // handle canvas resize + HiDPI scaling
+    this.resizeScope = () => {
+      const r = this.canvas.parentElement.getBoundingClientRect();
+      const dpr = this.window.devicePixelRatio || 1;
+
+      this.scopeWidth = r.width;
+      this.scopeHeight = r.height;
+
+       // set real pixel resolution (for sharp rendering)
+      this.canvas.width = Math.max(1, Math.floor(r.width * dpr));
+      this.canvas.height = Math.max(1, Math.floor(r.height * dpr));
+
+      // set CSS size
+      this.canvas.style.width = `${r.width}px`;
+      this.canvas.style.height = `${r.height}px`;
+
+      // scale drawing context to device pixel ratio
+      this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      // disable smoothing for crisp lines
+      this.ctx.imageSmoothingEnabled = false;
+      this.ctx.lineCap = 'butt';
+      this.ctx.lineJoin = 'miter';
+    };
+
+    this.resizeScope();
+    this.window.addEventListener('resize', this.resizeScope);
+  }
+
+  render(data) {
+    // get incoming values + NaN protection
+    const thrRaw = Number(data.throttle);
+    const brkRaw = Number(data.brake);
+
+    const thr = Number.isFinite(thrRaw) ? thrRaw : 0;
+    const brk = Number.isFinite(brkRaw) ? brkRaw : 0;
+    const absActive = Boolean(data.is_brake_abs);
+
+    // update sliding history (push new, drop oldest)
+    this.thrHistory.push(thr);
+    this.thrHistory.shift();
+    this.brkHistory.push(brk);
+    this.brkHistory.shift();
+    this.brkAbsHistory.push(absActive);
+    this.brkAbsHistory.shift();
+
+    // update UI elements
+    this.renderPedal('throttle', data.throttle, data.throttle_pct);
+    this.renderPedal('brake', data.brake, data.brake_pct);
+    this.renderGear(data.gear);
+    this.renderSpeeds(data);
+
+    // redraw trace
+    this.drawScope();
+  }
+
+  renderGear(gear) {
+    const el = this.document.getElementById('gear-header');
+
+    const g = Number(gear);
+
+    if (!Number.isFinite(g)) {
+      el.textContent = 'N';
+      return;
+    }
+
+    el.textContent =
+      g === -1 ? 'R' :
+      g === 0 ? 'N' :
+      String(g);
+  }
+
+  // All three readouts take raw m/s from the DTO and share one conversion.
+  renderSpeeds(data) {
+    this.renderSpeed(data.speed_ms ?? data.speed);
+    this.renderSpeedMetric('top-speed-header', data.top_speed_ms ?? data.top_speed);
+    this.renderSpeedMetric('exit-speed-header', data.exit_speed_ms ?? data.exit_speed);
+  }
+
+  // Switch the unit of every speed readout and relabel the header. Latched
+  // values are re-rendered from the last raw m/s samples straight away.
+  setSpeedUnit(unit) {
+    this.speedUnit = normalizeSpeedUnit(unit);
+    this.renderSpeedUnitLabel();
+
+    if (this.lastSpeedMs !== undefined) this.renderSpeed(this.lastSpeedMs);
+    for (const [elementId, speedMs] of this.lastSpeedMetrics) {
+      this.renderSpeedMetric(elementId, speedMs);
+    }
+  }
+
+  renderSpeedUnitLabel() {
+    let label = this.document.getElementById('speed-unit-label')
+      ?? this.document.getElementById('speed-label');
+
+    // Class-based lookup covers documents without the label id.
+    if (!label) {
+      try {
+        label = this.document.querySelector('#speed-header .speed-label');
+      } catch {
+        label = null;
+      }
+    }
+    if (label) label.textContent = speedUnitLabel(this.speedUnit);
+  }
+
+  renderSpeed(speedMs) {
+    const el = this.document.querySelector('#speed-header .speed-value');
+    this.lastSpeedMs = speedMs;
+    this.renderSpeedUnitLabel();
+
+    const speed = toDisplaySpeed(speedMs, this.speedUnit);
+    if (el) el.textContent = Number.isFinite(speed) ? Math.round(speed) : '--';
+  }
+
+  // Top and exit speed stay as a placeholder until they have been latched.
+  renderSpeedMetric(elementId, speedMs) {
+    const el = this.document.getElementById(elementId);
+    this.lastSpeedMetrics.set(elementId, speedMs);
+
+    const speed = toDisplaySpeed(speedMs, this.speedUnit);
+    if (el) el.textContent = Number.isFinite(speed) ? Math.round(speed) : '--';
+  }
+
+  renderPedal(type, rawValue, pctValue) {
+    const value = this.document.getElementById(`${type}-pct-header`);
+    const fillPeak = this.document.getElementById(`${type}-fill-peak`);
+    const fillMid = this.document.getElementById(`${type}-fill-mid`);
+    const fillDead = this.document.getElementById(`${type}-fill-dead`);
+
+    // normalize raw input
+    const normalized = Math.max(0, Math.min(1, Number(rawValue) || 0));
+    const pct = normalized * 100;
+
+    // Split pedal into zones:
+    // dead zone (0-0.1%), mid (0.1-99.9%), peak (99.9-100%)
+    const deadPct = (Math.min(pct, 0.1) / 0.1) * 100;
+    const midPct = pct <= 0.1
+      ? 0
+      : pct >= 99.9
+        ? 100
+        : ((pct - 0.1) / 99.8) * 100;
+    const peakPct = pct < 99.9
+      ? 0
+      : pct >= 100
+        ? 100
+        : ((pct - 99.9) / 0.1) * 100;
+
+    // update visual fill heights
+    fillDead.style.height = `${deadPct}%`;
+    fillMid.style.height = `${midPct}%`;
+    fillPeak.style.height = `${peakPct}%`;
+
+    // display percentage (FL = full)
+    const percent = Number.isFinite(pctValue) ? pctValue : pct;
+    const rounded = Math.round(percent);
+    value.textContent = (rounded === 100) ? 'FL' : `${rounded}`;
+  }
+
+  drawScope() {
+    if (!this.canvas || !this.ctx) return;
+
+    const ctx = this.ctx;
+    const W = this.scopeWidth || this.canvas.clientWidth;
+    const H = this.scopeHeight || this.canvas.clientHeight;
+    const PAD = 2;
+    const step = W / (this.HIST - 1);  // horizontal distance between points
+    // helper for crisp horizontal lines
+    const px = (value) => Math.round(value) + 0.5;
+
+    // clear previous frame
+    ctx.clearRect(0, 0, W, H);
+
+    // draw horizontal grid lines (20%, 40%, ...)
+    ctx.strokeStyle = 'rgba(255,255,255,0.10)';
+    ctx.lineWidth = 1;
+
+    [0.2, 0.4, 0.6, 0.8].forEach(level => {
+      const y = px(PAD + (H - PAD * 2) * (1 - level));
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(W, y);
+      ctx.stroke();
+    });
+
+    // function to draw a single trace line
+    const drawTrace = (history, lineColor) => {
+      ctx.beginPath();
+      ctx.strokeStyle = lineColor;
+      ctx.lineWidth = 2;
+
+      // NOTE:
+      // Do not snap the moving trace to half-pixels
+      // X half-pixel snapping with non-integer step introduces
+      // temporal quantization ("heat haze" shimmer) while scrolling left
+
+      // connect all history points into one continuous line
+      for (let i = 0; i < this.HIST; i++) {
+        const x = i * step;
+
+        // map value [0,1] to canvas Y (inverted)
+        const y = PAD + (H - PAD * 2) * (1 - history[i]);
+
+        i === 0
+          ? ctx.moveTo(x, y) // start path
+          : ctx.lineTo(x, y); // draw segment
+      }
+      ctx.stroke();
+    };
+
+    const drawBrakeTrace = () => {
+      ctx.lineWidth = 2;
+
+      for (let i = 1; i < this.HIST; i++) {
+        const x1 = (i - 1) * step;
+        const x2 = i * step;
+        const y1 = PAD + (H - PAD * 2) * (1 - this.brkHistory[i - 1]);
+        const y2 = PAD + (H - PAD * 2) * (1 - this.brkHistory[i]);
+        const segmentInAbs = this.brkAbsHistory[i - 1] || this.brkAbsHistory[i];
+
+        ctx.beginPath();
+        ctx.strokeStyle = segmentInAbs ? this.absColor : this.brkColor;
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
+      }
+    };
+
+    // draw both pedal traces
+    drawTrace(this.thrHistory, this.thrColor);
+    drawBrakeTrace();
+  }
+}

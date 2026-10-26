@@ -1,10 +1,13 @@
 {
   "name": "redwave_overlays",
   "productName": "RedWave overlays",
-  "version": "3.4.1",
+  "version": "4.0.0",
   "main": "frontend/main.js",
   "scripts": {
+    "test:frontend": "node --test",
+    "coverage:frontend": "c8 node --test",
     "build": "electron-builder",
+    "build:publish": "electron-builder --publish always",
     "start:dev": "cross-env NODE_ENV=development concurrently \"uvicorn backend.main:app --reload --port 8000\" \"electron .\"",
     "start:prod": "cross-env NODE_ENV=production electron ."
   },
@@ -15,16 +18,37 @@
       "frontend/**",
       "backend_run/**"
     ],
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "onesch",
+        "repo": "redwave-overlays"
+      }
+    ],
     "win": {
-      "icon": "frontend/static/images/app_icon.ico"
+      "icon": "frontend/static/images/app_icon.ico",
+      "target": "nsis"
+    },
+    "nsis": {
+      "artifactName": "${productName}.Setup.${version}.${ext}"
     }
   },
+  "dependencies": {
+    "builder-util-runtime": "^9.7.0",
+    "electron-updater": "^6.8.9"
+  },
   "devDependencies": {
+    "c8": "^12.0.0",
     "concurrently": "^9.2.1",
     "cross-env": "^10.0.0",
-    "electron": "^41.0.0"
+    "electron": "^41.0.0",
+    "electron-builder": "^26.15.3"
   },
   "author": "onesch",
   "license": "GPL-3.0",
-  "description": ""
+  "description": "RedWave Overlays is a lightweight desktop application designed to display live iRacing telemetry.",
+  "allowScripts": {
+    "electron@41.10.7": true,
+    "electron-winstaller@5.4.0": true
+  }
 }

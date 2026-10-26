@@ -1,0 +1,51 @@
+<!-- Custom footer -->
+<footer class="footer">
+  <div class="footer-info">
+    <p class="footer-version">
+      v{{ app_version }} •
+      <span id="version-status" aria-live="polite">
+        <span id="version-status-text">checking…</span>
+        <a
+          id="version-update-link"
+          class="version-update-link"
+          href="{{ url_for('settings') }}"
+          hidden
+        >Update available — open Settings</a>
+      </span>
+    </p>
+  </div>
+</footer>
+
+<script type="module">
+  const versionStatusText = document.getElementById('version-status-text');
+  const versionUpdateLink = document.getElementById('version-update-link');
+
+  const updateAvailableStates = new Set([
+    'available',
+    'downloading',
+    'downloaded',
+  ]);
+
+  function renderVersionStatus(status) {
+    const updateAvailable = updateAvailableStates.has(status.state);
+
+    versionStatusText.hidden = updateAvailable;
+    versionUpdateLink.hidden = !updateAvailable;
+
+    if (updateAvailable) return;
+
+    switch (status.state) {
+      case 'not-available':
+        versionStatusText.textContent = 'latest';
+        break;
+      case 'error':
+        versionStatusText.textContent = 'update check unavailable';
+        break;
+      default:
+        versionStatusText.textContent = 'checking…';
+    }
+  }
+
+  window.electronAPI.onUpdateStatus(renderVersionStatus);
+  window.electronAPI.getUpdateStatus().then(renderVersionStatus);
+</script>

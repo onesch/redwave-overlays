@@ -33,7 +33,7 @@ def test_reset_pit_data_clears_dicts(mock_builder):
         ("   ", ""),
     ],
 )
-def test_get_first_name_variants(mock_values, mock_lap_times, username, expected):
+def test_get_first_name(mock_values, mock_lap_times, username, expected):
     mock_builder = CarDataBuilder(mock_values, mock_lap_times)
     driver = {"UserName": username}
     assert mock_builder._get_first_name(driver) == expected
@@ -60,39 +60,119 @@ def test_format_lap_dist_invalid(mock_builder, mock_ctx, lap_dist):
     assert mock_builder._format_lap_dist(0, ctx) is None
 
 
-def test_resolve_position_multiclass_zero_and_negative(mock_builder, mock_ctx):
-    ctx = mock_ctx(positions=[0, -1])
-    zero_pos = mock_builder._resolve_position(idx=0, ctx=ctx)
-    negative_pos = mock_builder._resolve_position(idx=1, ctx=ctx)
-    assert zero_pos == 1
-    assert negative_pos is None
+@pytest.mark.parametrize(
+    "multiclass,positions,idx,expected",
+    [
+         # Current overall position is available.
+        (False, [9, 2, 3], 0, 9),
+        # Current position is -1 -> car is not classified.
+        (False, [-1, 2, 3], 0, None),
+        # fallback to starting position.
+        (False, [0, 2, 3], 0, 2),
+        # Current overall position is available in multiclass.
+        (True, [9, 2, 3], 0, 9),
+        # Current position is -1 -> car is not classified in multiclass.
+        (True, [-1, 2, 3], 0, None),
+        # fallback to starting position in multiclass.
+        (True, [1, 0, 3], 1, 3),
+    ],
+)
+def test_resolve_position(
+    mock_builder,
+    mock_ctx,
+    multiclass,
+    positions,
+    idx,
+    expected,
+):
+    ctx = mock_ctx(
+        positions=positions,
+        class_positions=positions,
+        multiclass=multiclass,
+    )
+    assert mock_builder._resolve_position(idx, ctx) == expected
 
 
-def test_resolve_position_normal_and_negative(mock_builder, mock_ctx):
-    ctx = mock_ctx(positions=[-1, 3])
+def test_resolve_position_returns_none_when_starting_position_missing(
+    mock_builder,
+    mock_ctx,
+):
+    ctx = mock_ctx(
+        positions=[0, 2, 3],
+        starting_positions={},
+    )
     assert mock_builder._resolve_position(0, ctx) is None
-    assert mock_builder._resolve_position(1, ctx) == 3
 
 
-def test_get_starting_position_from_qualify_stats(mock_builder):
-    pos = mock_builder._get_starting_position(
-        car_idx=1, field="Position", offset=0
-    )
-    assert pos == 2
+def test_get_starting_positions_from_qualify_results(mock_builder):
+    positions, class_positions = mock_builder.get_starting_positions()
+    assert positions == {0: 2, 1: 3, 2: 1}
+    assert class_positions == {0: 2, 1: 3, 2: 1}
 
 
-def test_get_starting_position_missing_qualify(mock_builder):
-    pos = mock_builder._get_starting_position(
-        car_idx=999, field="Position", offset=0
-    )
-    assert pos == 0
+def test_get_starting_positions_skips_result_without_car_idx(
+    mock_builder,
+):
+    mock_builder.irsdk.get_value = lambda key: {
+        "Results": [
+            {
+                "CarIdx": 0,
+                "Position": 1,
+                "ClassPosition": 0,
+            },
+            {
+                "Position": 2,
+                "ClassPosition": 1,
+            },
+        ]
+    }
+
+    positions, class_positions = mock_builder.get_starting_positions()
+
+    assert positions == {0: 2}
+    assert class_positions == {0: 1}
+
+
+def test_get_starting_positions_skips_missing_positions(
+    mock_builder,
+):
+    mock_builder.irsdk.get_value = lambda key: {
+        "Results": [
+            {
+                "CarIdx": 0,
+                "Position": None,
+                "ClassPosition": 0,
+            },
+            {
+                "CarIdx": 1,
+                "Position": 2,
+                "ClassPosition": None,
+            },
+        ]
+    }
+
+    positions, class_positions = mock_builder.get_starting_positions()
+
+    assert positions == {1: 3}
+    assert class_positions == {0: 1}
+
+
+def test_get_starting_positions_returns_empty_when_no_qualify_results(
+    mock_builder,
+):
+    mock_builder.irsdk.get_value.side_effect = lambda key: {}
+
+    positions, class_positions = mock_builder.get_starting_positions()
+
+    assert positions == {}
+    assert class_positions == {}
 
 
 def test_starting_position_falls_back_to_race(mock_builder, mock_ctx):
     ctx = mock_ctx(positions=[0])
     result = mock_builder.build(0, ctx)
-    assert result["name"] == "Driver1"
-    assert result["pos"] == 1
+    # fallback value from mock_ctx.starting_positions
+    assert result["pos"] == 2
 
 
 def test_builder_converts_negative_position_to_none(mock_builder, mock_ctx):
@@ -197,3 +277,176 @@ def test_build_all_sorted_by_position(mock_builder, mock_ctx):
 
     positions = [car["pos"] for car in cars]
     assert positions == sorted(positions)
+
+
+def test_get_irating_drivers_returns_ordered_eligible_drivers(mock_builder, mock_ctx):
+    ctx = mock_ctx(
+        drivers=[
+            {
+                "UserName": "Driver1",
+                "UserID": 101,
+                "IRating": 2000,
+                "CarClassID": 1,
+            },
+            {
+                "UserName": "Driver2",
+                "UserID": 102,
+                "IRating": 1800,
+                "CarClassID": 1,
+            },
+            {
+                "UserName": "Driver3",
+                "UserID": 103,
+                "IRating": 1700,
+                "CarClassID": 2,
+            },
+        ],
+        positions=[3, 1, 2],
+    )
+
+    result = mock_builder.get_irating_drivers(ctx)
+
+    assert result == [
+        {
+            "id": 102,
+            "irating": 1800,
+            "position": 1,
+            "class_id": 1,
+            "started": True,
+        },
+        {
+            "id": 103,
+            "irating": 1700,
+            "position": 2,
+            "class_id": 2,
+            "started": True,
+        },
+        {
+            "id": 101,
+            "irating": 2000,
+            "position": 3,
+            "class_id": 1,
+            "started": True,
+        },
+    ]
+
+
+def test_get_irating_drivers_skips_pace_car_and_invalid_irating(
+    mock_builder,
+    mock_ctx,
+):
+    ctx = mock_ctx(
+        drivers=[
+            {"UserName": "PACE CAR", "IRating": 0, "CarClassID": 1},
+            {
+                "UserName": "Driver1",
+                "UserID": 101,
+                "IRating": "invalid",
+                "CarClassID": 1,
+            },
+            {
+                "UserName": "Driver2",
+                "UserID": 102,
+                "IRating": 1800,
+                "CarClassID": 1,
+            },
+        ],
+        positions=[1, 2, 3],
+    )
+
+    result = mock_builder.get_irating_drivers(ctx)
+
+    assert result == [
+        {
+            "id": 102,
+            "irating": 1800,
+            "position": 3,
+            "class_id": 1,
+            "started": True,
+        }
+    ]
+
+
+def test_get_irating_drivers_marks_unresolved_position_as_not_started(
+    mock_builder,
+    mock_ctx,
+):
+    ctx = mock_ctx(positions=[-1, 1, 2])
+
+    result = mock_builder.get_irating_drivers(ctx)
+
+    assert result[-1]["id"] == 101
+    assert result[-1]["position"] is None
+    assert result[-1]["started"] is False
+
+
+def test_get_irating_drivers_excludes_zero_irating(
+    mock_service,
+    mock_ctx,
+):
+    ctx = mock_ctx(
+        drivers=[
+            {
+                "UserID": 101,
+                "IRating": 0,
+                "CarClassID": 1,
+            },
+            {
+                "UserID": 102,
+                "IRating": 1800,
+                "CarClassID": 1,
+            },
+        ],
+    )
+
+    result = mock_service.builder.get_irating_drivers(ctx)
+
+    assert result == [
+        {
+            "id": 102,
+            "irating": 1800,
+            "position": 2,
+            "class_id": 1,
+            "started": True,
+        }
+    ]
+
+
+@pytest.mark.parametrize(
+    "radio_car_idx,driver,expected",
+    [
+        (1, {"CarIdx": 1}, True),
+        (1, {"CarIdx": 2}, False),
+        (-1, {"CarIdx": 1}, False),
+        (-1, {"CarIdx": -1}, False),
+        (1, {}, False),
+    ],
+    ids=[
+        "matching-driver",
+        "different-driver",
+        "no-transmission",
+        "minus-one-is-not-a-driver",
+        "missing-car-index",
+    ],
+)
+def test_is_radio_transmitting(
+    mock_builder,
+    mock_ctx,
+    radio_car_idx,
+    driver,
+    expected,
+):
+    ctx = mock_ctx(radio_transmit_car_idx=radio_car_idx)
+
+    result = mock_builder._is_radio_transmitting(driver, ctx)
+
+    assert result is expected
+
+
+def test_build_matches_radio_by_driver_car_idx(mock_builder, mock_ctx):
+    ctx = mock_ctx(radio_transmit_car_idx=42)
+    ctx.drivers[1]["CarIdx"] = 42
+
+    result = mock_builder.build(1, ctx)
+
+    assert result["is_radio_transmitting"] is True

@@ -60,6 +60,17 @@ OVERRIDES = {
     435: {'shortname_override': 'watkinsglen'},
     16: {'shortname_override': 'lakeland'},
     275: {'shortname_override': 'lakeland'},
+    439: {'shortname_override': 'winton'},
+    440: {'shortname_override': 'winton'},
+    582: {'shortname_override': 'winton'},
+    465: {'shortname_override': 'virginia'},
+    466: {'shortname_override': 'virginia'},
+    467: {'shortname_override': 'virginia'},
+    468: {'shortname_override': 'virginia'},
+    469: {'shortname_override': 'virginia'},
+    256: {'shortname_override': 'southernnational'},
+    268: {'shortname_override': 'lemans'},
+    269: {'shortname_override': 'lemans'},
 }
 
 # On some tracks, it is necessary to rewrite the direction to avoid problems
@@ -80,6 +91,8 @@ DIRECTION_OVERRIDES = {
     145: 1,
     146: 1,
     290: -1,
+    # Circuit de Ledenon
+    489: -1,
 }
 
 def make_track_svg_url(

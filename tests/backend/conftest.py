@@ -19,7 +19,9 @@ def irsdk_mock_factory():
         mock_ir.is_initialized = True
         mock_ir.is_connected = is_connected
         mock_ir.__getitem__.side_effect = lambda key: base_values.get(key)
-        mock_ir.get_value = lambda key: base_values.get(key)
+        mock_ir.get_value = MagicMock(
+            side_effect=lambda key: base_values.get(key)
+        )
         mock_ir._ensure_connected = lambda: (is_connected, "")
 
         mock_ir.startup = MagicMock()

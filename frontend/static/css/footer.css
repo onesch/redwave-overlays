@@ -1,0 +1,57 @@
+@import url('base.css');
+
+/* Application footer */
+.footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  width: 100%;
+  height: 28px;
+  padding: 0 16px;
+  box-sizing: border-box;
+  background-color: var(--bg-primary);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1;
+  user-select: none;
+}
+
+.footer-info {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.footer-version {
+  margin: 0;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.version-update-link {
+  color: #8ab4f8;
+  text-decoration: none;
+  transition: color 150ms ease;
+}
+
+.version-update-link:hover {
+  color: #d3e3fd;
+  text-decoration: underline;
+}
+
+.version-update-link:focus-visible {
+  outline: 1px solid #8ab4f8;
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.version-update-link[hidden],
+#version-status-text[hidden] {
+  display: none;
+}

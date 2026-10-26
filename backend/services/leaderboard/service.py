@@ -5,7 +5,8 @@ from backend.services.leaderboard.car_data_builder import CarDataBuilder
 from backend.services.leaderboard.context import LeaderboardContext
 from backend.services.leaderboard.lap_times.formatter import TimeFormatter
 from backend.services.leaderboard.lap_times.service import LapTimeService
-from backend.services.leaderboard.neighbords import NeighborsService
+from backend.services.leaderboard.neighbors import NeighborsService
+from backend.utils.irating_calculation import IRatingCalculator
 
 
 class Leaderboard(BaseService):
@@ -16,7 +17,9 @@ class Leaderboard(BaseService):
         builder = CarDataBuilder(irsdk_service, self.lap_times)
         super().__init__(irsdk_service, builder)
         self.neighbors = NeighborsService(builder)
+        self.irating_calculator = IRatingCalculator()
         self._last_session_num: int | None = None
+        self._last_session_time: float | None = None
 
     def _build_snapshot(self, ctx: LeaderboardContext) -> dict[str, Any]:
         player_idx: int = self.irsdk.get_value("PlayerCarIdx")
@@ -26,29 +29,40 @@ class Leaderboard(BaseService):
             "cars": self.builder.build_all(ctx, exclude_idx=player_idx),
             "player": self.builder.build(player_idx, ctx),
             "neighbors": self.neighbors.get_neighbors(player_idx, ctx),
-            "leaderboard_data": self.get_session_info(player_idx, ctx),
+            "leaderboard_data": {
+                **self.get_session_info(player_idx, ctx),
+                "sof": ctx.sof,
+            },
             "multiclass": ctx.multiclass,
+            "irating_deltas": ctx.irating_deltas,
         }
 
     def _build_context(self) -> LeaderboardContext | None:
         driver_info: dict[str, Any] = self.irsdk.get_value("DriverInfo") or {}
         drivers: list[dict[str, Any]] = driver_info.get("Drivers", []) or []
+        player_idx: int = self.irsdk.get_value("PlayerCarIdx")
 
         if not drivers:
             return None
+
+        starting_positions, starting_class_positions = (
+            self.builder.get_starting_positions()
+        )
 
         ctx = LeaderboardContext(
             drivers=drivers,
             positions=self.irsdk.get_value("CarIdxPosition") or [],
             class_positions=self.irsdk.get_value("CarIdxClassPosition") or [],
+            starting_positions=starting_positions,
+            starting_class_positions=starting_class_positions,
             last_lap_times=self.irsdk.get_value("CarIdxLastLapTime") or [],
             best_lap_times=self.irsdk.get_value("CarIdxBestLapTime") or [],
-            laps_started=self._normalize_laps_started(
-                self.irsdk.get_value("CarIdxLap") or []
-            ),
+            laps_started=self._normalize_laps_started(self.irsdk.get_value("CarIdxLap") or []),
             lap_dist_pct=self.irsdk.get_value("CarIdxLapDistPct") or [],
             is_pitroad=self.irsdk.get_value("CarIdxOnPitRoad") or [],
             multiclass=self._is_multiclass(drivers),
+            est_times=self.irsdk.get_value("CarIdxEstTime") or [],
+            radio_transmit_car_idx=self.irsdk.get_value("RadioTransmitCarIdx"),
         )
 
         ctx.session_fastest_lap = self.lap_times.session_fastest_lap(ctx)
@@ -56,8 +70,61 @@ class Leaderboard(BaseService):
             class_id: self.lap_times.class_fastest_lap(ctx, class_id)
             for class_id in {driver.get("CarClassID") for driver in drivers}
         }
+        ctx.irating_deltas = self._calculate_irating_deltas(ctx)
+        ctx.sof = self._calculate_sof(ctx, player_idx)
 
         return ctx
+
+    def _calculate_irating_deltas(self, ctx: LeaderboardContext) -> dict[int, int]:
+        """
+        Calculate iRating deltas from current leaderboard state.
+        Returns mapping: UserID -> delta.
+        """
+        drivers = self.builder.get_irating_drivers(ctx)
+
+        classes: dict[int, list[dict[str, Any]]] = {}
+
+        for driver in drivers:
+            if not driver["started"]:
+                continue
+
+            classes.setdefault(
+                driver["class_id"],
+                []
+            ).append(driver)
+
+
+        deltas: dict[int, int] = {}
+
+        for class_id, class_drivers in classes.items():
+
+            race_results = {
+                driver["id"]: driver["irating"]
+                for driver in class_drivers
+            }
+
+            class_deltas = self.irating_calculator.calculate(
+                race_results
+            )
+
+            deltas.update(class_deltas)
+
+        return {
+            driver_id: delta
+            for driver_id, delta in deltas.items()
+        }
+
+    def _calculate_sof(self, ctx: LeaderboardContext, player_idx: int) -> int:
+        """Calculate Strength of Field for the active leaderboard class."""
+        drivers = self.builder.get_irating_drivers(ctx)
+        player_class_id = ctx.drivers[player_idx].get("CarClassID")
+
+        race_results = {
+            driver["id"]: driver["irating"]
+            for driver in drivers
+            if (not ctx.multiclass or driver["class_id"] == player_class_id)
+        }
+        return self.irating_calculator.calculate_sof(race_results)
 
     def get_session_time(
         self,
@@ -84,11 +151,10 @@ class Leaderboard(BaseService):
         """Public method returning structured session info for a player."""
         session_info: dict[str, Any] = self.irsdk.get_value("SessionInfo") or {}
         current_session = self._get_current_session(session_info)
-
-        self._reset_pit_status(session_info)
-
         session_laps: int | Literal["unlimited"] = current_session.get("SessionLaps")
         session_time_current: float = self.irsdk.get_value("SessionTime")
+
+        self._reset_pit_status(session_info, session_time_current)
 
         player_lap_time = self.lap_times.car_lap_time(player_idx, ctx)
 
@@ -126,13 +192,26 @@ class Leaderboard(BaseService):
             for lap in raw_laps
         ]
 
-    def _reset_pit_status(self, session_info: dict) -> None:
-        """Reset pit tracking if a new session has started."""
+    def _reset_pit_status(
+        self,
+        session_info: dict,
+        session_time: float,
+    ) -> None:
+        """Reset pit tracking when the session changes or restarts."""
         current_num = session_info.get("CurrentSessionNum", 0)
 
-        if self._last_session_num != current_num:
+        session_changed = self._last_session_num != current_num
+        session_restarted = (
+            session_time is not None
+            and self._last_session_time is not None
+            and session_time < self._last_session_time
+        )
+
+        if session_changed or session_restarted:
             self.builder.reset_pit_data()
-            self._last_session_num = current_num
+
+        self._last_session_num = current_num
+        self._last_session_time = session_time
 
     def _get_current_session(self, session_info: dict) -> dict:
         """Return the current session dictionary from session info."""

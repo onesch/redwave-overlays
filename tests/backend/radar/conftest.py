@@ -16,12 +16,17 @@ def mock_ctx(mock_values: dict) -> RadarContext:
     """
     Returns the RadarContext with mocked data from mock_values fixture.
     """
+    weekend_info = mock_values.get_value("WeekendInfo") or {}
+
     defaults = {
         "dist_ahead": mock_values.get_value("CarDistAhead"),
         "dist_behind": mock_values.get_value("CarDistBehind"),
         "car_left_right": mock_values.get_value("CarLeftRight"),
         "lap_dist_pct": mock_values.get_value("CarIdxLapDistPct"),
         "player_idx": mock_values.get_value("PlayerCarIdx"),
+        "track_length_m": RadarService._parse_track_length(
+            weekend_info.get("TrackLength")
+        ),
     }
 
     def _make_ctx(**overrides):
@@ -38,7 +43,7 @@ def mock_values(irsdk_mock_factory) -> dict:
     required for testing the RadarService.
     """
     values = {
-        "WeekendInfo": {"TrackLength": "1000 m"},
+        "WeekendInfo": {"TrackLength": "3.9927 km"},
         "CarDistAhead": 5.0,
         "CarDistBehind": 6.0,
         "CarLeftRight": 0,

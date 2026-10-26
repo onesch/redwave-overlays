@@ -3,14 +3,16 @@ const path = require('path');
 const isDev = process.env.NODE_ENV === "development";
 const { getOverlayMovementState, applyOverlayMovementToWindow } = require('../utils/overlays/overlay_movement');
 const { protectWindowShortcuts, disableZoomShortcuts, registerOverlayMoveShortcuts } = require('../utils/keyboard_protection');
-const { applySavedZoom, registerZoomHandlers } = require('../utils/overlays/zoom_range');
+const { applySavedZoom, registerZoomHandlers } = require('../utils/overlays/features/shared/zoom_range');
 const { applySavedPosition, registerPositionHandlers, watchOverlayPosition } = require('../utils/overlays/overlay_position');
-const { registerOverlayOpacityHandlers } = require('../utils/overlays/overlay_opacity');
-const { registerOverlayTrackTypeHandlers } = require('../utils/overlays/track_type');
-const { registerOverlayDisplayModeHandlers } = require('../utils/overlays/display_mode');
-const { registerOverlayAutoStartModeHandlers } = require('../utils/overlays/auto_start_mode');
+const { registerOverlayOpacityHandlers } = require('../utils/overlays/features/shared/overlay_opacity');
+const { registerOverlayTrackTypeHandlers } = require('../utils/overlays/features/track-map/track_type');
+const { registerOverlayDisplayModeHandlers } = require('../utils/overlays/features/shared/display_mode');
+const { registerOverlayAutoStartModeHandlers } = require('../utils/overlays/features/shared/auto_start_mode');
 const { registerOverlayMovementHandlers } = require('../utils/overlays/overlay_movement');
-const { registerOverlayRadarVisibilityHandlers } = require('../utils/overlays/radar_visibility_mode');
+const { registerOverlayRadarVisibilityHandlers } = require('../utils/overlays/features/radar/radar_visibility_mode');
+const { registerLastLapFormatHandlers } = require('../utils/overlays/features/leaderboard/last_lap_format');
+const { registerSpeedUnitHandlers } = require('../utils/overlays/features/telemetry/speed_unit');
 
 const overlays = {};
 let overlayCount = 0;
@@ -24,6 +26,8 @@ registerOverlayDisplayModeHandlers(overlays);
 registerOverlayAutoStartModeHandlers(overlays);
 registerOverlayMovementHandlers(overlays);
 registerOverlayRadarVisibilityHandlers(overlays);
+registerLastLapFormatHandlers(overlays);
+registerSpeedUnitHandlers(overlays);
 
 function createOverlay(route, options = {}) {
   if (overlays[route] && !overlays[route].isDestroyed()) {
@@ -39,7 +43,7 @@ function createOverlay(route, options = {}) {
     alwaysOnTop: true,
     frame: options.frame ?? false,
     transparent: options.transparent ?? true,
-    resizable: true,
+    resizable: isDev,
     movable: false,
     focusable: true,
     hasShadow: false,
@@ -76,8 +80,18 @@ function createOverlay(route, options = {}) {
   return overlay;
 }
 
+// Close every open overlay, e.g. when the main window goes away.
+// Overlays save their position on close, so this must use close(), not destroy().
+function closeAllOverlays() {
+  Object.values(overlays).forEach((overlay) => {
+    if (!overlay.isDestroyed()) {
+      overlay.close();
+    }
+  });
+}
+
 app.whenReady().then(() => {
   registerOverlayMoveShortcuts(app, overlays);
 });
 
-module.exports = { createOverlay, overlays };
+module.exports = { createOverlay, closeAllOverlays, overlays };

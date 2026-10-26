@@ -1,18 +1,18 @@
-from dataclasses import dataclass
 from typing import Any
 
 from backend.services.base import BaseService
+from backend.services.radar.context import RadarContext
 from backend.services.radar.constants import (
     RED_M,
     YEL_M,
     MAX_SHOW_DIST,
+    SIDE_WINDOW_M,
     CLR_LEFT,
     CLR_TWO_LEFT,
     CLR_BOTH,
     CLR_RIGHT,
     CLR_TWO_RIGHT,
 )
-from backend.services.radar.context import RadarContext
 
 
 class DistanceSeverity:
@@ -30,17 +30,48 @@ class DistanceSeverity:
         """Return severity level for a given distance."""
         if dist is None:
             return "none"
+
         if dist <= RED_M:
             return "red"
+
         if dist <= YEL_M:
             return "yellow"
+
         return "ok"
 
     @staticmethod
     def format_meta(dist: float | None) -> tuple[float | None, str]:
         """Return sanitized distance with severity."""
         sanitized_dist = DistanceSeverity._sanitize_distance(dist)
-        return (sanitized_dist, DistanceSeverity.for_distance(sanitized_dist))
+
+        return (
+            sanitized_dist,
+            DistanceSeverity.for_distance(sanitized_dist),
+        )
+
+    @staticmethod
+    def is_nearby(dist: float | None) -> bool:
+        """
+        Return whether the distance is within radar visibility range.
+
+        A distance is considered nearby when it is between 0 and
+        MAX_SHOW_DIST meters, inclusive.
+
+        Example:
+
+            MAX_SHOW_DIST = 15.0
+
+            is_nearby(10.0) -> True
+            is_nearby(15.0) -> True
+            is_nearby(15.1) -> False
+            is_nearby(None) -> False
+
+        Result:
+
+            Returns True if the car is within the radar visibility range,
+            otherwise returns False.
+        """
+        return dist is not None and 0 <= dist <= MAX_SHOW_DIST
 
 
 class RadarService(BaseService):
@@ -58,21 +89,50 @@ class RadarService(BaseService):
         if car_left_right is None:
             return None
 
+        weekend_info = self.irsdk.get_value("WeekendInfo") or {}
+
+        track_length_m = self._parse_track_length(weekend_info.get("TrackLength"))
+
         return RadarContext(
             dist_ahead=self.irsdk.get_value("CarDistAhead"),
             dist_behind=self.irsdk.get_value("CarDistBehind"),
             car_left_right=car_left_right,
             lap_dist_pct=self.irsdk.get_value("CarIdxLapDistPct") or [],
             player_idx=self.irsdk.get_value("PlayerCarIdx"),
+            track_length_m=track_length_m,
         )
 
-    def _build_snapshot(self, ctx: RadarContext) -> dict[str, Any]:
+    @staticmethod
+    def _parse_track_length(track_length: str | None) -> float | None:
+        """
+        Convert iRacing TrackLength from kilometers to meters.
+
+        Example:
+            "3.9927 km" -> 3992.7
+        """
+        if not track_length:
+            return None
+
+        try:
+            value = float(track_length.split()[0])
+        except (ValueError, IndexError):
+            return None
+
+        return value * 1000
+
+    def _build_snapshot(
+        self,
+        ctx: RadarContext,
+    ) -> dict[str, Any]:
         """
         Generates the snapshot for the API.
         Overridden method from BaseService.
         """
         left_data, right_data = self._build_side_data(ctx)
-        suppress_ahead = left_data is not None or right_data is not None
+
+        suppress_ahead = (
+            left_data is not None or right_data is not None
+        )
 
         dist_ahead = None if suppress_ahead else ctx.dist_ahead
         dist_behind = None if suppress_ahead else ctx.dist_behind
@@ -84,28 +144,42 @@ class RadarService(BaseService):
             "status": "ok",
             "ahead_m": ahead_val,
             "ahead_severity": ahead_sev,
+            "ahead_nearby": DistanceSeverity.is_nearby(ctx.dist_ahead),
             "behind_m": behind_val,
             "behind_severity": behind_sev,
+            "behind_nearby": DistanceSeverity.is_nearby(ctx.dist_behind),
             "left": left_data,
             "right": right_data,
         }
 
-    def _build_side_data(self, ctx: RadarContext) -> tuple[dict | None, dict | None]:
+    def _build_side_data(
+        self, ctx: RadarContext,
+    ) -> tuple[dict | None, dict | None]:
         """
-        Returns data for left and right side indicators based on radar context.
+        Returns data for left and right side indicators
+        based on radar context.
         """
-        left_present = ctx.car_left_right in (CLR_LEFT, CLR_TWO_LEFT, CLR_BOTH)
-        right_present = ctx.car_left_right in (CLR_RIGHT, CLR_TWO_RIGHT, CLR_BOTH)
-
+        left_present = ctx.car_left_right in (
+            CLR_LEFT,
+            CLR_TWO_LEFT,
+            CLR_BOTH,
+        )
+        right_present = ctx.car_left_right in (
+            CLR_RIGHT,
+            CLR_TWO_RIGHT,
+            CLR_BOTH,
+        )
         left_data = None
         right_data = None
 
         # Note: When both sides are present,
-        # _compute_side_offset is called twice,
-        # this is intentional, offset is
-        # ignored on the frontend when bothSides is true
+        # _compute_side_offset is called twice.
+        # This is intentional because offset is
+        # ignored on the frontend when bothSides is true.
+
         if left_present:
             left_data = self._compute_side_offset(ctx)
+
         if right_present:
             right_data = self._compute_side_offset(ctx)
 
@@ -114,12 +188,13 @@ class RadarService(BaseService):
     @staticmethod
     def _lap_delta(my: float, other: float) -> float:
         """
-        Computes the lap distance delta between two
-        cars, accounting for wrap-around at 0/1.
+        Computes the normalized lap distance delta between two cars,
+        accounting for wrap-around at 0/1.
 
-        > 0 if the other car is ahead.
-        < 0 if the other car is behind.
-        0 if both cars are aligned.
+        Returns:
+            Positive value if the other car is ahead.
+            Negative value if the other car is behind.
+            Zero if both cars are aligned.
         """
         delta = other - my
 
@@ -132,8 +207,22 @@ class RadarService(BaseService):
 
     def _find_closest_side_car(self, ctx: RadarContext) -> int | None:
         """
-        Returns the index of the closest car on
-        the side (left or right) based on lap distance percentage.
+        Find the car closest to the player along the track.
+
+        Uses lap distance percentages to compare the longitudinal
+        position of each car relative to the player's car.
+        Wrap-around at the start/finish line is handled by `_lap_delta()`.
+
+        Example:
+            Player car is at 50% of the lap.
+            Other cars are at 51% and 60%.
+
+            The car at 51% is closest to the player
+            and its index is returned.
+
+        Returns:
+            The index of the closest other car, or None if the
+            player's car index is unavailable.
         """
         my_idx = ctx.player_idx
         if my_idx is None:
@@ -142,20 +231,22 @@ class RadarService(BaseService):
         my_pct = ctx.lap_dist_pct[my_idx]
 
         best_idx = None
-        # Larger than any possible delta
-        best_score = float('inf')
+        best_score = float("inf")
 
-        # Find the closest car
+        # Check every car and find the one
+        # with the smallest lap-distance difference.
         for i, pct in enumerate(ctx.lap_dist_pct):
             if i == my_idx:
                 continue
+
+            # Skip cars without a valid lap-distance value.
             if pct is None:
                 continue
 
+            # Calculate the absolute longitudinal distance from the player's car.
             delta = abs(self._lap_delta(my_pct, pct))
 
-            # If this car is closer than the best
-            # one found so far, update best_idx and best_score
+             # Keep the closest car found so far.
             if delta < best_score:
                 best_score = delta
                 best_idx = i
@@ -164,27 +255,34 @@ class RadarService(BaseService):
 
     def _compute_side_offset(self, ctx: RadarContext) -> dict | None:
         """
-        Computes the longitudinal offset of the closest side car.
+        Computes the normalized longitudinal offset of the closest side car.
+
+        The lap distance percentage is first converted to a physical
+        distance in meters using the current track length. The distance
+        is then clamped to SIDE_WINDOW_M and normalized to the [-1, 1]
+        range for frontend positioning.
 
         Example:
-            Player lap position: 0.45
 
-            Cars:
-                Car A = 0.47
-                Car B = 0.60
+            Track length = 4000 m
+            Player = 0.45
+            Other car = 0.452
 
-            Candidate deltas:
-                Car A -> _lap_delta(0.45, 0.47) = +0.02
-                Car B -> _lap_delta(0.45, 0.60) = +0.15
+            delta_pct = 0.002
+            offset_m = 0.002 * 4000 = 8 m
 
-            _find_closest_side_car() selects Car A because
-            abs(+0.02) < abs(+0.15).
+            clamped = 8 m
+            offset_ratio = 8 / 8 = 1.0
 
-            Therefore this method returns:
+        Result:
 
-                {"offset": 0.02}
+            {"offset_ratio": 1.0}
         """
+
         if ctx.player_idx is None:
+            return None
+
+        if ctx.track_length_m is None:
             return None
 
         my_pct = ctx.lap_dist_pct[ctx.player_idx]
@@ -195,6 +293,18 @@ class RadarService(BaseService):
 
         other_pct = ctx.lap_dist_pct[car_idx]
 
-        delta = self._lap_delta(my_pct, other_pct)
+        delta_pct = self._lap_delta(my_pct, other_pct)
 
-        return {"offset": round(delta, 4)}
+        offset_m = delta_pct * ctx.track_length_m
+
+        # Do not allow offset_m to be less than -8 or greater than +8
+        clamped = max(
+            -SIDE_WINDOW_M,
+            min(SIDE_WINDOW_M, offset_m),
+        )
+
+        offset_ratio = clamped / SIDE_WINDOW_M
+
+        return {
+            "offset_ratio": round(offset_ratio, 4),
+        }

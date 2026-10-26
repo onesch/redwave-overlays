@@ -3,13 +3,11 @@
 {% block title %}Settings{% endblock %}
 
 {% block content %}
-<a href="{{ url_for('main') }}" class="menu-link">
-<button class="back-button">
-    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-    </svg>
-    Back
-</button>
+<a href="{{ url_for('main') }}" class="back-button">
+  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+  </svg>
+  Back
 </a>
 
 <div class="section-header">
@@ -18,37 +16,51 @@
 
 <div class="settings-list">
   <div class="setting-item">
-    <span class="setting-name">Reset overlays settings</span>
-    <button id="reset-overlay-settings" class="button primary-btn" style="width: auto;">Reset</button>
+    <div class="setting-info">
+      <span class="setting-name">Application updates</span>
+      <p id="update-status" class="setting-desc">Checking for updates…</p>
+    </div>
+
+    <div class="button-section setting-buttons">
+      <button id="download-update" class="button primary-btn">Download</button>
+      <button id="cancel-update" class="button primary-btn">Cancel</button>
+      <button id="open-update-release" class="button primary-btn">
+        <span>View release</span>
+        <span class="material-symbols-outlined">arrow_outward</span>
+      </button>
+    </div>
   </div>
 
   <div class="setting-item">
-    <span class="setting-name">Uninstall application</span>
-    <button id="uninstall-app" class="button primary-btn" style="width: auto;">Uninstall</button>
+    <div class="setting-info">
+      <span class="setting-name">Reset overlays settings</span>
+      <p class="setting-desc">Reset all overlay settings to their defaults.</p>
+    </div>
+
+    <button id="reset-overlay-settings" class="button primary-btn">Reset</button>
+  </div>
+
+  <div class="setting-item">
+    <div class="setting-info">
+      <span class="setting-name">Uninstall application</span>
+      <p class="setting-desc">Uninstall the application and remove all associated files.</p>
+    </div>
+
+    <div class="button-section setting-buttons">
+      <button
+        id="open-install-dir"
+        class="button primary-btn icon-button"
+        aria-label="Open installation folder"
+        title="Open installation folder"
+      >
+        <span class="material-symbols-outlined">folder_open</span>
+      </button>
+      <button id="uninstall-app" class="button primary-btn">Uninstall</button>
+    </div>
   </div>
 </div>
+{% endblock %}
 
-<script>
-  document
-    .getElementById('reset-overlay-settings')
-    .addEventListener('click', () => {
-      if (!confirm('Reset all overlay settings?')) {
-        return;
-      }
-
-      window.electronAPI.resetOverlaySettings();
-
-      alert('Overlay settings have been reset');
-    });
-
-  document
-    .getElementById('uninstall-app')
-    .addEventListener('click', () => {
-      if (!confirm('Run uninstaller and close RedWave overlays?')) {
-        return;
-      }
-
-      window.electronAPI.uninstallApp();
-    });
-</script>
+{% block scripts %}
+<script type="module" src="{{ url_for('static', path='/js/setting_page/index.js') }}"></script>
 {% endblock %}

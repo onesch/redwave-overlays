@@ -1,0 +1,64 @@
+:root {
+  --bg-primary: #0a0a0a;
+  --bg-secondary: #171717;
+  --bg-tertiary: #1a1a1a;
+  --border-primary: #262626;
+  --border-hover: #404040;
+  --text-primary: #ffffff;
+  --text-secondary: #666;
+  --text-tertiary: #aaa;
+  --button-hover: #e5e5e5;
+  --accent: #ffffff;
+  --info: #3b82f6;
+  --green-success: #22c55e;
+  --orange-info: #e9a23b;
+  --title-bar-height: 36px;
+  --title-bar-button-width: 46px;
+  --close-hover: #c42b1c;
+  --font-family: "Google Sans Flex", sans-serif;
+  --border-radius-sm: 6px;
+  --border-radius-md: 8px;
+  --border-radius-lg: 12px;
+  --border-radius-xl: 16px;
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 0.75rem;
+  --spacing-lg: 1rem;
+  --spacing-xl: 1.5rem;
+  --spacing-2xl: 2rem;
+  --spacing-3xl: 3rem;
+  --transition: 0.2s;
+}
+
+::-webkit-scrollbar {
+  display: none;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+body {
+  font-family: var(--font-family);
+  min-height: 100vh;
+  padding: 0;
+  background-color: var(--bg-primary);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+body.no-scroll {
+  overflow: hidden;
+}
+body {
+  padding-bottom: 28px;
+}
+
+main {
+  flex: 1 1 auto;
+  padding: var(--spacing-2xl);
+}

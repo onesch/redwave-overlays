@@ -23,7 +23,7 @@ def mock_ctx(mock_values) -> TelemetryContext:
         "throttle": mock_values.get_value("Throttle"),
         "brake": mock_values.get_value("Brake"),
         "gear": mock_values.get_value("Gear"),
-        "speed_km": mock_values.get_speed_kmh(),
+        "speed_ms": mock_values.get_speed_ms(),
         "is_brake_abs": mock_values.get_value("BrakeABSactive"),
     }
 
@@ -47,5 +47,5 @@ def mock_values(irsdk_mock_factory) -> dict:
         "BrakeABSactive": True,
     }
     irsdk = irsdk_mock_factory(values)
-    irsdk.get_speed_kmh = lambda: 246.8
+    irsdk.get_speed_ms = lambda: 246.8
     return irsdk

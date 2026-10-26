@@ -64,11 +64,46 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onRadarVisibilityUpdate: (callback) =>
     ipcRenderer.on('update-radar-visibility', (_, value) => callback(value)),
 
+  // Leaderboard last lap format
+  setLastLapFormat: (overlayName, value) =>
+    ipcRenderer.send('set-last-lap-format', { overlayName, value }),
+  getLastLapFormat: (overlayName) =>
+    ipcRenderer.invoke('get-last-lap-format', overlayName),
+  onLastLapFormatUpdate: (callback) =>
+    ipcRenderer.on('update-last-lap-format', (_, value) => callback(value)),
+
+  // Telemetry speed unit
+  setSpeedUnit: (overlayName, value) =>
+    ipcRenderer.send('set-speed-unit', { overlayName, value }),
+  getSpeedUnit: (overlayName) =>
+    ipcRenderer.invoke('get-speed-unit', overlayName),
+  onSpeedUnitUpdate: (callback) =>
+    ipcRenderer.on('update-speed-unit', (_, value) => callback(value)),
+
   // Reset overlay settings
   resetOverlaySettings: () =>
     ipcRenderer.send('reset-overlay-settings'),
 
+  // Custom title bar of the main window
+  minimizeWindow: () => ipcRenderer.send('window-minimize'),
+  closeWindow: () => ipcRenderer.send('window-close'),
+  startWindowDrag: () => ipcRenderer.send('window-drag-start'),
+  dragWindow: () => ipcRenderer.send('window-drag-move'),
+  endWindowDrag: () => ipcRenderer.send('window-drag-end'),
+
+  // Open installation directory
+  openInstallDir: () =>
+    ipcRenderer.send('open-install-dir'),
+
   // Uninstall app
   uninstallApp: () =>
-    ipcRenderer.send('uninstall-app')
+    ipcRenderer.send('uninstall-app'),
+
+  // Application updates
+  getUpdateStatus: () => ipcRenderer.invoke('get-update-status'),
+  downloadUpdate: () => ipcRenderer.invoke('download-update'),
+  cancelUpdateDownload: () => ipcRenderer.invoke('cancel-update-download'),
+  openUpdateRelease: () => ipcRenderer.invoke('open-update-release'),
+  onUpdateStatus: (callback) =>
+    ipcRenderer.on('update-status', (_, status) => callback(status))
 });

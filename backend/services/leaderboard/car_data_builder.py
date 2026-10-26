@@ -36,10 +36,12 @@ class CarDataBuilder(BaseCarBuilder):
 
         return {
             **base_car,
+            "driver_id": driver.get("UserID", idx),
             "pos": self._resolve_position(idx, ctx),
             "name": self._get_first_name(driver),
             "irating": driver.get("IRating"),
             "license": driver.get("LicString"),
+            "is_radio_transmitting": self._is_radio_transmitting(driver, ctx),
             "car_class_color": driver.get("CarClassColor"),
             "lap_dist_pct": self._format_lap_dist(idx, ctx),
             "last_pit_lap": self._get_last_pit_lap(idx, ctx.laps_started, ctx.is_pitroad),
@@ -66,50 +68,121 @@ class CarDataBuilder(BaseCarBuilder):
         names = driver.get("UserName", "").strip().split()
         return names[0] if names else ""
 
+    def get_irating_drivers(
+        self,
+        ctx: LeaderboardContext,
+    ) -> list[dict[str, Any]]:
+        """
+        Build driver data required for iRating calculation.
+        """
+        drivers = []
+
+        for car_idx, driver in enumerate(ctx.drivers):
+            if self._is_pace_car(driver):
+                continue
+
+            position = self._resolve_position(car_idx, ctx)
+            started = position is not None and position > 0
+
+            irating = driver.get("IRating")
+            if not isinstance(irating, int) or irating <= 0:
+                continue
+
+            drivers.append(
+                {
+                    "id": driver.get("UserID", car_idx),
+                    "irating": irating,
+                    "position": position,
+                    "class_id": driver.get("CarClassID"),
+                    "started": started,
+                }
+            )
+
+        return sorted(
+            drivers,
+            key=lambda d: (
+                d["position"] is None,
+                d["position"] or 9999,
+            ),
+        )
+
     def _format_lap_dist(self, idx: int, ctx: LeaderboardContext) -> float:
         dist: float = ctx.lap_dist_pct[idx]
         return round(dist, 3) if isinstance(dist, float) and dist >= 0 else None
 
-    def _resolve_position(self, idx: int, ctx: LeaderboardContext) -> int | None:
+    def _resolve_position(
+        self,
+        idx: int,
+        ctx: LeaderboardContext,
+    ) -> int | None:
         """
-        Return the car's effective position,
-        using class positions if multiclass.
-        Returns None if unknown, or calculates starting position if zero.
-        """
-        pos_list = ctx.class_positions if ctx.multiclass else ctx.positions
-        pos = pos_list[idx]
+        Return the car's effective position.
 
-        if pos == -1:
+        Uses current telemetry position when available.
+        Falls back to the starting position from QualifyResultsInfo
+        when the current position is zero.
+        """
+        positions: list[int] = (
+            ctx.class_positions
+            if ctx.multiclass
+            else ctx.positions
+        )
+
+        position = positions[idx]
+
+        if position == -1:
             return None
-        if pos == 0:
-            return self._get_starting_position(
-                idx,
-                "ClassPosition" if ctx.multiclass else "Position",
-                1 if ctx.multiclass else 0,
-            )
-        return pos
 
-    def _get_starting_position(
-        self, car_idx: int, field: str, offset: int
-    ) -> int:
-        """
-        Get the car's starting position from
-        session results, adding an offset.
-        Returns 0 if not found.
-        """
-        session_info: dict[str, Any] = self.irsdk.get_value("SessionInfo") or {}
-        sessions: list[dict[str, Any]] = session_info.get("Sessions", [])
+        if position > 0:
+            return position
 
-        for sess in sessions:
-            if sess.get("SessionType") in (
-                "Warmup",
-                "Lone Qualify",
-                "Open Qualify",
-            ):
-                for res in sess.get("ResultsPositions") or []:
-                    if res.get("CarIdx") == car_idx:
-                        return int(res.get(field, 0)) + offset
-        return 0
+        starting_positions: dict[int, int] = (
+            ctx.starting_class_positions
+            if ctx.multiclass
+            else ctx.starting_positions
+        )
+
+        return starting_positions.get(idx)
+
+    def get_starting_positions(
+        self,
+    ) -> tuple[dict[int, int], dict[int, int]]:
+        """
+        Return starting overall and class positions from
+        QualifyResultsInfo.
+
+        Returns:
+            Tuple containing:
+                - overall starting positions by car index
+                - class starting positions by car index
+        """
+        qualify_info: dict[str, Any] = (
+            self.irsdk.get_value("QualifyResultsInfo") or {}
+        )
+
+        qualify_results: list[dict[str, Any]] = (
+            qualify_info.get("Results") or []
+        )
+
+        starting_positions = {}
+        starting_class_positions = {}
+
+        for result in qualify_results:
+            car_idx = result.get("CarIdx")
+
+            if car_idx is None:
+                continue
+
+            position = result.get("Position")
+            class_position = result.get("ClassPosition")
+
+            if position is not None:
+                starting_positions[car_idx] = position + 1
+
+            if class_position is not None:
+                starting_class_positions[car_idx] = class_position + 1
+
+        return starting_positions, starting_class_positions
 
     def _get_last_pit_lap(
         self, idx: int, laps_started: list[int], is_pitroad: list[bool]
@@ -131,3 +204,14 @@ class CarDataBuilder(BaseCarBuilder):
             return f"L{self._last_pit_laps[idx]}"
 
         return None
+
+    @staticmethod
+    def _is_radio_transmitting(
+        driver: dict[str, Any],
+        ctx: LeaderboardContext,
+    ) -> bool:
+        """Return whether the driver is transmitting over the radio."""
+        if ctx.radio_transmit_car_idx == -1:
+            return False
+
+        return driver.get("CarIdx") == ctx.radio_transmit_car_idx

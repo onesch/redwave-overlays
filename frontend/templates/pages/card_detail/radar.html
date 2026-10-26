@@ -1,4 +1,4 @@
-{% extends "pages/card_detail/base_detail.html" %}
+{% extends "base/base_detail.html" %}
 
 {% block title %}Overlays - {{ card_data.title }}{% endblock %}
 
@@ -14,43 +14,15 @@
 {% endblock %}
 
 {% block overlay_scripts %}
-<script>
-document.addEventListener('DOMContentLoaded', async () => {
-    const overlayName = 'radar';
-    const overlay = new OverlayBase(overlayName);
-    
-    const showBtn = document.getElementById('showBtn');
-    const dimBtn = document.getElementById('dimBtn');
-    const hideBtn = document.getElementById('hideBtn');
+<script type="module">
+  import {
+    mountOverlaySettings,
+    createRadarVisibilitySetting,
+  } from "{{ url_for('static', path='/js/page_detail/index.js') }}";
 
-    document.getElementById('OpenBtn').addEventListener('click', () => {
-        window.electronAPI.openOverlay(overlayName);
-    });
-
-    const savedVisibilityMode = await window.electronAPI.getRadarVisibility(overlayName);
-    applyVisibility(savedVisibilityMode);
-
-    hideBtn.onclick = () => {
-        window.electronAPI.setRadarVisibility(overlayName, 'hide');
-        applyVisibility('hide');
-    };
-
-    dimBtn.onclick = () => {
-        window.electronAPI.setRadarVisibility(overlayName, 'dim');
-        applyVisibility('dim');
-    };
-
-    showBtn.onclick = () => {
-        window.electronAPI.setRadarVisibility(overlayName, 'show');
-        applyVisibility('show');
-    };
-
-    function applyVisibility(mode) {
-        hideBtn.classList.toggle('active', mode === 'hide');
-        dimBtn.classList.toggle('active', mode === 'dim');
-        showBtn.classList.toggle('active', mode === 'show');
-    }
-
-});
+  mountOverlaySettings({
+    overlayName: 'radar',
+    settings: [createRadarVisibilitySetting],
+  });
 </script>
 {% endblock %}

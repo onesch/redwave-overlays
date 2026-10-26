@@ -44,9 +44,11 @@ def test_leaderboard_snapshot_structure(mock_service):
         "neighbors",
         "leaderboard_data",
         "multiclass",
+        "irating_deltas",
     )
 
     assert all(k in snapshot for k in keys)
+    assert "sof" in snapshot["leaderboard_data"]
 
 
 def test_leaderboard_snapshot_multiclass(mock_values):
@@ -79,18 +81,36 @@ def test_is_multiclass_returns_true_for_multiple_classes(
 
 def test_reset_pit_status_calls_reset_on_new_session(mock_service):
     mock_service._last_session_num = 1
+    mock_service._last_session_time = 100.0
     session_info = {"CurrentSessionNum": 2}
     mock_service.builder.reset_pit_data = MagicMock()
-    mock_service._reset_pit_status(session_info)
+
+    mock_service._reset_pit_status(session_info, session_time=200.0)
+
     mock_service.builder.reset_pit_data.assert_called_once()
 
 
 def test_reset_pit_status_does_not_call_reset_on_same_session(mock_service):
     mock_service._last_session_num = 2
+    mock_service._last_session_time = 100.0
     session_info = {"CurrentSessionNum": 2}
     mock_service.builder.reset_pit_data = MagicMock()
-    mock_service._reset_pit_status(session_info)
+
+    mock_service._reset_pit_status(session_info, session_time=101.0)
+
     mock_service.builder.reset_pit_data.assert_not_called()
+
+
+def test_reset_pit_status_resets_on_same_session_restart(mock_service):
+    mock_service._last_session_num = 2
+    mock_service._last_session_time = 1200.0
+    session_info = {"CurrentSessionNum": 2}
+    mock_service.builder.reset_pit_data = MagicMock()
+
+    mock_service._reset_pit_status(session_info, session_time=0.0)
+
+    mock_service.builder.reset_pit_data.assert_called_once()
+    assert mock_service._last_session_time == 0.0
 
 
 def test_get_current_session_empty_or_out_of_bounds(mock_service):
@@ -128,6 +148,10 @@ def test_build_context_success(mock_service):
     assert ctx.session_fastest_lap == pytest.approx(11.1)
     assert ctx.class_fastest_laps == {1: pytest.approx(11.1)}
     assert ctx.multiclass is False
+    assert ctx.sof == 1829
+    assert ctx.starting_positions == {0: 2, 1: 3, 2: 1}
+    assert ctx.starting_class_positions == {0: 2, 1: 3, 2: 1}
+    assert ctx.radio_transmit_car_idx == -1
 
 
 def test_build_context_multiclass(mock_values):
@@ -140,6 +164,9 @@ def test_build_context_multiclass(mock_values):
         2: pytest.approx(22.2),
     }
     assert ctx.multiclass is True
+    assert ctx.sof == 1845  # for class №1 from mock_values 101 and 103 ids.
+    assert ctx.starting_positions == {0: 2, 1: 3, 2: 1}
+    assert ctx.starting_class_positions == {0: 2, 1: 2, 2: 1}
 
 
 def test_build_context_returns_none_when_no_drivers(irsdk_mock_factory):
@@ -167,3 +194,167 @@ def test_build_context_returns_none_when_no_drivers(irsdk_mock_factory):
 )
 def test_normalize_laps_started(mock_service, raw_laps, expected):
     assert mock_service._normalize_laps_started(raw_laps) == expected
+
+
+def test_build_snapshot_includes_cached_irating_deltas(mock_service, mock_ctx):
+    ctx = mock_ctx(irating_deltas={101: 60, 102: 2, 103: -60})
+
+    snapshot = mock_service._build_snapshot(ctx)
+
+    assert snapshot["irating_deltas"] == {101: 60, 102: 2, 103: -60}
+
+
+def test_calculate_irating_deltas_uses_finishing_order_by_class(
+    mock_service,
+    mock_ctx,
+):
+    ctx = mock_ctx(
+        drivers=[
+            {
+                "UserName": "Driver1",
+                "UserID": 101,
+                "IRating": 2000,
+                "CarClassID": 1,
+            },
+            {
+                "UserName": "Driver2",
+                "UserID": 102,
+                "IRating": 1800,
+                "CarClassID": 2,
+            },
+            {
+                "UserName": "Driver3",
+                "UserID": 103,
+                "IRating": 1700,
+                "CarClassID": 1,
+            },
+            {
+                "UserName": "Driver4",
+                "UserID": 104,
+                "IRating": 1600,
+                "CarClassID": 2,
+            },
+        ],
+        positions=[2, 1, 1, -1],
+        class_positions=[2, 1, 1, -1],
+        multiclass=True,
+    )
+
+    result = mock_service._calculate_irating_deltas(ctx)
+
+    assert result == {103: 56, 101: -55, 102: 1}
+    assert 104 not in result
+
+
+def test_calculate_sof_returns_expected_value(
+    mock_service,
+    mock_ctx,
+):
+    ctx = mock_ctx(
+        drivers=[
+            {
+                "UserID": 101,
+                "IRating": 2000,
+                "CarClassID": 1,
+            },
+            {
+                "UserID": 102,
+                "IRating": 1800,
+                "CarClassID": 1,
+            },
+            {
+                "UserID": 103,
+                "IRating": 1700,
+                "CarClassID": 1,
+            },
+        ],
+        multiclass=False,
+    )
+
+    result = mock_service._calculate_sof(ctx, player_idx=0)
+
+    expected = mock_service.irating_calculator.calculate_sof(
+        {
+            101: 2000,
+            102: 1800,
+            103: 1700,
+        }
+    )
+
+    assert result == expected
+
+
+def test_calculate_sof_uses_player_class_in_multiclass(
+    mock_service,
+    mock_ctx,
+):
+    ctx = mock_ctx(
+        drivers=[
+            {
+                "UserID": 101,
+                "IRating": 2000,
+                "CarClassID": 1,
+            },
+            {
+                "UserID": 102,
+                "IRating": 1800,
+                "CarClassID": 2,
+            },
+            {
+                "UserID": 103,
+                "IRating": 1700,
+                "CarClassID": 1,
+            },
+        ],
+        multiclass=True,
+    )
+
+    result = mock_service._calculate_sof(ctx, player_idx=0)
+
+    expected = mock_service.irating_calculator.calculate_sof(
+        {
+            101: 2000,
+            103: 1700,
+        }
+    )
+
+    assert result == expected
+
+
+def test_calculate_sof_includes_unstarted_drivers(
+    mock_service,
+    mock_ctx,
+):
+    ctx = mock_ctx(
+        drivers=[
+            {
+                "UserID": 101,
+                "IRating": 2000,
+                "CarClassID": 1,
+            },
+            {
+                "UserID": 102,
+                "IRating": 1800,
+                "CarClassID": 1,
+            },
+            {
+                "UserID": 103,
+                "IRating": 1700,
+                "CarClassID": 1,
+            },
+        ],
+        positions=[0, 0, 0],
+        multiclass=False,
+    )
+
+    result = mock_service._calculate_sof(ctx, player_idx=0)
+
+    expected = mock_service.irating_calculator.calculate_sof(
+        {
+            101: 2000,
+            102: 1800,
+            103: 1700,
+        }
+    )
+
+    assert result == expected
