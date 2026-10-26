@@ -224,3 +224,32 @@
   flex: 1;
   min-width: 0;
 }
+
+/* Last lap format Selector */
+.setting-container:has(#lastLapFormat) {
+  position: relative;
+  z-index: 2;
+}
+.setting-value:has(#lastLapFormat) {
+  height: 22px;
+  min-height: 22px;
+  align-items: center;
+}
+#lastLapFormat {
+  box-sizing: border-box;
+  width: 120px;
+  height: 22px;
+  min-height: 22px;
+  padding: 0 6px;
+  color: var(--text-primary);
+  background: #333;
+  border: 1px solid #555;
+  border-radius: 6px;
+  font: inherit;
+  font-size: 0.8rem;
+  line-height: 20px;
+  cursor: pointer;
+}
+#lastLapFormat:hover {
+  border-color: #777;
+}
