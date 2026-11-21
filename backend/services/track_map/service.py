@@ -141,6 +141,7 @@ class TrackMapService(BaseService):
             "status": "ok",
             "player_id": player_idx,
             "is_session_changed": is_session_changed,
+            "multiclass": ctx.multiclass,
             "cars": cars,
             "track": self._get_track(weekend_info.get("TrackID")),
         }
