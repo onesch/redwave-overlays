@@ -7,11 +7,7 @@ from backend.services.base import (
     BaseCarBuilder,
     SessionStateContext,
 )
-from backend.utils.track_url_generation import (
-    DIRECTION_OVERRIDES,
-    make_track_svg_url,
-    fetch_svg,
-)
+from backend.services.track_map.track_api import fetch_track_geometry
 
 
 @dataclass
@@ -45,24 +41,40 @@ class TrackMapService(BaseService):
 
     def __init__(self, irsdk_service):
         self.session_tracker = SessionTracker()
-        self._cached_track_svg: str | None = None
-        self._cached_start_finish_svg: str | None = None
-        self._cached_track_id: int | None = None
+
+        self._current_track_id: int | None = None
+        self._current_track: dict | None = None
+
         super().__init__(irsdk_service, TrackMapCarBuilder())
 
-    def _update_track_svgs(
-        self, track_id: str, track_name: str, track_short_name: str
-    ):
-        track_url = make_track_svg_url(
-            track_id, track_name, track_short_name, svg_type="active"
-        )
-        start_finish_url = make_track_svg_url(
-            track_id, track_name, track_short_name, svg_type="start-finish"
+    def _get_track(self, track_id: int) -> dict | None:
+        """Returns cached geometry or fetches it when the track changes."""
+        if track_id == self._current_track_id:
+            print(f"[TrackMap] Cache hit: track_id={track_id}")
+            return self._current_track
+
+        print(
+            f"[TrackMap] Track changed: "
+            f"{self._current_track_id} -> {track_id}"
         )
 
-        self._cached_track_svg = fetch_svg(track_url, extract_first=True)
-        self._cached_start_finish_svg = fetch_svg(start_finish_url)
-        self._cached_track_id = track_id
+        self._current_track_id = track_id
+
+        print(f"[TrackMap] Fetching geometry for track_id={track_id}")
+        geometry = fetch_track_geometry(track_id)
+
+        if geometry is None:
+            print(f"[TrackMap] Failed to fetch geometry: track_id={track_id}")
+            self._current_track = None
+        else:
+            self._current_track = {"id": track_id, **geometry}
+            print(
+                f"[TrackMap] Geometry cached: "
+                f"track_id={track_id}, "
+                f"points={len(geometry['points'])}"
+            )
+
+        return self._current_track
 
     def _build_context(self) -> TrackMapContext | None:
         """
@@ -99,6 +111,7 @@ class TrackMapService(BaseService):
         weekend_info: dict[str, Any] = (
             self.irsdk.get_value("WeekendInfo") or {}
         )
+
         session_key = SessionKey(
             session_id=weekend_info.get("SessionID"),
             session_num=self.irsdk.get_value("SessionNum"),
@@ -124,19 +137,10 @@ class TrackMapService(BaseService):
                 }
             )
 
-        track_id = weekend_info.get("TrackID")
-        track_name = weekend_info.get("TrackName")
-        track_short_name = weekend_info.get("TrackDisplayShortName")
-
-        if is_session_changed or track_id != self._cached_track_id:
-            self._update_track_svgs(track_id, track_name, track_short_name)
-
         return {
             "status": "ok",
             "player_id": player_idx,
             "is_session_changed": is_session_changed,
             "cars": cars,
-            "track_svg": self._cached_track_svg,
-            "start_finish_svg": self._cached_start_finish_svg,
-            "direction_override": DIRECTION_OVERRIDES.get(track_id),
+            "track": self._get_track(weekend_info.get("TrackID")),
         }
