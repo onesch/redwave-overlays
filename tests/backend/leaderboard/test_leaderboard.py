@@ -1,6 +1,7 @@
 import pytest
 from unittest.mock import MagicMock
 
+from backend.services.base import is_multiclass
 from backend.services.leaderboard.context import LeaderboardContext
 from backend.services.leaderboard.service import Leaderboard
 
@@ -67,16 +68,14 @@ def test_leaderboard_no_drivers_returns_error(irsdk_mock_factory):
     assert result["cars"] == []
 
 
-def test_is_multiclass_returns_false_for_single_class(mock_service, mock_ctx):
+def test_is_multiclass_returns_false_for_single_class(mock_ctx):
     ctx = mock_ctx(drivers=[{"CarClassID": 1}, {"CarClassID": 1}])
-    assert mock_service._is_multiclass(ctx.drivers) is False
+    assert is_multiclass(ctx.drivers) is False
 
 
-def test_is_multiclass_returns_true_for_multiple_classes(
-    mock_service, mock_ctx
-):
+def test_is_multiclass_returns_true_for_multiple_classes(mock_ctx):
     ctx = mock_ctx(drivers=[{"CarClassID": 1}, {"CarClassID": 2}])
-    assert mock_service._is_multiclass(ctx.drivers) is True
+    assert is_multiclass(ctx.drivers) is True
 
 
 def test_reset_pit_status_calls_reset_on_new_session(mock_service):

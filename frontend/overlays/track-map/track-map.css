@@ -10,7 +10,7 @@
   /* Car markers */
   --car-default-color: var(--yellow-primary);
   --car-outline-color: #fff;
-  --car-text-color: #000;
+  --car-text-color: #130A06;
   --player-arrow-color: #fff;
 
   /* Car marker sizes: also define how much room the map leaves at its edges. */

@@ -6,6 +6,7 @@ from backend.services.base import (
     BaseService,
     BaseCarBuilder,
     SessionStateContext,
+    is_multiclass,
 )
 from backend.services.track_map.track_api import fetch_track_geometry
 from backend.services.track_map.track_cache import (
@@ -95,12 +96,7 @@ class TrackMapService(BaseService):
         if not drivers:
             return None
 
-        class_ids: set = {
-            driver.get("CarClassID")
-            for driver in drivers
-            if driver.get("CarClassID")
-        }
-        multiclass: bool = len(class_ids) > 1
+        multiclass: bool = is_multiclass(drivers)
 
         return TrackMapContext(
             drivers=drivers,
@@ -145,7 +141,6 @@ class TrackMapService(BaseService):
                     ),
                 }
             )
-
         return {
             "status": "ok",
             "player_id": player_idx,

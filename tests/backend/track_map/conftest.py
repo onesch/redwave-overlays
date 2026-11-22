@@ -49,6 +49,18 @@ def mock_ctx(mock_values: dict) -> TrackMapContext:
 
 
 @pytest.fixture(autouse=True)
+def user_data_dir(monkeypatch, tmp_path):
+    """
+    Points the track geometry cache to a temporary folder, so tests never
+    read or write the real cache in the user's AppData.
+    """
+    monkeypatch.setattr(
+        track_map_service, "get_user_data_path", lambda: tmp_path
+    )
+    return tmp_path
+
+
+@pytest.fixture(autouse=True)
 def fake_fetch(monkeypatch) -> SimpleNamespace:
     """
     Replaces the Track Map API request so tests never hit the network.
@@ -58,7 +70,6 @@ def fake_fetch(monkeypatch) -> SimpleNamespace:
     fake = SimpleNamespace(
         calls=[],
         geometry={
-            "view_box": (0.0, 0.0, 1920.0, 1080.0),
             "points": [(0.0, 0.0), (10.0, 0.0), (0.0, 0.0)],
             "start_finish": {"pct": 0.5, "direction": 1},
         },

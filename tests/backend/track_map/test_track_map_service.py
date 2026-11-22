@@ -72,78 +72,63 @@ def test_build_context_multiclass_flag(irsdk_mock_factory):
     assert ctx.multiclass is True
 
 
-def test_track_svg_is_reused_from_cache_between_snapshots(mock_service):
-    update_calls: list[tuple[int, str, str]] = []
-
-    def fake_update(track_id, track_name, track_short_name):
-        update_calls.append((track_id, track_name, track_short_name))
-        mock_service._cached_track_svg = "<svg>track</svg>"
-        mock_service._cached_start_finish_svg = "<svg>sf</svg>"
-        mock_service._cached_track_id = track_id
-
-    mock_service._update_track_svgs = fake_update
-
-    first_snapshot = mock_service.get_snapshot()
-    second_snapshot = mock_service.get_snapshot()
-
-    assert len(update_calls) == 1
-    assert first_snapshot["track_svg"] == "<svg>track</svg>"
-    assert second_snapshot["track_svg"] == "<svg>track</svg>"
-    assert first_snapshot["start_finish_svg"] == "<svg>sf</svg>"
-    assert second_snapshot["start_finish_svg"] == "<svg>sf</svg>"
-
-
-def test_track_svg_cache_is_refreshed_after_track_change(irsdk_mock_factory):
+def test_build_context_ignores_pace_car_class(irsdk_mock_factory):
     values = {
-        "PlayerCarIdx": 0,
-        "SessionNum": 0,
-        "CarIdxOnPitRoad": [False, False],
-        "CarIdxLapDistPct": [0.3, 0.2],
-        "CarIdxPosition": [1, 2],
-        "CarIdxClassPosition": [0, 1],
         "DriverInfo": {
             "Drivers": [
-                {
-                    "CarNumber": "12",
-                    "CarClassColor": 16711680,
-                    "CarClassID": 1,
-                },
-                {
-                    "CarNumber": "8",
-                    "CarClassColor": 16711680,
-                    "CarClassID": 1,
-                },
+                {"UserName": "Driver1", "CarClassID": 5},
+                {"UserName": "Driver2", "CarClassID": 5},
+                {"UserName": "Pace Car", "CarClassID": 11, "CarIsPaceCar": 1},
             ]
         },
-        "WeekendInfo": {
-            "SessionID": 1234567890,
-            "TrackID": 123,
-            "TrackName": "Test Track",
-            "TrackDisplayShortName": "test_track",
-        },
     }
-    irsdk_mock = irsdk_mock_factory(values)
-    service = TrackMapService(irsdk_mock)
+    service = TrackMapService(irsdk_mock_factory(values))
+    ctx = service._build_context()
+    assert ctx.multiclass is False
 
-    update_calls: list[int] = []
 
-    def fake_update(track_id, track_name, track_short_name):
-        update_calls.append(track_id)
-        service._cached_track_svg = f"<svg>{track_id}</svg>"
-        service._cached_start_finish_svg = f"<svg>sf-{track_id}</svg>"
-        service._cached_track_id = track_id
+def test_snapshot_contains_multiclass_and_track(mock_service):
+    snapshot = mock_service.get_snapshot()
 
-    service._update_track_svgs = fake_update
+    assert snapshot["multiclass"] is False
+    assert snapshot["track"]["id"] == 123
+    assert snapshot["track"]["start_finish"] == {"pct": 0.5, "direction": 1}
+    assert len(snapshot["track"]["points"]) == 3
 
-    first_snapshot = service.get_snapshot()
-    values["WeekendInfo"]["TrackID"] = 456
-    values["WeekendInfo"]["TrackName"] = "Second Track"
-    values["WeekendInfo"]["TrackDisplayShortName"] = "second_track"
-    second_snapshot = service.get_snapshot()
 
-    assert update_calls == [123, 456]
-    assert first_snapshot["track_svg"] == "<svg>123</svg>"
-    assert second_snapshot["track_svg"] == "<svg>456</svg>"
+def test_track_is_fetched_once_for_the_same_track(mock_service, fake_fetch):
+    first = mock_service.get_snapshot()
+    second = mock_service.get_snapshot()
+
+    assert fake_fetch.calls == [123]
+    assert first["track"] == second["track"]
+
+
+def test_track_is_fetched_again_after_track_change(
+    mock_values, mock_values_dict, fake_fetch
+):
+    service = TrackMapService(mock_values)
+
+    service.get_snapshot()
+    mock_values_dict["WeekendInfo"]["TrackID"] = 456
+    snapshot = service.get_snapshot()
+
+    assert fake_fetch.calls == [123, 456]
+    assert snapshot["track"]["id"] == 456
+
+
+def test_track_is_loaded_from_disk_cache_after_restart(
+    mock_values, fake_fetch, user_data_dir
+):
+    TrackMapService(mock_values).get_snapshot()
+
+    # A new service instance simulates an app restart: the geometry comes
+    # from the cache file, without a new API request.
+    snapshot = TrackMapService(mock_values).get_snapshot()
+
+    assert fake_fetch.calls == [123]
+    assert snapshot["track"]["id"] == 123
+    assert (user_data_dir / "track_geometry_cache.json").exists()
 
 
 # --- Negative tests ---
@@ -160,3 +145,32 @@ def test_build_context_returns_none_when_no_drivers(irsdk_mock_factory):
     service = TrackMapService(irsdk_mock_factory(values))
     ctx = service._build_context()
     assert ctx is None
+
+
+def test_failed_fetch_returns_no_track_and_is_not_cached(
+    mock_values, fake_fetch, user_data_dir
+):
+    fake_fetch.geometry = None
+
+    snapshot = TrackMapService(mock_values).get_snapshot()
+
+    assert snapshot["track"] is None
+    assert not (user_data_dir / "track_geometry_cache.json").exists()
+
+    # After a restart the track is requested again, not taken from the cache.
+    TrackMapService(mock_values).get_snapshot()
+    assert fake_fetch.calls == [123, 123]
+
+
+def test_missing_track_id_skips_fetch(mock_values, mock_values_dict, fake_fetch):
+    mock_values_dict["WeekendInfo"]["TrackID"] = None
+    service = TrackMapService(mock_values)
+
+    snapshot = service.get_snapshot()
+
+    assert snapshot["track"] is None
+    assert fake_fetch.calls == []
+
+    # The real track id arriving later is still loaded.
+    mock_values_dict["WeekendInfo"]["TrackID"] = 123
+    assert service.get_snapshot()["track"]["id"] == 123
