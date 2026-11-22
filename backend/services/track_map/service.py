@@ -8,6 +8,11 @@ from backend.services.base import (
     SessionStateContext,
 )
 from backend.services.track_map.track_api import fetch_track_geometry
+from backend.services.track_map.track_cache import (
+    TRACK_CACHE_FILENAME,
+    TrackGeometryCache,
+)
+from backend.utils.paths import get_user_data_path
 
 
 @dataclass
@@ -45,34 +50,38 @@ class TrackMapService(BaseService):
         self._current_track_id: int | None = None
         self._current_track: dict | None = None
 
+        # Persistent geometry cache: survives app restarts.
+        self._track_cache = TrackGeometryCache(
+            get_user_data_path() / TRACK_CACHE_FILENAME
+        )
+
         super().__init__(irsdk_service, TrackMapCarBuilder())
 
-    def _get_track(self, track_id: int) -> dict | None:
-        """Returns cached geometry or fetches it when the track changes."""
-        if track_id == self._current_track_id:
-            print(f"[TrackMap] Cache hit: track_id={track_id}")
-            return self._current_track
+    def _get_track(self, track_id: int | None) -> dict | None:
+        """
+        Returns the geometry of the current track. On a track change it
+        is taken from the persistent cache, or fetched from the API
+        (and cached) on a cache miss.
+        """
+        if track_id is None:
+            return None
 
-        print(
-            f"[TrackMap] Track changed: "
-            f"{self._current_track_id} -> {track_id}"
-        )
+        if track_id == self._current_track_id:
+            return self._current_track
 
         self._current_track_id = track_id
 
-        print(f"[TrackMap] Fetching geometry for track_id={track_id}")
-        geometry = fetch_track_geometry(track_id)
+        geometry = self._track_cache.get(track_id)
+        if geometry is None:
+            geometry = fetch_track_geometry(track_id)
+
+            if geometry is not None:
+                self._track_cache.put(track_id, geometry)
 
         if geometry is None:
-            print(f"[TrackMap] Failed to fetch geometry: track_id={track_id}")
             self._current_track = None
         else:
             self._current_track = {"id": track_id, **geometry}
-            print(
-                f"[TrackMap] Geometry cached: "
-                f"track_id={track_id}, "
-                f"points={len(geometry['points'])}"
-            )
 
         return self._current_track
 

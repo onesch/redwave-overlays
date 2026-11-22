@@ -1,4 +1,5 @@
 const path = require('path');
+const { app } = require('electron');
 const { execFile, exec } = require('child_process');
 const http = require('http');
 
@@ -54,7 +55,12 @@ async function startBackend() {
   const exePath = path.join(__dirname, '../../backend_run/main.exe');
   console.log('Starting backend:', exePath);
 
-  backendProcess = execFile(exePath, { windowsHide: true });
+  // The backend stores its data (e.g. the track geometry cache) next to
+  // the app settings, in Electron's userData folder.
+  backendProcess = execFile(exePath, {
+    windowsHide: true,
+    env: { ...process.env, REDWAVE_USER_DATA_DIR: app.getPath('userData') },
+  });
 
   await waitForServer(`http://127.0.0.1:${BACKEND_PORT}`);
   console.log('Backend ready');
