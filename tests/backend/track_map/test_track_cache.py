@@ -3,7 +3,10 @@ import json
 
 import pytest
 
-from backend.services.track_map.track_cache import TrackGeometryCache
+from backend.services.track_map.track_cache import (
+    CACHE_EPOCH,
+    TrackGeometryCache,
+)
 
 GEOMETRY = {
     "points": [(0.0, 0.0), (10.0, 0.0), (0.0, 0.0)],
@@ -11,10 +14,10 @@ GEOMETRY = {
 }
 
 
-def _write_cache(path, data) -> None:
+def _write_cache(path, tracks, epoch=CACHE_EPOCH) -> None:
     """Writes a cache file the same way TrackGeometryCache does."""
     with gzip.open(path, "wt", encoding="utf-8") as f:
-        json.dump(data, f)
+        json.dump({"epoch": epoch, "tracks": tracks}, f)
 
 
 # --- Positive tests ---
@@ -65,6 +68,7 @@ def test_put_writes_gzip_file_without_temp_leftovers(tmp_path):
         gzip.compress(b'{"145": {}}')[:10],  # truncated archive
         gzip.compress(b"not json"),
         gzip.compress(b"[]"),  # not an object
+        gzip.compress(b'{"epoch": 1, "tracks": []}'),  # no track list
     ],
 )
 def test_unreadable_file_gives_empty_cache(tmp_path, content):
@@ -91,6 +95,33 @@ def test_invalid_entries_are_skipped(tmp_path):
     assert cache.get(145) == GEOMETRY
     assert cache.get(214) is None
     assert cache.get(300) is None
+
+
+def test_cache_of_another_epoch_is_ignored(tmp_path):
+    path = tmp_path / "cache.json.gz"
+    _write_cache(path, {"145": GEOMETRY}, epoch=CACHE_EPOCH - 1)
+
+    assert TrackGeometryCache(path).get(145) is None
+
+
+def test_cache_without_epoch_is_ignored(tmp_path):
+    # The first layout stored the tracks at the top level.
+    path = tmp_path / "cache.json.gz"
+    with gzip.open(path, "wt", encoding="utf-8") as f:
+        json.dump({"145": GEOMETRY}, f)
+
+    assert TrackGeometryCache(path).get(145) is None
+
+
+def test_outdated_cache_is_replaced_on_next_put(tmp_path):
+    path = tmp_path / "cache.json.gz"
+    _write_cache(path, {"145": GEOMETRY}, epoch=CACHE_EPOCH - 1)
+
+    TrackGeometryCache(path).put(214, GEOMETRY)
+    cache = TrackGeometryCache(path)
+
+    assert cache.get(214) == GEOMETRY
+    assert cache.get(145) is None
 
 
 def test_failed_save_keeps_geometry_in_memory(tmp_path):

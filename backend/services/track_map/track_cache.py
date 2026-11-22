@@ -12,6 +12,11 @@ from backend.services.track_map.track_api import TrackGeometry
 # Stored as compressed JSON.
 TRACK_CACHE_FILENAME = "track_geometry_cache.json.gz"
 
+# Bump it whenever the geometry served by the Track Map API is corrected:
+# a cache saved with a different epoch is discarded, and tracks are fetched
+# again. It also covers a change of the cache file layout.
+CACHE_EPOCH = 1
+
 logger = logging.getLogger(__name__)
 
 
@@ -41,11 +46,14 @@ class TrackGeometryCache:
     survives app restarts without repeated API requests.
     """
 
-    def __init__(self, path: Path):
+    def __init__(self, path: Path, epoch: int = CACHE_EPOCH):
         """
         :param path: location of the cache file; it does not have to exist.
+        :param epoch: version of the cached data; a file saved with another
+            epoch is ignored.
         """
         self.path = path
+        self.epoch = epoch
         self._lock = threading.Lock()
         self._tracks: dict[int, dict[str, Any]] = self._load()
 
@@ -74,9 +82,10 @@ class TrackGeometryCache:
         """
         Read and validate the cache file.
 
-        A missing, unreadable or malformed file gives an empty cache,
-        and invalid entries are skipped, so a damaged cache never breaks
-        the app: the geometry is just fetched from the API again.
+        A missing, unreadable, malformed or outdated (another epoch) file
+        gives an empty cache, and invalid entries are skipped, so a damaged
+        cache never breaks the app: the geometry is just fetched from the
+        API again.
         """
         # Read the whole file; a missing file is a normal first run.
         try:
@@ -94,9 +103,19 @@ class TrackGeometryCache:
             logger.warning("Track cache %s is not an object", self.path)
             return {}
 
+        # A cache of another epoch (or of the older layout) is outdated.
+        if raw.get("epoch") != self.epoch:
+            logger.info("Track cache %s is outdated, ignoring it", self.path)
+            return {}
+
+        entries = raw.get("tracks")
+        if not isinstance(entries, dict):
+            logger.warning("Track cache %s has no track list", self.path)
+            return {}
+
         # Keep only entries that pass the same validation as API data.
         tracks: dict[int, dict[str, Any]] = {}
-        for key, entry in raw.items():
+        for key, entry in entries.items():
             try:
                 # JSON object keys are strings, track ids are integers.
                 tracks[int(key)] = _validate_entry(entry)
@@ -118,7 +137,11 @@ class TrackGeometryCache:
 
             # Compact JSON, compressed on the fly.
             with gzip.open(tmp_path, "wt", encoding="utf-8") as f:
-                json.dump(self._tracks, f, separators=(",", ":"))
+                json.dump(
+                    {"epoch": self.epoch, "tracks": self._tracks},
+                    f,
+                    separators=(",", ":"),
+                )
 
             # Atomic on the same volume: readers see the old or new file.
             os.replace(tmp_path, self.path)
