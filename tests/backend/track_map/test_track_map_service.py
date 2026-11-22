@@ -128,7 +128,7 @@ def test_track_is_loaded_from_disk_cache_after_restart(
 
     assert fake_fetch.calls == [123]
     assert snapshot["track"]["id"] == 123
-    assert (user_data_dir / "track_geometry_cache.json").exists()
+    assert (user_data_dir / "track_geometry_cache.json.gz").exists()
 
 
 # --- Negative tests ---
@@ -155,7 +155,7 @@ def test_failed_fetch_returns_no_track_and_is_not_cached(
     snapshot = TrackMapService(mock_values).get_snapshot()
 
     assert snapshot["track"] is None
-    assert not (user_data_dir / "track_geometry_cache.json").exists()
+    assert not (user_data_dir / "track_geometry_cache.json.gz").exists()
 
     # After a restart the track is requested again, not taken from the cache.
     TrackMapService(mock_values).get_snapshot()

@@ -61,7 +61,6 @@ def test_fetch_track_geometry_returns_normalized_geometry(fake_get):
     geometry = track_api.fetch_track_geometry(145)
 
     assert geometry == {
-        "view_box": (0.0, 0.0, 1920.0, 1080.0),
         "points": [
             (1740.7, 469.7),
             (1740.656, 467.338),
@@ -110,9 +109,6 @@ def test_fetch_track_geometry_returns_none_on_non_json_body(fake_get):
     [
         [],
         {"error": "Track not found"},
-        _payload(viewBox="0 0 1920"),
-        _payload(viewBox="0 0 0 1080"),
-        _payload(viewBox="a b c d"),
         _payload(points=[[1, 2]]),
         _payload(points=[[1, 2], [3]]),
         _payload(points=[[1, 2], [3, None]]),
