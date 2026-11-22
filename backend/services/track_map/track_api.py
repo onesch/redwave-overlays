@@ -6,7 +6,6 @@ from pydantic import (
     ConfigDict,
     Field,
     ValidationError,
-    field_validator,
 )
 
 TRACK_API_URL = (
@@ -36,32 +35,14 @@ class TrackGeometry(BaseModel):
     """
     Track geometry as returned by the Track Map API.
 
-    The points form the track's closed loop, expressed in
-    view_box (min_x, min_y, width, height) coordinates.
+    The points form the track's closed loop. The API also sends a viewBox,
+    which is ignored: the overlay fits the view box to the points itself.
     """
 
     model_config = ConfigDict(allow_inf_nan=False)
 
-    view_box: tuple[float, float, float, float] = Field(alias="viewBox")
     points: list[tuple[float, float]] = Field(min_length=2)
     start_finish: StartFinish
-
-    @field_validator("view_box", mode="before")
-    @classmethod
-    def _split_view_box(cls, value: Any) -> Any:
-        """Accepts the SVG attribute form: "min_x min_y width height"."""
-        if isinstance(value, str):
-            return value.replace(",", " ").split()
-        return value
-
-    @field_validator("view_box")
-    @classmethod
-    def _check_view_box_size(
-        cls, value: tuple[float, float, float, float]
-    ) -> tuple[float, float, float, float]:
-        if value[2] <= 0 or value[3] <= 0:
-            raise ValueError("viewBox width and height must be positive")
-        return value
 
 
 def fetch_track_geometry(track_id: int) -> dict[str, Any] | None:
@@ -69,7 +50,7 @@ def fetch_track_geometry(track_id: int) -> dict[str, Any] | None:
     Fetch and validate the track geometry.
 
     :param track_id: iRacing track ID (WeekendInfo.TrackID)
-    :return: {"view_box", "points", "start_finish"} ready for the
+    :return: {"points", "start_finish"} ready for the
              overlay DTO, or None if the track is unavailable
              or the response is malformed.
     """

@@ -7,6 +7,11 @@ const SVG_NS = 'http://www.w3.org/2000/svg';
 const START_FINISH_COLS = 2;
 const START_FINISH_ROWS = 5;
 
+// Cell size as a fraction of the larger view box side. The map is always
+// fitted to the window by that side, so the line keeps the same on-screen
+// size on any track, from small ovals to long road courses.
+const START_FINISH_CELL_RATIO = 0.012;
+
 // Car movement animation between two data updates.
 const CAR_TRANSITION = 'transform 0.1s linear';
 
@@ -28,8 +33,8 @@ const CIRCLE_SEGMENTS = 128;
 // Smaller than half of the view box to leave room for the outline.
 const CIRCLE_RADIUS = 35;
 
-// Tight view box around the track points: the backend view box may include
-// extra margins that would shrink the map inside the window.
+// Tight view box around the track points, so the map fills the window
+// without the empty margins of a fixed canvas.
 // Returns null when the points have no area.
 function getPointsViewBox(points) {
     let minX = Infinity;
@@ -170,20 +175,17 @@ export class TrackMapRenderer extends BaseRenderer {
         }
 
         const path = new TrackPath(source.points);
+        const viewBox = getPointsViewBox(source.points);
 
-        if (path.length <= 0) {
+        // Nothing to draw if the points have no length or no area.
+        if (path.length <= 0 || !viewBox) {
             return null;
         }
 
         return {
-            // Fall back to the backend view box if the points have no area.
-            viewBox:
-                getPointsViewBox(source.points) ??
-                source.view_box,
+            viewBox,
             path,
             startFinish: source.start_finish,
-            // Cell size in view box units: the line is 5 cells across the track.
-            startFinishCellSize: 16,
             // Fraction of the TrackPath covered by one lap.
             lapSpan: 1,
         };
@@ -217,7 +219,6 @@ export class TrackMapRenderer extends BaseRenderer {
                 pct: 0,
                 direction: 1,
             },
-            startFinishCellSize: 1,
             lapSpan: 1,
         };
     }
@@ -231,7 +232,6 @@ export class TrackMapRenderer extends BaseRenderer {
                 pct: 0,
                 direction: 1,
             },
-            startFinishCellSize: 3,
             // TrackPath closes the loop (there and back), so a lap
             // uses only its forward half: left end -> right end.
             lapSpan: 0.5,
@@ -273,6 +273,9 @@ export class TrackMapRenderer extends BaseRenderer {
 
         const angle = Math.atan2(dy, dx) * 180 / Math.PI;
 
+        const [, , width, height] = this.track.viewBox;
+        const cellSize = Math.max(width, height) * START_FINISH_CELL_RATIO;
+
         // Local coordinates: one cell is 1x1, the grid is 2 cells along
         // the track and 5 cells across it. The transform reads right to left:
         // center the grid, scale cells to view box units, rotate along the
@@ -281,7 +284,7 @@ export class TrackMapRenderer extends BaseRenderer {
             class: 'track-start-finish',
             transform:
                 `translate(${x} ${y}) rotate(${angle}) ` +
-                `scale(${this.track.startFinishCellSize}) ` +
+                `scale(${cellSize}) ` +
                 `translate(${-START_FINISH_COLS / 2} ${-START_FINISH_ROWS / 2})`,
         });
 
@@ -292,7 +295,7 @@ export class TrackMapRenderer extends BaseRenderer {
                     y: row,
                     width: 1,
                     height: 1,
-                    fill: (row + col) % 2 === 0 ? '#ff3333' : '#ffffff',
+                    class: (row + col) % 2 === 0 ? 'cell-dark' : 'cell-light',
                 }));
             }
         }
@@ -383,10 +386,12 @@ export class TrackMapRenderer extends BaseRenderer {
     updateCarAppearance(carDiv, car, playerId, isMulticlass) {
         carDiv.classList.toggle('player', car.player_id === playerId);
 
-        carDiv.style.setProperty(
-            '--car-color',
-            isMulticlass ? car.color : 'var(--yellow-primary)'
-        );
+        // Class color in multiclass sessions, otherwise the CSS default color.
+        if (isMulticlass) {
+            carDiv.style.setProperty('--car-color', car.color);
+        } else {
+            carDiv.style.removeProperty('--car-color');
+        }
 
         carDiv.dataset.shape = this._getCarShape(car.color, isMulticlass);
     }

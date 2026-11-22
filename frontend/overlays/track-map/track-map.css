@@ -1,3 +1,23 @@
+:root {
+  /* Track */
+  --track-outline-color: #fff;
+  --track-surface-color: #130A06;
+
+  /* Start / finish line */
+  --start-finish-dark-color: #ff3333;
+  --start-finish-light-color: #fff;
+
+  /* Car markers */
+  --car-default-color: var(--yellow-primary);
+  --car-outline-color: #fff;
+  --car-text-color: #000;
+  --player-arrow-color: #fff;
+
+  /* Car marker sizes: also define how much room the map leaves at its edges. */
+  --car-size: 20px;
+  --player-car-size: 26px;
+}
+
 /* ── Container ── */
 #track-container {
   position: relative;
@@ -12,10 +32,11 @@ body[data-track-type="linear"] #track-container {
 }
 
 /* The real track fills the whole window: the SVG fits the map into the
-   container (meet) and centers it on both axes. */
+   container (meet) and centers it on both axes. The padding keeps markers
+   of cars on the map edge inside the window. */
 body[data-track-type="track"] {
   height: 100vh;
-  padding: 12px;
+  padding: calc(var(--player-car-size) / 2 + 2px);
   box-sizing: border-box;
 }
 
@@ -54,30 +75,39 @@ body[data-track-type="track"] #track-container {
 
 /* White outer contour */
 #track-line svg .track.outer {
-  stroke: #fff;
+  stroke: var(--track-outline-color);
   stroke-width: 10px;
 }
 
 /* Dark track surface */
 #track-line svg .track.surface {
-  stroke: #130A06;
+  stroke: var(--track-surface-color);
   stroke-width: 8px;
+}
+
+/* Start / finish line cells (checkered pattern) */
+#track-line svg .track-start-finish .cell-dark {
+  fill: var(--start-finish-dark-color);
+}
+
+#track-line svg .track-start-finish .cell-light {
+  fill: var(--start-finish-light-color);
 }
 
 /* ── Car dot ── */
 .track-map-car {
-  --car-color: var(--yellow-primary);
+  --car-color: var(--car-default-color);
   position: absolute;
   left: 0;
   top: 0;
-  width: 20px;
-  height: 20px;
+  width: var(--car-size);
+  height: var(--car-size);
   box-sizing: border-box;
   display: flex;
   align-items: center;
   justify-content: center;
   --shape: circle(50%);
-  color: #000;
+  color: var(--car-text-color);
   font-size: 10px;
   font-weight: 600;
   line-height: 1;
@@ -96,7 +126,7 @@ body[data-track-type="track"] #track-container {
 
 .track-map-car-shape {
   inset: 0;
-  background-color: #fff;
+  background-color: var(--car-outline-color);
   z-index: -1;
 }
 
@@ -115,8 +145,8 @@ body[data-track-type="track"] #track-container {
 
 /* Player car */
 .track-map-car.player {
-  width: 26px;
-  height: 26px;
+  width: var(--player-car-size);
+  height: var(--player-car-size);
   font-size: 13px;
   z-index: 4;
 }
@@ -130,6 +160,6 @@ body[data-track-type="track"] #track-container {
   transform: translateX(-50%);
   border-left: 6px solid transparent;
   border-right: 6px solid transparent;
-  border-top: 8px solid #fff;
+  border-top: 8px solid var(--player-arrow-color);
   z-index: 3;
 }

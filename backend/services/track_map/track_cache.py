@@ -19,9 +19,8 @@ def _validate_entry(entry: Any) -> dict[str, Any]:
     """
     if not isinstance(entry, dict):
         raise TypeError(f"expected an object, got {type(entry).__name__}")
-    # TrackGeometry reads the view box from its API alias.
-    data = {**entry, "viewBox": entry.get("view_box")}
-    return TrackGeometry.model_validate(data).model_dump()
+    # Entries saved earlier may still contain "view_box"; it is ignored.
+    return TrackGeometry.model_validate(entry).model_dump()
 
 
 class TrackGeometryCache:
