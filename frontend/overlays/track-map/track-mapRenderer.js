@@ -6,27 +6,30 @@ const SVG_NS = 'http://www.w3.org/2000/svg';
 // Checkered start/finish grid: 2 cells along the track, 5 across it.
 const START_FINISH_COLS = 2;
 const START_FINISH_ROWS = 5;
+
+// Car movement animation between two data updates.
 const CAR_TRANSITION = 'transform 0.1s linear';
 
 // Marker shapes (see data-shape in track-map.css), assigned to car classes in
 // order of appearance; the first one is also used in single-class sessions.
 const CAR_SHAPES = ['circle', 'square', 'diamond', 'hexagon', 'pentagon'];
 
-// Synthetic track geometry.
+// Geometry of the synthetic linear and circle layouts.
 const LINEAR_VIEW_BOX = [0, 0, 300, 75];
 const CIRCLE_VIEW_BOX = [0, 0, 100, 100];
 
+// Horizontal line inset from the view box edges so the outline is not cut off.
 const LINEAR_POINTS = [
     [18, 37.5],
     [282, 37.5],
 ];
 
 const CIRCLE_SEGMENTS = 128;
+// Smaller than half of the view box to leave room for the outline.
 const CIRCLE_RADIUS = 35;
 
-
-// Tight view box around the track points: the backend view box carries its
-// own empty margins, which would shrink the map inside the window.
+// Tight view box around the track points: the backend view box may include
+// extra margins that would shrink the map inside the window.
 // Returns null when the points have no area.
 function getPointsViewBox(points) {
     let minX = Infinity;
@@ -74,6 +77,8 @@ export class TrackMapRenderer extends BaseRenderer {
         this.trackLine = document.getElementById('track-line');
     }
 
+    // Apply an API update: reset cars on a new session, rebuild the track
+    // when it changes, then draw the cars on top of it.
     render(data) {
         if (data.status === 'ok' && data.is_session_changed) {
             this.clearCars();
@@ -171,12 +176,15 @@ export class TrackMapRenderer extends BaseRenderer {
         }
 
         return {
+            // Fall back to the backend view box if the points have no area.
             viewBox:
                 getPointsViewBox(source.points) ??
                 source.view_box,
             path,
             startFinish: source.start_finish,
+            // Cell size in view box units: the line is 5 cells across the track.
             startFinishCellSize: 16,
+            // Fraction of the TrackPath covered by one lap.
             lapSpan: 1,
         };
     }
@@ -266,7 +274,9 @@ export class TrackMapRenderer extends BaseRenderer {
         const angle = Math.atan2(dy, dx) * 180 / Math.PI;
 
         // Local coordinates: one cell is 1x1, the grid is 2 cells along
-        // the track and 5 cells across it, centered on the origin.
+        // the track and 5 cells across it. The transform reads right to left:
+        // center the grid, scale cells to view box units, rotate along the
+        // track direction, then move to the start/finish point.
         const group = this._createSvgElement('g', {
             class: 'track-start-finish',
             transform:
@@ -305,6 +315,8 @@ export class TrackMapRenderer extends BaseRenderer {
     clearCars() {
         Object.values(this.cars).forEach(car => car.remove());
         this.cars = {};
+
+        // Shapes are reassigned from scratch for the next set of cars.
         this.classShapes.clear();
     }
 
@@ -331,7 +343,8 @@ export class TrackMapRenderer extends BaseRenderer {
         }
     }
 
-    // Remove cars that are no longer on the track.
+    // Remove cars that are no longer on the track
+    // (lap_dist_pct is -1 for a car that is not on the track).
     _isCarInactiveAndRemove(car) {
         if (car.lap_dist_pct === -1) {
             const carDiv = this.cars[car.player_id];
@@ -366,7 +379,7 @@ export class TrackMapRenderer extends BaseRenderer {
         return carDiv;
     }
 
-    // Update the car's visual appearance based on session type and player identity.
+    // Update the car's color, class shape and player highlight.
     updateCarAppearance(carDiv, car, playerId, isMulticlass) {
         carDiv.classList.toggle('player', car.player_id === playerId);
 
@@ -412,6 +425,8 @@ export class TrackMapRenderer extends BaseRenderer {
     }
 
     // Convert SVG viewBox coordinates into container pixels.
+    // Must mirror the SVG preserveAspectRatio="xMidYMid meet" (uniform scale,
+    // centered), otherwise cars drift away from the drawn track.
     _trackToContainer({ x, y }) {
         const cr = this.trackContainer.getBoundingClientRect();
 
@@ -435,7 +450,8 @@ export class TrackMapRenderer extends BaseRenderer {
         // First positioning: place the car immediately without animation.
         const isFirstPosition = !Number.isFinite(lastPct);
 
-        // Suppress animation when the car crosses the start/finish line.
+        // Suppress animation when the car crosses the start/finish line:
+        // a jump of more than half a lap means the progress wrapped around.
         const crossedLapBoundary =
             !isFirstPosition &&
             Math.abs(lastPct - lapDistPct) > 0.5;
