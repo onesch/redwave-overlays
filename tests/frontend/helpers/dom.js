@@ -35,7 +35,11 @@ class FakeElement {
     this.document = document;
     this.tagName = tag.toUpperCase();
     this.id = id;
-    this.style = { setProperty: (name, value) => { this.style[name] = value; } };
+    this.style = {
+      setProperty: (name, value) => { this.style[name] = value; },
+      removeProperty: (name) => { delete this.style[name]; },
+    };
+    this.attributes = {};
     this.dataset = {};
     this.children = [];
     this.listeners = new Map();
@@ -74,6 +78,28 @@ class FakeElement {
     if (child.id) this.document?.elements.set(child.id, child);
     return child;
   }
+
+  // Strings become text, like text nodes in the real DOM.
+  append(...nodes) {
+    nodes.forEach((node) => {
+      if (typeof node === 'string') this.textContent += node;
+      else this.appendChild(node);
+    });
+  }
+
+  replaceChildren(...nodes) {
+    this.children = [];
+    this.textContent = '';
+    this.append(...nodes);
+  }
+
+  // `class` also updates the class list, as for SVG elements.
+  setAttribute(name, value) {
+    this.attributes[name] = String(value);
+    if (name === 'class') this.className = String(value);
+  }
+
+  getAttribute(name) { return this.attributes[name] ?? null; }
 
   remove() {
     this.removed = true;
@@ -130,6 +156,11 @@ class FakeDocument {
 
   createElement(tag = 'div') {
     return new FakeElement({ tag, document: this });
+  }
+
+  // SVG elements are plain fake elements; the namespace is not modelled.
+  createElementNS(namespace, tag) {
+    return this.createElement(tag);
   }
 
   getElementById(id) { return this.elements.get(id) ?? null; }

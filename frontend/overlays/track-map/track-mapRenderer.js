@@ -17,7 +17,11 @@ const CAR_TRANSITION = 'transform 0.1s linear';
 
 // Marker shapes (see data-shape in track-map.css), assigned to car classes in
 // order of appearance; the first one is also used in single-class sessions.
-const CAR_SHAPES = ['circle', 'square', 'diamond', 'hexagon', 'pentagon'];
+const CAR_SHAPES = ['circle', 'square', 'diamond', 'octagon'];
+
+// Relative luminance at which dark text (#130A06) and white text give the same
+// contrast ratio; brighter car colors get dark text, darker ones white text.
+const CAR_TEXT_LUMINANCE_THRESHOLD = 0.19;
 
 // Geometry of the synthetic linear and circle layouts.
 const LINEAR_VIEW_BOX = [0, 0, 300, 75];
@@ -59,11 +63,50 @@ function getPointsViewBox(points) {
     return [minX, minY, width, height];
 }
 
+// Parse a '#rgb', '#rrggbb' or 'rgb(r, g, b)' color into [r, g, b] (0-255).
+// Returns null for any other value.
+function parseColor(color) {
+    const value = String(color ?? '').trim();
+
+    const hex = value.match(/^#([\da-f]{3}|[\da-f]{6})$/i);
+    if (hex) {
+        const digits = hex[1].length === 3
+            ? [...hex[1]].map((digit) => digit + digit)
+            : hex[1].match(/../g);
+        return digits.map((digit) => parseInt(digit, 16));
+    }
+
+    const rgb = value.match(/^rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i);
+    if (rgb) {
+        return rgb.slice(1, 4).map((channel) => Math.min(Number(channel), 255));
+    }
+
+    return null;
+}
+
+// WCAG relative luminance of a color (0 = black, 1 = white),
+// or null when the color cannot be parsed.
+function getLuminance(color) {
+    const channels = parseColor(color);
+    if (!channels) {
+        return null;
+    }
+
+    const [r, g, b] = channels.map((channel) => {
+        const c = channel / 255;
+        return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+    });
+
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
 export class TrackMapRenderer extends BaseRenderer {
     constructor(document) {
         super(document);
 
-        this.trackType = 'linear';
+        // Set by the first setTrackType call, so even the default
+        // type ('linear') gets drawn.
+        this.trackType = null;
 
         // key: player_id, value: car DOM element
         this.cars = {};
@@ -392,6 +435,13 @@ export class TrackMapRenderer extends BaseRenderer {
         } else {
             carDiv.style.removeProperty('--car-color');
         }
+
+        // White number on dark class colors; the default dark number otherwise.
+        const luminance = isMulticlass ? getLuminance(car.color) : null;
+        carDiv.classList.toggle(
+            'dark-color',
+            luminance !== null && luminance < CAR_TEXT_LUMINANCE_THRESHOLD
+        );
 
         carDiv.dataset.shape = this._getCarShape(car.color, isMulticlass);
     }

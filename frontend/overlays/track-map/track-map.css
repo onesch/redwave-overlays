@@ -11,6 +11,7 @@
   --car-default-color: var(--yellow-primary);
   --car-outline-color: #fff;
   --car-text-color: #130A06;
+  --car-text-light-color: #fff;
   --player-arrow-color: #fff;
 
   /* Car marker sizes: also define how much room the map leaves at its edges. */
@@ -117,6 +118,11 @@ body[data-track-type="track"] #track-container {
   z-index: 2;
 }
 
+/* Number on a dark class color (multiclass), set by the renderer */
+.track-map-car.dark-color {
+  color: var(--car-text-light-color);
+}
+
 /* Marker shape: white outline layer with the car-colored fill inset by 2px */
 .track-map-car-shape,
 .track-map-car-shape::before {
@@ -139,10 +145,8 @@ body[data-track-type="track"] #track-container {
 /* Car class shapes (multiclass sessions) */
 .track-map-car[data-shape="circle"]   { --shape: circle(50%); }
 .track-map-car[data-shape="square"]   { --shape: inset(0 round 5px); }
-.track-map-car[data-shape="diamond"]  { --shape: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); }
-.track-map-car[data-shape="hexagon"]  { --shape: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%); }
-.track-map-car[data-shape="pentagon"] { --shape: polygon(50% 0, 100% 38%, 82% 100%, 18% 100%, 0 38%); }
-
+.track-map-car[data-shape="diamond"]  { --shape: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); width: calc(var(--car-size) + 2px); height: calc(var(--car-size) + 2px); }
+.track-map-car[data-shape="octagon"] { --shape: polygon(25% 0%, 75% 0%, 100% 25%, 100% 75%, 75% 100%, 25% 100%, 0% 75%, 0% 25%); }
 /* Player car */
 .track-map-car.player {
   width: var(--player-car-size);
