@@ -38,29 +38,17 @@ class IRSDKService():
             return None
 
     @staticmethod
-    def get_car_rgb(
-        *,
-        idx: int,
-        drivers: list[dict],
-        player_idx: int | None,
-        multiclass: bool,
-    ) -> str:
-        """Return the car's color as RGB string."""
-        if idx >= len(drivers):
-            return "#1b2a3a"
+    def get_class_color(rgb: Any) -> str | None:
+        """
+        Decode an iRacing CarClassColor (0xRRGGBB integer) to '#rrggbb'.
 
-        if idx == player_idx:
-            return "#1e6cff"
-
-        rgb = drivers[idx].get("CarClassColor")
-
-        if not multiclass or rgb in (None, 0xFFFFFF):
-            return "#1b2a3a"
-
-        r = (rgb >> 16) & 0xFF
-        g = (rgb >> 8) & 0xFF
-        b = rgb & 0xFF
-        return f"rgb({r},{g},{b})"
+        :param rgb: the CarClassColor value of a driver entry.
+        :return: the color, or None if the class has no color.
+        """
+        # White (0xFFFFFF) stands for "no class color", as in the leaderboard.
+        if not isinstance(rgb, int) or rgb == 0xFFFFFF:
+            return None
+        return f"#{rgb:06x}"
 
     def get_car_location(self) -> str:
         """Return 'track' if player is on track, 'garage' otherwise."""

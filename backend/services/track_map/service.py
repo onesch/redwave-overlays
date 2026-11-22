@@ -8,6 +8,7 @@ from backend.services.base import (
     SessionStateContext,
     is_multiclass,
 )
+from backend.services.irsdk.service import IRSDKService
 from backend.services.track_map.track_api import fetch_track_geometry
 from backend.services.track_map.track_cache import (
     TRACK_CACHE_FILENAME,
@@ -38,7 +39,11 @@ class TrackMapCarBuilder(BaseCarBuilder):
         if not car:
             return None
         # Specific fields
-        car["car_class_color"] = ctx.drivers[idx].get("CarClassColor")
+        driver = ctx.drivers[idx]
+        car["class_id"] = driver.get("CarClassID")
+        car["color"] = IRSDKService.get_class_color(
+            driver.get("CarClassColor")
+        )
         return car
 
 
@@ -133,12 +138,8 @@ class TrackMapService(BaseService):
                     "player_id": idx,
                     "car_number": car["car_number"],
                     "lap_dist_pct": car["lap_dist_pct"],
-                    "color": self.irsdk.get_car_rgb(
-                        idx=idx,
-                        drivers=ctx.drivers,
-                        player_idx=player_idx,
-                        multiclass=ctx.multiclass,
-                    ),
+                    "class_id": car["class_id"],
+                    "color": car["color"],
                 }
             )
         return {

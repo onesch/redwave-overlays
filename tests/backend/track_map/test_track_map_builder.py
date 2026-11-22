@@ -5,7 +5,7 @@ from backend.services.track_map.service import TrackMapCarBuilder
 # --- Positive tests ---
 
 
-def test_track_map_builder_adds_class_color(mock_builder, mock_ctx):
+def test_track_map_builder_adds_class_data(mock_builder, mock_ctx):
     ctx = mock_ctx()
     car = mock_builder.build(0, ctx)
 
@@ -13,7 +13,8 @@ def test_track_map_builder_adds_class_color(mock_builder, mock_ctx):
     assert car["car_number"] == "12"
     assert car["lap_dist_pct"] == pytest.approx(0.3)
     assert car["is_in_pitroad"] is False
-    assert car["car_class_color"] == 16711680
+    assert car["class_id"] == 1
+    assert car["color"] == "#ff0000"
 
 
 # --- Negative tests ---

@@ -27,70 +27,16 @@ def test_get_value_existing(mock_irsdk_service):
 
 
 @pytest.mark.parametrize(
-    "idx,drivers,player_idx,multiclass,expected",
+    "rgb,expected",
     [
-        # no multiclass
-        (
-            0,
-            [
-                {"CarClassColor": 0xFF0000},
-                {"CarClassColor": 0x00FF00},
-                {"CarClassColor": 0x0000FF},
-            ],
-            None,
-            False,
-            "#1b2a3a",
-        ),
-        # multiclass, player car
-        (
-            1,
-            [
-                {"CarClassColor": 0xFF0000},
-                {"CarClassColor": 0x00FF00},
-                {"CarClassColor": 0x0000FF},
-            ],
-            1,
-            True,
-            "#1e6cff",
-        ),
-        # multiclass, another car
-        (
-            2,
-            [
-                {"CarClassColor": 0xFF0000},
-                {"CarClassColor": 0x00FF00},
-                {"CarClassColor": 0x0000FF},
-            ],
-            0,
-            True,
-            "rgb(0,0,255)",
-        ),
-        # idx out of bounds
-        (
-            10,
-            [
-                {"CarClassColor": 0xFF0000},
-                {"CarClassColor": 0x00FF00},
-                {"CarClassColor": 0x0000FF},
-            ],
-            None,
-            False,
-            "#1b2a3a",
-        ),
-        # CarClassColor None
-        (0, [{"CarClassColor": None}], None, True, "#1b2a3a"),
+        (0xFF0000, "#ff0000"),
+        (0x0000FF, "#0000ff"),
+        (0x00000A, "#00000a"),  # zero-padded to six digits
     ],
 )
-def test_get_car_rgb(idx, drivers, player_idx, multiclass, expected):
-    assert (
-        IRSDKService.get_car_rgb(
-            idx=idx,
-            drivers=drivers,
-            player_idx=player_idx,
-            multiclass=multiclass,
-        )
-        == expected
-    )
+def test_get_class_color(rgb, expected):
+    assert IRSDKService.get_class_color(rgb) == expected
+
 
 def test_get_speed_ms_valid(mock_irsdk_service):
     # iRacing reports 10 m/s; the backend exposes it without converting.
@@ -123,6 +69,18 @@ def test_get_speed_ms_none(irsdk_mock_factory):
 
     result = service.get_speed_ms()
     assert result == 0.0
+
+
+@pytest.mark.parametrize(
+    "rgb",
+    [
+        None,
+        "16711680",
+        0xFFFFFF,  # white stands for "no class color"
+    ],
+)
+def test_get_class_color_returns_none_without_color(rgb):
+    assert IRSDKService.get_class_color(rgb) is None
 
 
 def test_get_speed_ms_invalid(mock_irsdk_service):

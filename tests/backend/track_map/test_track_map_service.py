@@ -87,6 +87,13 @@ def test_build_context_ignores_pace_car_class(irsdk_mock_factory):
     assert ctx.multiclass is False
 
 
+def test_snapshot_cars_contain_class_data(mock_service):
+    car = mock_service.get_snapshot()["cars"][0]
+
+    assert car["class_id"] == 1
+    assert car["color"] == "#ff0000"
+
+
 def test_snapshot_contains_multiclass_and_track(mock_service):
     snapshot = mock_service.get_snapshot()
 

@@ -132,15 +132,15 @@ test('TrackMapRenderer styles cars by class only in multiclass sessions', async 
   const document = createTrackMapDocument();
   const renderer = new TrackMapRenderer(document);
   const cars = [
-    { player_id: 1, car_number: '1', color: 'rgb(255,218,89)', lap_dist_pct: 0.1 },
-    { player_id: 2, car_number: '2', color: 'rgb(0,0,128)', lap_dist_pct: 0.2 },
+    { player_id: 1, car_number: '1', class_id: 10, color: '#ffda59', lap_dist_pct: 0.1 },
+    { player_id: 2, car_number: '2', class_id: 20, color: '#000080', lap_dist_pct: 0.2 },
   ];
 
   renderer.setTrackType('circle');
   renderer.render({ status: 'ok', multiclass: true, cars });
 
   const [light, dark] = [renderer.cars[1], renderer.cars[2]];
-  assert.equal(light.style['--car-color'], 'rgb(255,218,89)');
+  assert.equal(light.style['--car-color'], '#ffda59');
   assert.equal(light.dataset.shape, 'circle');
   assert.equal(dark.dataset.shape, 'square');
 
