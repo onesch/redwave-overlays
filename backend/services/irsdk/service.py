@@ -38,6 +38,36 @@ class IRSDKService():
             return None
 
     @staticmethod
+    def is_pace_car(driver: dict) -> bool:
+        """
+        Check if a DriverInfo.Drivers entry is the pace car.
+
+        :param driver: driver entry from DriverInfo.Drivers.
+        :return: True if flagged by CarIsPaceCar or named "Pace Car".
+        """
+        return bool(driver.get("CarIsPaceCar")) or (
+            driver.get("UserName", "").upper() == "PACE CAR"
+        )
+
+    @staticmethod
+    def is_multiclass(drivers: list[dict]) -> bool:
+        """
+        Check if the session has more than one car class.
+
+        The pace car is ignored: it has its own class id.
+
+        :param drivers: DriverInfo.Drivers entries.
+        :return: True if more than one CarClassID is present.
+        """
+        class_ids = {
+            driver.get("CarClassID")
+            for driver in drivers
+            if driver.get("CarClassID")
+            and not IRSDKService.is_pace_car(driver)
+        }
+        return len(class_ids) > 1
+
+    @staticmethod
     def get_class_color(rgb: Any) -> str | None:
         """
         Decode an iRacing CarClassColor (0xRRGGBB integer) to '#rrggbb'.

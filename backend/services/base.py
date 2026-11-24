@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from typing import Any
 
+from backend.services.irsdk.service import IRSDKService
+
 
 @dataclass
 class SessionStateContext:
@@ -32,26 +34,6 @@ class SessionStateContext:
     multiclass: bool
 
 
-def is_pace_car(driver: dict) -> bool:
-    """Checks if a driver entry is the pace car (by flag or by name)."""
-    return bool(driver.get("CarIsPaceCar")) or (
-        driver.get("UserName", "").upper() == "PACE CAR"
-    )
-
-
-def is_multiclass(drivers: list[dict]) -> bool:
-    """
-    Checks if the session has more than one car class.
-    The pace car is ignored: it has its own class id.
-    """
-    class_ids = {
-        driver.get("CarClassID")
-        for driver in drivers
-        if driver.get("CarClassID") and not is_pace_car(driver)
-    }
-    return len(class_ids) > 1
-
-
 class BaseCarBuilder:
     """
     Base builder responsible for constructing per-car data
@@ -65,7 +47,7 @@ class BaseCarBuilder:
         Build a base representation of a car.
         """
         driver = ctx.drivers[idx]
-        if self._is_pace_car(driver):
+        if IRSDKService.is_pace_car(driver):
             return None
 
         return {
@@ -74,11 +56,6 @@ class BaseCarBuilder:
             "lap_dist_pct": ctx.lap_dist_pct[idx],
             "is_in_pitroad": ctx.is_pitroad[idx],
         }
-
-    @staticmethod
-    def _is_pace_car(driver: dict) -> bool:
-        """Checks if a car is a pace car."""
-        return is_pace_car(driver)
 
 
 class BaseService:

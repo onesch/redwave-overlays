@@ -1,6 +1,7 @@
 from typing import Any, Literal
 
-from backend.services.base import BaseService, is_multiclass
+from backend.services.base import BaseService
+from backend.services.irsdk.service import IRSDKService
 from backend.services.leaderboard.car_data_builder import CarDataBuilder
 from backend.services.leaderboard.context import LeaderboardContext
 from backend.services.leaderboard.lap_times.formatter import TimeFormatter
@@ -60,7 +61,7 @@ class Leaderboard(BaseService):
             laps_started=self._normalize_laps_started(self.irsdk.get_value("CarIdxLap") or []),
             lap_dist_pct=self.irsdk.get_value("CarIdxLapDistPct") or [],
             is_pitroad=self.irsdk.get_value("CarIdxOnPitRoad") or [],
-            multiclass=is_multiclass(drivers),
+            multiclass=IRSDKService.is_multiclass(drivers),
             est_times=self.irsdk.get_value("CarIdxEstTime") or [],
             radio_transmit_car_idx=self.irsdk.get_value("RadioTransmitCarIdx"),
         )

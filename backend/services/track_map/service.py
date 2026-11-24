@@ -6,7 +6,6 @@ from backend.services.base import (
     BaseService,
     BaseCarBuilder,
     SessionStateContext,
-    is_multiclass,
 )
 from backend.services.irsdk.service import IRSDKService
 from backend.services.track_map.track_api import fetch_track_geometry
@@ -101,7 +100,7 @@ class TrackMapService(BaseService):
         if not drivers:
             return None
 
-        multiclass: bool = is_multiclass(drivers)
+        multiclass: bool = IRSDKService.is_multiclass(drivers)
 
         return TrackMapContext(
             drivers=drivers,
