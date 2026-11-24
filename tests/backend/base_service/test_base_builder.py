@@ -15,19 +15,16 @@ def test_build_returns_car_data(mock_builder, mock_ctx):
     assert car["is_in_pitroad"] is False
 
 
-@pytest.mark.parametrize(
-    "username,expected",
-    [
-        ("PACE CAR", True),
-        ("pace car", True),
-        ("Driver1", False),
-        ("", False),
-    ],
-)
-def test_is_pace_car_variants(mock_builder, username, expected):
-    driver = {"UserName": username}
+def test_build_returns_none_for_pace_car_flag(mock_builder, mock_ctx):
+    ctx = mock_ctx(
+        drivers=[{"UserName": "Safety", "CarNumber": "0", "CarIsPaceCar": 1}],
+        lap_dist_pct=[0.0],
+        is_pitroad=[False],
+        positions=[0],
+        class_positions=[0],
+    )
 
-    assert mock_builder._is_pace_car(driver) is expected
+    assert mock_builder.build(0, ctx) is None
 
 
 # --- Negative tests ---
@@ -48,8 +45,3 @@ def test_build_returns_none_for_pace_car(mock_builder, mock_ctx):
 
     assert result is None
 
-
-def test_is_pace_car_returns_false_for_normal_driver(mock_builder):
-    driver = {"UserName": "Driver1"}
-
-    assert mock_builder._is_pace_car(driver) is False

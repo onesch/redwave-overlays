@@ -3,6 +3,7 @@ from typing import Any
 
 from backend.services.leaderboard.car_sorter import CarSorter
 from backend.services.base import BaseCarBuilder
+from backend.services.irsdk.service import IRSDKService
 from backend.services.leaderboard.context import LeaderboardContext
 from backend.services.leaderboard.lap_times.formatter import TimeFormatter
 from backend.services.leaderboard.lap_times.service import LapTimeService
@@ -78,7 +79,7 @@ class CarDataBuilder(BaseCarBuilder):
         drivers = []
 
         for car_idx, driver in enumerate(ctx.drivers):
-            if self._is_pace_car(driver):
+            if IRSDKService.is_pace_car(driver):
                 continue
 
             position = self._resolve_position(car_idx, ctx)

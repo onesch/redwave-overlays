@@ -1,612 +1,485 @@
 import { BaseRenderer } from '../shared/baseRenderer.js';
+import { isDarkColor } from '../shared/colors.js';
+import { TrackPath } from './trackPath.js';
+
+const SVG_NS = 'http://www.w3.org/2000/svg';
+
+// Checkered start/finish grid: 2 cells along the track, 5 across it.
+const START_FINISH_COLS = 2;
+const START_FINISH_ROWS = 5;
+
+// Cell size as a fraction of the larger view box side. The map is always
+// fitted to the window by that side, so the line keeps the same on-screen
+// size on any track, from small ovals to long road courses.
+const START_FINISH_CELL_RATIO = 0.012;
+
+// Car movement animation between two data updates.
+const CAR_TRANSITION = 'transform 0.1s linear';
+
+// Marker shapes (see data-shape in track-map.css), assigned to car classes in
+// order of appearance; the first one is also used in single-class sessions.
+const CAR_SHAPES = ['circle', 'square', 'diamond', 'octagon'];
+
+// Geometry of the synthetic linear and circle layouts.
+const LINEAR_VIEW_BOX = [0, 0, 300, 75];
+const CIRCLE_VIEW_BOX = [0, 0, 100, 100];
+
+// Horizontal line inset from the view box edges so the outline is not cut off.
+const LINEAR_POINTS = [
+    [18, 37.5],
+    [282, 37.5],
+];
+
+const CIRCLE_SEGMENTS = 128;
+// Smaller than half of the view box to leave room for the outline.
+const CIRCLE_RADIUS = 35;
+
+// Tight view box around the track points, so the map fills the window
+// without the empty margins of a fixed canvas.
+// Returns null when the points have no area.
+function getPointsViewBox(points) {
+    let minX = Infinity;
+    let minY = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
+
+    for (const [x, y] of points) {
+        minX = Math.min(minX, x);
+        minY = Math.min(minY, y);
+        maxX = Math.max(maxX, x);
+        maxY = Math.max(maxY, y);
+    }
+
+    const width = maxX - minX;
+    const height = maxY - minY;
+
+    if (!(width > 0 && height > 0)) {
+        return null;
+    }
+
+    return [minX, minY, width, height];
+}
 
 export class TrackMapRenderer extends BaseRenderer {
     constructor(document) {
         super(document);
 
-        this.trackType = 'linear';
-        this.finishLine = null;
-        this.cars = {}; // key: player_id, value: div
+        // Set by the first setTrackType call, so even the default
+        // type ('linear') gets drawn.
+        this.trackType = null;
+
+        // key: player_id, value: car DOM element
+        this.cars = {};
+
+        // key: car.class_id, value: marker shape name
+        this.classShapes = new Map();
+
+        // Original track geometry received from the backend.
+        this.sourceTrack = null;
+        this.trackId = null;
+
+        // Active geometry used for rendering and car positioning.
+        this.track = null;
 
         this.trackContainer = document.getElementById('track-container');
         this.trackLine = document.getElementById('track-line');
-
-        // SVG track state
-        this._lastTrackSvg = null;
-        this._lastStartFinishSvg = null;
-        this._directionOverride = null;
-
-        // Path measurement
-        this._measureSvg = null;
-        this._trackPathEl = null;
-        this._trackPathLength = 0;
-        this._svgViewBox = [0, 0, 1920, 1080];
-
-        // Direction & start offset
-        this._startLen = 0;
-        this._direction = 1;
     }
 
+    // Apply an API update: reset cars on a new session, rebuild the track
+    // when it changes, then draw the cars on top of it.
     render(data) {
         if (data.status === 'ok' && data.is_session_changed) {
-            this.resetTrackMap();
+            this.clearCars();
         }
 
-        if (this.trackType === 'track') {
-            if (data.track_svg && data.track_svg !== this._lastTrackSvg) {
-                this._lastTrackSvg = data.track_svg;
-                this._lastStartFinishSvg = data.start_finish_svg;
-                this._directionOverride = data.direction_override ?? null;
-                this.renderSvgTrack(data.track_svg, data.start_finish_svg);
-            }
+        const track = data.track ?? null;
+
+        if ((track?.id ?? null) !== this.trackId) {
+            this.setTrack(track);
         }
 
-        this.renderCars(data.cars, data.player_id);
+        this.renderCars(data.cars, data.player_id, data.multiclass);
     }
 
-    renderSvgTrack(trackSvg, startFinishSvg) {
-        this.trackLine.innerHTML = '';
+    // Store original track geometry and rebuild the active layout.
+    setTrack(track) {
+        this.trackId = track?.id ?? null;
+        this.sourceTrack = track;
 
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(trackSvg, 'image/svg+xml');
-        const svg = doc.querySelector('svg');
-
-        // Adjust the container's aspect ratio to the track's actual viewBox
-        const vb = svg.getAttribute('viewBox')?.split(' ').map(Number);
-        if (vb) {
-            this.trackContainer.style.aspectRatio = `${vb[2]} / ${vb[3]}`;
-        }
-
-        svg.style.width = '100%';
-        svg.style.height = '100%';
-        svg.style.overflow = 'visible';
-
-        svg.querySelectorAll('path, polyline, polygon').forEach(el => {
-            const parent = el.parentNode;
-
-            const group = this.document.createElementNS('http://www.w3.org/2000/svg', 'g');
-
-            const outer = el.cloneNode(true);
-            outer.setAttribute('class', 'track outer');
-            outer.style.fill = 'none';
-            outer.style.stroke = '';
-
-            const surface = el.cloneNode(true);
-            surface.setAttribute('class', 'track surface');
-            surface.style.fill = 'none';
-            surface.style.stroke = '';
-
-            group.appendChild(outer);
-            group.appendChild(surface);
-
-            parent.replaceChild(group, el);
-        });
-
-        let sfGroup = null;
-        if (startFinishSvg) {
-            const sfDoc = parser.parseFromString(startFinishSvg, 'image/svg+xml');
-            const sfSvg = sfDoc.querySelector('svg');
-
-            this._resolveStylesToInline(sfSvg);
-
-            const defs = sfSvg.querySelector('defs');
-            if (defs) {
-                const cleanDefs = this.document.createElementNS('http://www.w3.org/2000/svg', 'defs');
-                for (const el of defs.children) {
-                    if (el.tagName.toLowerCase() !== 'style') {
-                        cleanDefs.appendChild(el.cloneNode(true));
-                    }
-                }
-                if (cleanDefs.children.length > 0) svg.appendChild(cleanDefs);
-            }
-
-            const wrapper = this.document.createElementNS('http://www.w3.org/2000/svg', 'g');
-            wrapper.id = '_sf_group';
-
-            for (const el of sfSvg.children) {
-                const tag = el.tagName.toLowerCase();
-                if (tag === 'defs' || tag === 'style') continue;
-                if (tag === 'g') {
-                    for (const child of el.children) {
-                        wrapper.appendChild(child.cloneNode(true));
-                    }
-                } else {
-                    wrapper.appendChild(el.cloneNode(true));
-                }
-            }
-
-            if (wrapper.children.length > 0) {
-                svg.appendChild(wrapper);
-                sfGroup = wrapper;
-            }
-        }
-
-        this.trackLine.appendChild(svg);
-        this._svgViewBox = vb || [0, 0, 1920, 1080];
-        this._buildTrackPath(svg, sfGroup);
+        this.renderTrackLine();
     }
 
-    _resolveStylesToInline(svgEl) {
-        // Resolve CSS classes to inline style on all SVG elements
-        // Collect all CSS rules from the <style> inside this SVG
-        const styleMap = {};
-        svgEl.querySelectorAll('style').forEach(styleEl => {
-            const text = styleEl.textContent || '';
-            // Parse .className { prop: value; ... }
-            const ruleRe = /\.([a-zA-Z0-9_-]+)\s*\{([^}]+)\}/g;
-            let m;
-            while ((m = ruleRe.exec(text)) !== null) {
-                const className = m[1];
-                const declarations = m[2];
-                if (!styleMap[className]) styleMap[className] = {};
-                declarations.split(';').forEach(decl => {
-                    const [prop, val] = decl.split(':').map(s => s.trim());
-                    if (prop && val) styleMap[className][prop] = val;
-                });
-            }
-        });
-
-        if (Object.keys(styleMap).length === 0) return;
-
-        // Apply the found styles inline to each element
-        svgEl.querySelectorAll('[class]').forEach(el => {
-            const classes = el.getAttribute('class').split(/\s+/);
-            classes.forEach(cls => {
-                if (styleMap[cls]) {
-                    Object.entries(styleMap[cls]).forEach(([prop, val]) => {
-                        // Inline style takes precedence over CSS class
-                        el.style.setProperty(prop, val);
-                    });
-                }
-            });
-        });
-    }
-
-
-    _buildTrackPath(svg, sfGroup) {
-        const pathEl = svg.querySelector('path');
-        if (!pathEl) return;
-
-        const viewBox = svg.getAttribute('viewBox');
-
-        const measureSvg = this.document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-        measureSvg.style.cssText = 'position:absolute;opacity:0;pointer-events:none;width:1920px;height:1080px';
-        measureSvg.setAttribute('viewBox', viewBox);
-
-        // Copy only symbols from defs (without style)
-        const defs = svg.querySelector('defs');
-        if (defs) {
-            const cleanDefs = this.document.createElementNS('http://www.w3.org/2000/svg', 'defs');
-            for (const el of defs.children) {
-                if (el.tagName.toLowerCase() !== 'style') {
-                    cleanDefs.appendChild(el.cloneNode(true));
-                }
-            }
-            if (cleanDefs.children.length > 0) measureSvg.appendChild(cleanDefs);
-        }
-
-        const cloned = pathEl.cloneNode(true);
-        measureSvg.appendChild(cloned);
-
-        let measureSfGroup = null;
-        if (sfGroup) {
-            measureSfGroup = sfGroup.cloneNode(true);
-            measureSvg.appendChild(measureSfGroup);
-        }
-
-        this.document.body.appendChild(measureSvg);
-
-        this._trackPathEl = cloned;
-        this._measureSvg = measureSvg;
-        this._trackPathLength = cloned.getTotalLength();
-
-        if (measureSfGroup) {
-            const arrowVec = this._getArrowVector(measureSfGroup);
-            this._removeArrow(measureSfGroup);
-            const sfPt = this._getSfPoint(measureSfGroup);
-            this._startLen = this._findClosestLen(cloned, this._trackPathLength, sfPt.x, sfPt.y, 6000);
-
-            // If the backend sent a direction override, we use it, otherwise we detect it
-            if (this._directionOverride !== null && this._directionOverride !== undefined) {
-                this._direction = this._directionOverride;
-            } else {
-                this._direction = this._detectDirection(cloned, this._trackPathLength, this._startLen, arrowVec);
-            }
-            console.log('SF point:', sfPt, 'startLen:', this._startLen, 'direction:', this._direction);
-        } else {
-            this._startLen = 0;
-            this._direction = 1;
-        }
-    }
-
-    _getElCenter(el) {
-        const tag = el.tagName.toLowerCase();
-        if (tag === 'use') {
-            const t = el.getAttribute('transform') || '';
-            const tr = t.match(/translate\(\s*([\d.+-]+)[\s,]+([\d.+-]+)\s*\)/);
-            const sc = t.match(/scale\(\s*([\d.+-]+)(?:[\s,]+([\d.+-]+))?\s*\)/);
-            const s  = sc ? parseFloat(sc[1]) : 1;
-            const w  = parseFloat(el.getAttribute('width')  || 0) * s;
-            const h  = parseFloat(el.getAttribute('height') || 0) * s;
-
-            if (tr) {
-                const tx = parseFloat(tr[1]), ty = parseFloat(tr[2]);
-                return { x: tx + w / 2, y: ty + h / 2 };
-            }
-            // translate is missing - try getBBox
-        }
-        try {
-            const bb = el.getBBox();
-            return { x: bb.x + bb.width / 2, y: bb.y + bb.height / 2 };
-        } catch(e) {
-            return { x: 0, y: 0 };
-        }
-    }
-
-    _getSfPoint(sfGroupEl) {
-        // Look for <use> that references an SF line (not an arrow)
-        for (const el of sfGroupEl.children) {
-            const tag = el.tagName.toLowerCase();
-            if (tag === 'use') {
-                const href = el.getAttribute('href') || el.getAttribute('xlink:href') || '';
-                // Line is NOT Direction/Arrow
-                if (/direction|arrow/i.test(href)) continue;
-                return this._getElCenter(el);
-            }
-            // rect, path without arrow
-            if (tag === 'rect' || tag === 'path') {
-                try {
-                    const bb = el.getBBox();
-                    return { x: bb.x + bb.width / 2, y: bb.y + bb.height / 2 };
-                } catch(e) {}
-            }
-        }
-        // Fallback, the first element
-        const el = sfGroupEl.children[0];
-        if (!el) return { x: 0, y: 0 };
-        try {
-            const bb = el.getBBox();
-            return { x: bb.x + bb.width / 2, y: bb.y + bb.height / 2 };
-        } catch(e) {
-            return { x: 0, y: 0 };
-        }
-    }
-
-    _getArrowVector(sfGroupEl) {
-        let arrowEl = null;
-
-        // Search for <use href="#Track_Direction"> or "#...direction/arrow..."
-        for (const el of sfGroupEl.children) {
-            const tag = el.tagName.toLowerCase();
-            if (tag === 'use') {
-                const href = el.getAttribute('href') || el.getAttribute('xlink:href') || '';
-                if (/direction|arrow/i.test(href)) { arrowEl = el; break; }
-            }
-            if (tag === 'polygon') { arrowEl = el; break; }
-        }
-
-        // Fallback - path with the largest bbox (if no use/polygon)
-        if (!arrowEl) {
-            const paths = Array.from(sfGroupEl.querySelectorAll('path'));
-            if (paths.length >= 2) {
-                let maxArea = -1;
-                for (const p of paths) {
-                    try {
-                        const bb = p.getBBox();
-                        if (bb.width * bb.height > maxArea) { maxArea = bb.width * bb.height; arrowEl = p; }
-                    } catch(e) {}
-                }
-            }
-        }
-
-        if (!arrowEl) return null;
-
-        let pts = [];
-        const tag = arrowEl.tagName.toLowerCase();
-
-        if (tag === 'polygon') {
-            const raw = arrowEl.getAttribute('points').trim().split(/[\s,]+/);
-            for (let i = 0; i < raw.length - 1; i += 2)
-                pts.push({ x: parseFloat(raw[i]), y: parseFloat(raw[i+1]) });
-
-        } else if (tag === 'use') {
-            // Parse transform and expand symbol manually
-            const t  = arrowEl.getAttribute('transform') || '';
-            const tr = t.match(/translate\(\s*([\d.+-]+)[\s,]+([\d.+-]+)\s*\)/);
-            const sc = t.match(/scale\(\s*([\d.+-]+)\s*\)/);
-            const ro = t.match(/rotate\(\s*([\d.+-]+)\s*\)/);
-            const tx = tr ? parseFloat(tr[1]) : 0;
-            const ty = tr ? parseFloat(tr[2]) : 0;
-            const s  = sc ? parseFloat(sc[1]) : 1;
-            const w  = parseFloat(arrowEl.getAttribute('width')  || 0) * s;
-            const h  = parseFloat(arrowEl.getAttribute('height') || 0) * s;
-            const angleDeg = ro ? parseFloat(ro[1]) : 0;
-
-            const href  = arrowEl.getAttribute('href') || arrowEl.getAttribute('xlink:href') || '';
-            const symId = href.replace('#', '');
-            // Search for symbol in measureSvg and in the main document
-            const sym  = sfGroupEl.closest('svg')?.querySelector(`#${symId}`)
-                    || this.document.getElementById(symId);
-            const poly = sym && sym.querySelector('polygon');
-
-            if (poly) {
-                const raw  = poly.getAttribute('points').trim().split(/[\s,]+/);
-                const vb   = (sym.getAttribute('viewBox') || '0 0 100 40').split(/\s+/).map(Number);
-                const svbW = vb[2], svbH = vb[3];
-
-                const rad = angleDeg * Math.PI / 180; // convert to radians
-                const cos = Math.cos(rad);
-                const sin = Math.sin(rad);
-
-                for (let i = 0; i + 1 < raw.length; i += 2) {
-                    // Local coordinates in symbol space
-                    const lx = parseFloat(raw[i])   / svbW * w;
-                    const ly = parseFloat(raw[i+1]) / svbH * h;
-                    // Apply rotation around origin(0,0), then translate
-                    pts.push({
-                        x: lx * cos - ly * sin + tx,
-                        y: lx * sin + ly * cos + ty,
-                    });
-                }
-            } else {
-               // Fallback, 4 corners taking into account rotation
-                const corners = [
-                    { x: 0, y: 0 }, { x: w, y: 0 },
-                    { x: w, y: h }, { x: 0, y: h },
-                ];
-                const rad = angleDeg * Math.PI / 180;
-                const cos = Math.cos(rad), sin = Math.sin(rad);
-                pts = corners.map(({ x: lx, y: ly }) => ({
-                    x: lx * cos - ly * sin + tx,
-                    y: lx * sin + ly * cos + ty,
-                }));
-            }
-
-        } else if (tag === 'path') {
-            const len = arrowEl.getTotalLength();
-            for (let i = 0; i <= 32; i++)
-                pts.push(arrowEl.getPointAtLength((i / 32) * len));
-        }
-
-        if (pts.length < 2) return null;
-
-        const cx = pts.reduce((s, p) => s + p.x, 0) / pts.length;
-        const cy = pts.reduce((s, p) => s + p.y, 0) / pts.length;
-        let tip = pts[0], maxD = 0;
-        for (const p of pts) {
-            const d = (p.x - cx) ** 2 + (p.y - cy) ** 2;
-            if (d > maxD) { maxD = d; tip = p; }
-        }
-        const dx = tip.x - cx, dy = tip.y - cy;
-        const len = Math.hypot(dx, dy);
-        return len > 0 ? { x: dx / len, y: dy / len } : null;
-    }
-
-    _removeArrow(sfGroupEl) {
-        for (const el of [...sfGroupEl.children]) {
-            const tag = el.tagName.toLowerCase();
-            if (tag === 'polygon') { el.remove(); continue; }
-            if (tag === 'use') {
-                const href = el.getAttribute('href') || el.getAttribute('xlink:href') || '';
-                if (/direction|arrow/i.test(href)) { el.remove(); continue; }
-            }
-        }
-        // Fallback if only path remains, delete the largest one
-        const paths = Array.from(sfGroupEl.querySelectorAll('path'));
-        if (paths.length >= 2) {
-            let maxArea = -1, biggest = null;
-            for (const p of paths) {
-                try {
-                    const bb = p.getBBox();
-                    if (bb.width * bb.height > maxArea) { maxArea = bb.width * bb.height; biggest = p; }
-                } catch(e) {}
-            }
-            if (biggest) biggest.remove();
-        }
-    }
-
-    _detectDirection(trackPath, total, startLen, arrowVec) {
-        if (!arrowVec) return 1;
-        const delta = total * 0.005;
-        const pA = trackPath.getPointAtLength((startLen - delta + total) % total);
-        const pB = trackPath.getPointAtLength((startLen + delta) % total);
-        const tx = pB.x - pA.x, ty = pB.y - pA.y;
-        const dot = tx * arrowVec.x + ty * arrowVec.y;
-        return dot >= 0 ? 1 : -1;
-    }
-
-    _findClosestLen(path, total, tx, ty, samples) {
-        let bestL = 0, bestD = Infinity;
-        for (let i = 0; i <= samples; i++) {
-            const l = (i / samples) * total;
-            const p = path.getPointAtLength(l);
-            const d = (p.x - tx) ** 2 + (p.y - ty) ** 2;
-            if (d < bestD) { bestD = d; bestL = l; }
-        }
-        return bestL;
-    }
-
-    // Renders geometric track layout (circle or linear)
-    renderTrackLine() {
-        this.trackLine.innerHTML = '';
-        this.trackLine.classList.remove('circle', 'linear');
-        this.trackLine.classList.add(this.trackType);
-        this.trackLine.dataset.type = this.trackType;
-
-        if (this.trackType === 'circle') {
-            this.trackContainer.style.aspectRatio = '1 / 1';
-            // Finish line at the bottom of the circle
-            const finish = this.document.createElement('div');
-            finish.className = 'track-finish-line';
-            this.trackLine.appendChild(finish);
-        } else if (this.trackType === 'linear') {
-            this.trackContainer.style.aspectRatio = '4 / 1';
-        }
-    }
-
-    // Change track type and re-render
+    // Change track type and rebuild its geometry.
     setTrackType(type) {
+        if (!['linear', 'circle', 'track'].includes(type)) {
+            return;
+        }
+
+        if (this.trackType === type) {
+            return;
+        }
+
         this.trackType = type;
         this.document.body.dataset.trackType = type;
-        if (type === 'track') {
-            this.clearCars();
-            this.trackLine.innerHTML = '';
-            this.trackLine.classList.remove('circle', 'linear');
-            if (this._lastTrackSvg) {
-                this.renderSvgTrack(this._lastTrackSvg, this._lastStartFinishSvg);
-            }
-        } else {
-            this.resetTrackMap();
-            this.renderTrackLine();
-        }
+
+        this.clearCars();
+        this.renderTrackLine();
     }
 
-    // Cleaning old cars from data this.cars
+    // Build geometry and render the selected track layout.
+    renderTrackLine() {
+        this.trackLine.replaceChildren();
+        this.trackLine.classList.remove('circle', 'linear');
+
+        this.track = this._createTrackLayout();
+
+        if (!this.track) {
+            this.trackContainer.style.aspectRatio = '';
+            return;
+        }
+
+        const { viewBox } = this.track;
+
+        // The track type fills the window and centers the map itself;
+        // the synthetic layouts size the container by their aspect ratio.
+        this.trackContainer.style.aspectRatio =
+            this.trackType === 'track'
+                ? ''
+                : `${viewBox[2]} / ${viewBox[3]}`;
+
+        this.trackLine.classList.add(this.trackType);
+
+        this.renderSvgTrack();
+    }
+
+    // Create geometry for the selected track type.
+    _createTrackLayout() {
+        if (this.trackType === 'track') {
+            return this._createSourceTrack();
+        }
+
+        if (this.trackType === 'circle') {
+            return this._createCircleTrack();
+        }
+
+        if (this.trackType === 'linear') {
+            return this._createLinearTrack();
+        }
+
+        return null;
+    }
+
+    // Create a track from the geometry received from the backend.
+    _createSourceTrack() {
+        const source = this.sourceTrack;
+
+        if (!source || source.points?.length < 2) {
+            return null;
+        }
+
+        const path = new TrackPath(source.points);
+        const viewBox = getPointsViewBox(source.points);
+
+        // Nothing to draw if the points have no length or no area.
+        if (path.length <= 0 || !viewBox) {
+            return null;
+        }
+
+        return {
+            viewBox,
+            path,
+            startFinish: source.start_finish,
+            // Fraction of the TrackPath covered by one lap.
+            lapSpan: 1,
+        };
+    }
+
+    // Create a circular track using the same TrackPath pipeline.
+    _createCircleTrack() {
+        const [minX, minY, width, height] = CIRCLE_VIEW_BOX;
+
+        const cx = minX + width / 2;
+        const cy = minY + height / 2;
+
+        const points = Array.from(
+            { length: CIRCLE_SEGMENTS + 1 },
+            (_, index) => {
+                const angle =
+                    Math.PI / 2 -
+                    (index / CIRCLE_SEGMENTS) * Math.PI * 2;
+
+                return [
+                    cx + CIRCLE_RADIUS * Math.cos(angle),
+                    cy + CIRCLE_RADIUS * Math.sin(angle),
+                ];
+            }
+        );
+
+        return {
+            viewBox: CIRCLE_VIEW_BOX,
+            path: new TrackPath(points),
+            startFinish: {
+                pct: 0,
+                direction: 1,
+            },
+            lapSpan: 1,
+        };
+    }
+
+    // Create a horizontal track using the same TrackPath pipeline.
+    _createLinearTrack() {
+        return {
+            viewBox: LINEAR_VIEW_BOX,
+            path: new TrackPath(LINEAR_POINTS),
+            startFinish: {
+                pct: 0,
+                direction: 1,
+            },
+            // TrackPath closes the loop (there and back), so a lap
+            // uses only its forward half: left end -> right end.
+            lapSpan: 0.5,
+        };
+    }
+
+    // Draw track geometry using SVG.
+    renderSvgTrack() {
+        const { viewBox, path } = this.track;
+
+        const svg = this._createSvgElement('svg', {
+            viewBox: viewBox.join(' '),
+            preserveAspectRatio: 'xMidYMid meet',
+            'aria-hidden': 'true',
+            focusable: 'false',
+        });
+
+        const pathData = path.toSvgPathData();
+
+        // Draw the white outline first, then the dark track surface.
+        for (const layer of ['outer', 'surface']) {
+            const trackPath = this._createSvgElement('path', {
+                class: `track ${layer}`,
+                d: pathData,
+            });
+
+            svg.appendChild(trackPath);
+        }
+
+        svg.appendChild(this._createStartFinishLine());
+
+        this.trackLine.appendChild(svg);
+    }
+
+    // Draw the start/finish line across the track.
+    _createStartFinishLine() {
+        const { x, y, dx, dy } =
+            this.track.path.pointAt(this.track.startFinish.pct);
+
+        const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+
+        const [, , width, height] = this.track.viewBox;
+        const cellSize = Math.max(width, height) * START_FINISH_CELL_RATIO;
+
+        // Local coordinates: one cell is 1x1, the grid is 2 cells along
+        // the track and 5 cells across it. The transform reads right to left:
+        // center the grid, scale cells to view box units, rotate along the
+        // track direction, then move to the start/finish point.
+        const group = this._createSvgElement('g', {
+            class: 'track-start-finish',
+            transform:
+                `translate(${x} ${y}) rotate(${angle}) ` +
+                `scale(${cellSize}) ` +
+                `translate(${-START_FINISH_COLS / 2} ${-START_FINISH_ROWS / 2})`,
+        });
+
+        for (let row = 0; row < START_FINISH_ROWS; row++) {
+            for (let col = 0; col < START_FINISH_COLS; col++) {
+                group.appendChild(this._createSvgElement('rect', {
+                    x: col,
+                    y: row,
+                    width: 1,
+                    height: 1,
+                    class: (row + col) % 2 === 0 ? 'cell-dark' : 'cell-light',
+                }));
+            }
+        }
+
+        return group;
+    }
+
+    // Create an SVG element with the specified attributes.
+    _createSvgElement(tag, attributes) {
+        const element = this.document.createElementNS(SVG_NS, tag);
+
+        for (const [name, value] of Object.entries(attributes)) {
+            element.setAttribute(name, value);
+        }
+
+        return element;
+    }
+
+    // Remove all existing car elements.
     clearCars() {
         Object.values(this.cars).forEach(car => car.remove());
         this.cars = {};
+
+        // Shapes are reassigned from scratch for the next set of cars.
+        this.classShapes.clear();
     }
 
-    // Reset the track map to its initial state
-    resetTrackMap() {
-        // Remove all car divs
-        this.clearCars();
-        // Clears cached SVG/path data, direction and measurement helpers
-        this._lastTrackSvg = null;
-        this._trackPathEl = null;
-        this._startLen = 0;
-        this._direction = 1;
-        this._directionOverride = null;
-        if (this._measureSvg) {
-            this._measureSvg.remove();
-            this._measureSvg = null;
+    // Render all cars received from the API.
+    renderCars(cars, playerId, isMulticlass) {
+        if (!this.track) {
+            this.clearCars();
+            return;
         }
-        // clears the track line container in the DOM
-        this.trackLine.innerHTML = '';
-    }
 
-    // Render all cars received from API
-    renderCars(cars, playerId) {
-        cars.forEach(car => {
-            if (this._isCarInactiveAndRemove(car)) return;
+        for (const car of cars ?? []) {
+            if (this._isCarInactiveAndRemove(car)) {
+                continue;
+            }
 
-            let carDiv = this.cars[car.player_id] || this.createCarDiv(car);
-            this.updateCarAppearance(carDiv, car, playerId);
+            let carDiv = this.cars[car.player_id];
+
+            if (!carDiv) {
+                carDiv = this.createCarDiv(car);
+            }
+
+            this.updateCarAppearance(carDiv, car, playerId, isMulticlass);
             this.updateCarPosition(carDiv, car.lap_dist_pct);
-        });
+        }
     }
 
-    // Remove a car that is no longer on the road
+    // Remove cars that are no longer on the track
+    // (lap_dist_pct is -1 for a car that is not on the track).
     _isCarInactiveAndRemove(car) {
         if (car.lap_dist_pct === -1) {
-            if (this.cars[car.player_id]) {
-                this.cars[car.player_id].remove();
+            const carDiv = this.cars[car.player_id];
+
+            if (carDiv) {
+                carDiv.remove();
                 delete this.cars[car.player_id];
             }
+
             return true;
         }
+
         return false;
     }
 
-    // Create new car DOM element
+    // Create a new car DOM element.
     createCarDiv(car) {
         const carDiv = this.document.createElement('div');
+
         carDiv.classList.add('track-map-car');
-        carDiv.innerText = car.car_number;
-        carDiv.style.setProperty('--car-color', car.color);
+
+        // The shape layer is separate from the number, so clipping the
+        // marker does not clip the text or the player indicator.
+        const shape = this.document.createElement('span');
+        shape.classList.add('track-map-car-shape');
+
+        carDiv.append(shape, String(car.car_number));
 
         this.trackContainer.appendChild(carDiv);
         this.cars[car.player_id] = carDiv;
 
-        carDiv.style.transition = 'top 0.1s linear, left 0.1s linear';
         return carDiv;
     }
 
-    // Highlight player car and adjust z-index
-    updateCarAppearance(carDiv, car, playerId) {
-        if (car.player_id === playerId) {
-            carDiv.classList.add('player');
-            carDiv.style.zIndex = '999';
+    // Update the car's color, class shape and player highlight.
+    updateCarAppearance(carDiv, car, playerId, isMulticlass) {
+        carDiv.classList.toggle('player', car.player_id === playerId);
+
+        // Class color in multiclass sessions, otherwise the CSS default color.
+        const classColor = isMulticlass ? car.color : null;
+
+        if (classColor) {
+            carDiv.style.setProperty('--car-color', classColor);
         } else {
-            carDiv.classList.remove('player');
-            carDiv.style.zIndex = '1';
+            carDiv.style.removeProperty('--car-color');
         }
+
+        // White number on dark class colors; the default dark number otherwise.
+        carDiv.classList.toggle(
+            'dark-color',
+            Boolean(classColor) && isDarkColor(classColor)
+        );
+
+        carDiv.dataset.shape = this._getCarShape(car.class_id, isMulticlass);
     }
 
-    // Update car position based on current track type
+    // Shape of a car class: the same class always gets the same shape.
+    _getCarShape(classId, isMulticlass) {
+        if (!isMulticlass) {
+            return CAR_SHAPES[0];
+        }
+
+        if (!this.classShapes.has(classId)) {
+            this.classShapes.set(
+                classId,
+                CAR_SHAPES[this.classShapes.size % CAR_SHAPES.length]
+            );
+        }
+
+        return this.classShapes.get(classId);
+    }
+
+    // Update car position using the active track geometry.
     updateCarPosition(carDiv, lapDistPct) {
-        if (this.trackType === 'track') {
-            this.positionCarSvgTrack(carDiv, lapDistPct);
-        } else if (this.trackType === 'circle') {
-            this.positionCarCircle(carDiv, lapDistPct);
-        } else if (this.trackType === 'linear') {
-            this.positionCarLinear(carDiv, lapDistPct);
+        if (!Number.isFinite(lapDistPct) || !this.track) {
+            return;
         }
-    }
 
-    // Positions a car dot along the actual SVG track path using lap distance percentage
-    positionCarSvgTrack(carDiv, lapDistPct) {
-        if (!this._trackPathEl || !this._trackPathLength) return;
+        const { path, startFinish, lapSpan } = this.track;
 
-            // Compute the point along the path accounting for start offset and direction
-            const total = this._trackPathLength;
-            const curLen = ((this._startLen + this._direction * lapDistPct * total) % total + total) % total;
-            const pt = this._trackPathEl.getPointAtLength(curLen);
+        const point = path.pointAt(
+            startFinish.pct + startFinish.direction * lapDistPct * lapSpan
+        );
 
-            const svgEl = this.trackLine.querySelector('svg');
-            if (!svgEl) return;
-
-            // Calculate scale and offset to map SVG viewBox coords onto the rendered element
-            const svgRect = svgEl.getBoundingClientRect();
-            const containerRect = this.trackContainer.getBoundingClientRect();
-            const vb = this._svgViewBox;
-
-            const vbW = vb[2], vbH = vb[3];
-            const elW = svgRect.width, elH = svgRect.height;
-            const scale = Math.min(elW / vbW, elH / vbH);
-            const offsetX = (elW - vbW * scale) / 2;
-            const offsetY = (elH - vbH * scale) / 2;
-
-            // Convert SVG point to container-relative pixel position
-            const x = (pt.x - vb[0]) * scale + offsetX + (svgRect.left - containerRect.left);
-            const y = (pt.y - vb[1]) * scale + offsetY + (svgRect.top - containerRect.top);
-
-            this._applyCarTransition(carDiv, lapDistPct, x, y);
-    }
-
-    // Positions a car dot on a circle track layout using lap distance percentage
-    positionCarCircle(carDiv, lapDistPct) {
-        // Compute circle geometry centered in the container
-        const cr = this.trackContainer.getBoundingClientRect();
-        const size = Math.min(cr.width, cr.height);
-        const cx = cr.width / 2;
-        const cy = cr.height / 2;
-        const radius = size * 0.35;
-
-        // Convert lap percentage to an angle and project onto the circle
-        const angle = -lapDistPct * 2 * Math.PI + Math.PI / 2;
-        const x = cx + radius * Math.cos(angle);
-        const y = cy + radius * Math.sin(angle);
+        const { x, y } = this._trackToContainer(point);
 
         this._applyCarTransition(carDiv, lapDistPct, x, y);
     }
 
-    // Positions a car dot on a horizontal linear bar using lap distance percentage
-    positionCarLinear(carDiv, lapDistPct) {
-        // Map lap percentage to a pixel X position across the container width
+    // Convert SVG viewBox coordinates into container pixels.
+    // Must mirror the SVG preserveAspectRatio="xMidYMid meet" (uniform scale,
+    // centered), otherwise cars drift away from the drawn track.
+    _trackToContainer({ x, y }) {
         const cr = this.trackContainer.getBoundingClientRect();
-        const x = lapDistPct * cr.width;
-        const y = cr.height / 2;
 
-        this._applyCarTransition(carDiv, lapDistPct, x, y);
+        const [minX, minY, width, height] = this.track.viewBox;
+
+        const scale = Math.min(
+            cr.width / width,
+            cr.height / height
+        );
+
+        return {
+            x: (x - minX) * scale + (cr.width - width * scale) / 2,
+            y: (y - minY) * scale + (cr.height - height * scale) / 2,
+        };
     }
 
-    // Applies smooth CSS transition to a car dot, suppressing it on lap wrap-around jumps
+    // Apply smooth movement using GPU-friendly transforms.
     _applyCarTransition(carDiv, lapDistPct, x, y) {
-        const lastPct = parseFloat(carDiv.dataset.lastLapPct ?? lapDistPct);
-        carDiv.style.transition = Math.abs(lastPct - lapDistPct) > 0.5 ? 'none' : 'top 0.1s linear, left 0.1s linear';
-        carDiv.style.left = `${x}px`;
-        carDiv.style.top = `${y}px`;
+        const lastPct = Number(carDiv.dataset.lastLapPct);
+
+        // First positioning: place the car immediately without animation.
+        const isFirstPosition = !Number.isFinite(lastPct);
+
+        // Suppress animation when the car crosses the start/finish line:
+        // a jump of more than half a lap means the progress wrapped around.
+        const crossedLapBoundary =
+            !isFirstPosition &&
+            Math.abs(lastPct - lapDistPct) > 0.5;
+
+        carDiv.style.transition =
+            isFirstPosition || crossedLapBoundary
+                ? 'none'
+                : CAR_TRANSITION;
+
+        carDiv.style.transform =
+            `translate3d(${x}px, ${y}px, 0) translate(-50%, -50%)`;
+
         carDiv.dataset.lastLapPct = lapDistPct;
     }
 }

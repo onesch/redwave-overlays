@@ -7,11 +7,13 @@ from backend.services.base import (
     BaseCarBuilder,
     SessionStateContext,
 )
-from backend.utils.track_url_generation import (
-    DIRECTION_OVERRIDES,
-    make_track_svg_url,
-    fetch_svg,
+from backend.services.irsdk.service import IRSDKService
+from backend.services.track_map.track_api import fetch_track_geometry
+from backend.services.track_map.track_cache import (
+    TRACK_CACHE_FILENAME,
+    TrackGeometryCache,
 )
+from backend.utils.paths import get_user_data_path
 
 
 @dataclass
@@ -36,7 +38,11 @@ class TrackMapCarBuilder(BaseCarBuilder):
         if not car:
             return None
         # Specific fields
-        car["car_class_color"] = ctx.drivers[idx].get("CarClassColor")
+        driver = ctx.drivers[idx]
+        car["class_id"] = driver.get("CarClassID")
+        car["color"] = IRSDKService.get_class_color(
+            driver.get("CarClassColor")
+        )
         return car
 
 
@@ -45,24 +51,44 @@ class TrackMapService(BaseService):
 
     def __init__(self, irsdk_service):
         self.session_tracker = SessionTracker()
-        self._cached_track_svg: str | None = None
-        self._cached_start_finish_svg: str | None = None
-        self._cached_track_id: int | None = None
+
+        self._current_track_id: int | None = None
+        self._current_track: dict | None = None
+
+        # Persistent geometry cache: survives app restarts.
+        self._track_cache = TrackGeometryCache(
+            get_user_data_path() / TRACK_CACHE_FILENAME
+        )
+
         super().__init__(irsdk_service, TrackMapCarBuilder())
 
-    def _update_track_svgs(
-        self, track_id: str, track_name: str, track_short_name: str
-    ):
-        track_url = make_track_svg_url(
-            track_id, track_name, track_short_name, svg_type="active"
-        )
-        start_finish_url = make_track_svg_url(
-            track_id, track_name, track_short_name, svg_type="start-finish"
-        )
+    def _get_track(self, track_id: int | None) -> dict | None:
+        """
+        Returns the geometry of the current track. On a track change it
+        is taken from the persistent cache, or fetched from the API
+        (and cached) on a cache miss.
+        """
+        if track_id is None:
+            return None
 
-        self._cached_track_svg = fetch_svg(track_url, extract_first=True)
-        self._cached_start_finish_svg = fetch_svg(start_finish_url)
-        self._cached_track_id = track_id
+        if track_id == self._current_track_id:
+            return self._current_track
+
+        self._current_track_id = track_id
+
+        geometry = self._track_cache.get(track_id)
+        if geometry is None:
+            geometry = fetch_track_geometry(track_id)
+
+            if geometry is not None:
+                self._track_cache.put(track_id, geometry)
+
+        if geometry is None:
+            self._current_track = None
+        else:
+            self._current_track = {"id": track_id, **geometry}
+
+        return self._current_track
 
     def _build_context(self) -> TrackMapContext | None:
         """
@@ -74,12 +100,7 @@ class TrackMapService(BaseService):
         if not drivers:
             return None
 
-        class_ids: set = {
-            driver.get("CarClassID")
-            for driver in drivers
-            if driver.get("CarClassID")
-        }
-        multiclass: bool = len(class_ids) > 1
+        multiclass: bool = IRSDKService.is_multiclass(drivers)
 
         return TrackMapContext(
             drivers=drivers,
@@ -99,6 +120,7 @@ class TrackMapService(BaseService):
         weekend_info: dict[str, Any] = (
             self.irsdk.get_value("WeekendInfo") or {}
         )
+
         session_key = SessionKey(
             session_id=weekend_info.get("SessionID"),
             session_num=self.irsdk.get_value("SessionNum"),
@@ -115,28 +137,15 @@ class TrackMapService(BaseService):
                     "player_id": idx,
                     "car_number": car["car_number"],
                     "lap_dist_pct": car["lap_dist_pct"],
-                    "color": self.irsdk.get_car_rgb(
-                        idx=idx,
-                        drivers=ctx.drivers,
-                        player_idx=player_idx,
-                        multiclass=ctx.multiclass,
-                    ),
+                    "class_id": car["class_id"],
+                    "color": car["color"],
                 }
             )
-
-        track_id = weekend_info.get("TrackID")
-        track_name = weekend_info.get("TrackName")
-        track_short_name = weekend_info.get("TrackDisplayShortName")
-
-        if is_session_changed or track_id != self._cached_track_id:
-            self._update_track_svgs(track_id, track_name, track_short_name)
-
         return {
             "status": "ok",
             "player_id": player_idx,
             "is_session_changed": is_session_changed,
+            "multiclass": ctx.multiclass,
             "cars": cars,
-            "track_svg": self._cached_track_svg,
-            "start_finish_svg": self._cached_start_finish_svg,
-            "direction_override": DIRECTION_OVERRIDES.get(track_id),
+            "track": self._get_track(weekend_info.get("TrackID")),
         }

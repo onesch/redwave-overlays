@@ -1,136 +1,169 @@
+:root {
+  /* Track */
+  --track-outline-color: #fff;
+  --track-surface-color: #130A06;
+
+  /* Start / finish line */
+  --start-finish-dark-color: #ff3333;
+  --start-finish-light-color: #fff;
+
+  /* Car markers */
+  --car-default-color: var(--yellow-primary);
+  --car-outline-color: #fff;
+  --car-text-color: #130A06;
+  --car-text-light-color: #fff;
+  --player-arrow-color: #fff;
+
+  /* Car marker sizes: also define how much room the map leaves at its edges. */
+  --car-size: 20px;
+  --player-car-size: 26px;
+}
+
 /* ── Container ── */
 #track-container {
   position: relative;
   width: 100%;
   margin: 0 auto;
+  isolation: isolate;
 }
 
-body[data-track-type="circle"] #track-container {
-  max-width: 300px;
-}
-
+body[data-track-type="circle"] #track-container,
 body[data-track-type="linear"] #track-container {
   max-width: 300px;
 }
 
+/* The real track fills the whole window: the SVG fits the map into the
+   container (meet) and centers it on both axes. The padding keeps markers
+   of cars on the map edge inside the window. */
 body[data-track-type="track"] {
-  padding: 10px;
+  height: 100vh;
+  padding: calc(var(--player-car-size) / 2 + 2px);
   box-sizing: border-box;
+}
+
+body[data-track-type="track"] .overlay-body {
+  height: 100%;
 }
 
 body[data-track-type="track"] #track-container {
   max-width: 100%;
-}
-
-#track-line {
-  position: absolute;
-  inset: 0;
-}
-
-#track-line svg {
-  width: 100%;
   height: 100%;
 }
 
-/* Circle track line */
-#track-line.circle::before {
-  display: none;
+/* ── Track line container ── */
+#track-line {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
 }
 
-#track-line.circle::after {
-  content: '';
-  position: absolute;
-  inset: 15%;
-  border-radius: 50%;
-  border: 6px solid var(--track-surface);
-  box-shadow:
-      0 0 0 2.5px var(--track-outer),
-      inset 0 0 0 2.5px var(--track-outer);
-}
-
-/* Finish line */
-.track-finish-line {
-  position: absolute;
-  left: 50%;
-  bottom: 12.5%;
-  width: 3px;
-  height: 20px;
-  background: var(--track-finish);
-  border-radius: 2px;
-  z-index: 2;
-}
-
-/* Linear track line */
-#track-line.linear::before {
-  content: '';
-  position: absolute;
-  left: 50%;
-  top: 50%;
+#track-line svg {
+  display: block;
   width: 100%;
-  height: 10px;
-  transform: translate(-50%, -50%);
-  background: var(--track-linear-bg);
-  border-radius: 5px;
-}
-#track-line.linear::after {
-  content: '';
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 98.7%;
-  height: 6px;
-  transform: translate(-50%, -50%);
-  background: var(--track-linear-line);
-  border-radius: 3px;
+  height: 100%;
+  overflow: visible;
+  shape-rendering: geometricPrecision;
 }
 
-/* SVG track line */
-#track-line svg .track.outer {
+/* ── Track geometry ── */
+#track-line svg .track {
   fill: none;
-  stroke: var(--track-outer);
-  stroke-width: 45;
   stroke-linecap: round;
   stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
 }
+
+/* White outer contour */
+#track-line svg .track.outer {
+  stroke: var(--track-outline-color);
+  stroke-width: 10px;
+}
+
+/* Dark track surface */
 #track-line svg .track.surface {
-  fill: none;
-  stroke: var(--track-surface);
-  stroke-width: 25;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+  stroke: var(--track-surface-color);
+  stroke-width: 8px;
+}
+
+/* Start / finish line cells (checkered pattern) */
+#track-line svg .track-start-finish .cell-dark {
+  fill: var(--start-finish-dark-color);
+}
+
+#track-line svg .track-start-finish .cell-light {
+  fill: var(--start-finish-light-color);
 }
 
 /* ── Car dot ── */
 .track-map-car {
-  --car-color: #999;
+  --car-color: var(--car-default-color);
   position: absolute;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background-color: color-mix(in srgb, var(--car-color) 85%, black);
-  border: 2px solid color-mix(in srgb, var(--car-color) 40%, black);
-  box-shadow: 
-    0 2px 6px var(--car-shadow), 
-    inset 0 -2px 2px var(--car-shadow-inner);
-  color: var(--car-text);
-  font-size: 14px;
-  font-weight: bold;
-  text-align: center;
-  line-height: 20px;
+  left: 0;
+  top: 0;
+  width: var(--car-size);
+  height: var(--car-size);
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  --shape: circle(50%);
+  color: var(--car-text-color);
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1;
   transform: translate(-50%, -50%);
-  transition: top 0.1s linear, left 0.1s linear;
-    z-index: 3;
+  transition: transform 0.1s linear;
+  will-change: transform;
+  z-index: 2;
+}
+
+/* Number on a dark class color (multiclass), set by the renderer */
+.track-map-car.dark-color {
+  color: var(--car-text-light-color);
+}
+
+/* Marker shape: white outline layer with the car-colored fill inset by 2px */
+.track-map-car-shape,
+.track-map-car-shape::before {
+  position: absolute;
+  clip-path: var(--shape);
+}
+
+.track-map-car-shape {
+  inset: 0;
+  background-color: var(--car-outline-color);
+  z-index: -1;
+}
+
+.track-map-car-shape::before {
+  content: '';
+  inset: 2px;
+  background-color: var(--car-color);
+}
+
+/* Car class shapes (multiclass sessions) */
+.track-map-car[data-shape="circle"]   { --shape: circle(50%); }
+.track-map-car[data-shape="square"]   { --shape: inset(0 round 5px); }
+.track-map-car[data-shape="diamond"]  { --shape: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); width: calc(var(--car-size) + 2px); height: calc(var(--car-size) + 2px); }
+.track-map-car[data-shape="octagon"] { --shape: polygon(25% 0%, 75% 0%, 100% 25%, 100% 75%, 75% 100%, 25% 100%, 0% 75%, 0% 25%); }
+/* Player car */
+.track-map-car.player {
+  width: var(--player-car-size);
+  height: var(--player-car-size);
+  font-size: 13px;
+  z-index: 4;
 }
 
 /* Player indicator arrow */
 .track-map-car.player::after {
   content: '';
   position: absolute;
-  top: -8px;
+  top: -9px;
   left: 50%;
   transform: translateX(-50%);
   border-left: 6px solid transparent;
   border-right: 6px solid transparent;
-  border-top: 8px solid #fff;
+  border-top: 8px solid var(--player-arrow-color);
   z-index: 3;
 }

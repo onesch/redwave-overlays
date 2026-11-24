@@ -5,7 +5,7 @@ module.exports = {
     baseSize: {
       linear: { width: 350, height: 100 },
       circle: { width: 240, height: 240 },
-      track: { width: 340, height: 340 },
+      track: { width: 240, height: 240 },
     }
   },
   'telemetry': { baseSize: { width: 230, height: 100 } },

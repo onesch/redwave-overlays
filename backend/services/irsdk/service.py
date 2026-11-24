@@ -38,29 +38,47 @@ class IRSDKService():
             return None
 
     @staticmethod
-    def get_car_rgb(
-        *,
-        idx: int,
-        drivers: list[dict],
-        player_idx: int | None,
-        multiclass: bool,
-    ) -> str:
-        """Return the car's color as RGB string."""
-        if idx >= len(drivers):
-            return "#1b2a3a"
+    def is_pace_car(driver: dict) -> bool:
+        """
+        Check if a DriverInfo.Drivers entry is the pace car.
 
-        if idx == player_idx:
-            return "#1e6cff"
+        :param driver: driver entry from DriverInfo.Drivers.
+        :return: True if flagged by CarIsPaceCar or named "Pace Car".
+        """
+        return bool(driver.get("CarIsPaceCar")) or (
+            driver.get("UserName", "").upper() == "PACE CAR"
+        )
 
-        rgb = drivers[idx].get("CarClassColor")
+    @staticmethod
+    def is_multiclass(drivers: list[dict]) -> bool:
+        """
+        Check if the session has more than one car class.
 
-        if not multiclass or rgb in (None, 0xFFFFFF):
-            return "#1b2a3a"
+        The pace car is ignored: it has its own class id.
 
-        r = (rgb >> 16) & 0xFF
-        g = (rgb >> 8) & 0xFF
-        b = rgb & 0xFF
-        return f"rgb({r},{g},{b})"
+        :param drivers: DriverInfo.Drivers entries.
+        :return: True if more than one CarClassID is present.
+        """
+        class_ids = {
+            driver.get("CarClassID")
+            for driver in drivers
+            if driver.get("CarClassID")
+            and not IRSDKService.is_pace_car(driver)
+        }
+        return len(class_ids) > 1
+
+    @staticmethod
+    def get_class_color(rgb: Any) -> str | None:
+        """
+        Decode an iRacing CarClassColor (0xRRGGBB integer) to '#rrggbb'.
+
+        :param rgb: the CarClassColor value of a driver entry.
+        :return: the color, or None if the class has no color.
+        """
+        # White (0xFFFFFF) stands for "no class color", as in the leaderboard.
+        if not isinstance(rgb, int) or rgb == 0xFFFFFF:
+            return None
+        return f"#{rgb:06x}"
 
     def get_car_location(self) -> str:
         """Return 'track' if player is on track, 'garage' otherwise."""

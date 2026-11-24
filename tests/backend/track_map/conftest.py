@@ -1,5 +1,7 @@
 import pytest
+from types import SimpleNamespace
 
+from backend.services.track_map import service as track_map_service
 from backend.services.track_map.service import (
     TrackMapCarBuilder,
     TrackMapService,
@@ -12,7 +14,6 @@ def mock_service(mock_values: dict) -> TrackMapService:
     """
     Returns the TrackMapService initialized with mock values.
     """
-
     return TrackMapService(mock_values)
 
 
@@ -21,7 +22,6 @@ def mock_builder() -> TrackMapCarBuilder:
     """
     Returns an initialized TrackMapCarBuilder object.
     """
-
     return TrackMapCarBuilder()
 
 
@@ -30,7 +30,6 @@ def mock_ctx(mock_values: dict) -> TrackMapContext:
     """
     Returns the TrackMapContext with mocked data from mock_values fixture.
     """
-
     defaults = {
         "drivers": mock_values.get_value("DriverInfo")["Drivers"],
         "lap_dist_pct": mock_values.get_value("CarIdxLapDistPct"),
@@ -49,13 +48,48 @@ def mock_ctx(mock_values: dict) -> TrackMapContext:
     return _make_ctx
 
 
+@pytest.fixture(autouse=True)
+def user_data_dir(monkeypatch, tmp_path):
+    """
+    Points the track geometry cache to a temporary folder, so tests never
+    read or write the real cache in the user's AppData.
+    """
+    monkeypatch.setattr(
+        track_map_service, "get_user_data_path", lambda: tmp_path
+    )
+    return tmp_path
+
+
+@pytest.fixture(autouse=True)
+def fake_fetch(monkeypatch) -> SimpleNamespace:
+    """
+    Replaces the Track Map API request so tests never hit the network.
+    Records requested track ids in `calls`; set `geometry` to change
+    the returned value (None simulates a failed request).
+    """
+    fake = SimpleNamespace(
+        calls=[],
+        geometry={
+            "points": [(0.0, 0.0), (10.0, 0.0), (0.0, 0.0)],
+            "start_finish": {"pct": 0.5, "direction": 1},
+        },
+    )
+
+    def _fetch(track_id):
+        fake.calls.append(track_id)
+        return fake.geometry
+
+    monkeypatch.setattr(track_map_service, "fetch_track_geometry", _fetch)
+    return fake
+
+
 @pytest.fixture
-def mock_values(irsdk_mock_factory) -> dict:
+def mock_values_dict() -> dict:
     """
     Return dictionary containing the data
     required for testing the TrackMapService.
     """
-    values = {
+    return {
         "PlayerCarIdx": 0,
         "CarIdxOnPitRoad": [False, False],
         "CarIdxLapDistPct": [0.3, 0.2],
@@ -79,8 +113,12 @@ def mock_values(irsdk_mock_factory) -> dict:
             "SessionID": 1234567890,
             "SessionNum": 0,
             "TrackID": 123,
-            "TrackName": "Test Track",
-            "TrackDisplayShortName": "test_track",
         }
     }
-    return irsdk_mock_factory(values)
+
+@pytest.fixture
+def mock_values(irsdk_mock_factory, mock_values_dict):
+    """
+    Returns the irsdk mock serving mock_values_dict.
+    """
+    return irsdk_mock_factory(mock_values_dict)
