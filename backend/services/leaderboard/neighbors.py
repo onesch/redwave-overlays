@@ -1,5 +1,6 @@
 from typing import Any
 
+from backend.components.lap_relation import wrap_gap
 from backend.services.leaderboard.context import LeaderboardContext
 
 
@@ -77,7 +78,7 @@ class NeighborsService:
 
         # Calculate the shortest physical gap between the cars on the track.
         raw = (other_laps + other_dist) - (my_laps + my_dist)
-        gap_pct = self._wrap_gap(raw)
+        gap_pct = wrap_gap(raw)
 
         # Calculate the estimated time gap when both cars have valid telemetry.
         gap_sec = None
@@ -189,12 +190,7 @@ class NeighborsService:
                 continue
 
             # Add racing and multiclass metadata.
-            car_data["lap_diff"] = self._get_lap_diff(
-                player_laps=my_laps,
-                player_dist=my_dist,
-                other_laps=other_laps,
-                other_dist=other_dist,
-            )
+            car_data["lap_diff"] = ctx.lap_relations.label(idx)
             car_data["same_class"] = same_class
             car_data["racing_relevance"] = "class" if same_class else "traffic"
 
@@ -212,29 +208,6 @@ class NeighborsService:
             traffic_target.append(candidate)
 
         return ahead, behind, physical_ahead, physical_behind
-
-    @staticmethod
-    def _get_lap_diff(
-        player_laps: int,
-        player_dist: float,
-        other_laps: int,
-        other_dist: float,
-    ) -> str | None:
-        """
-        Determine lap relation between the player and another car.
-        """
-        covered_diff = (other_laps + other_dist) - (player_laps + player_dist)
-        lap_diff = round(
-            covered_diff - NeighborsService._wrap_gap(covered_diff)
-        )
-
-        if lap_diff > 0:
-            return "ahead_lap"
-
-        if lap_diff < 0:
-            return "behind_lap"
-
-        return None
 
     @staticmethod
     def _sort_candidates(
@@ -316,14 +289,3 @@ class NeighborsService:
     def _is_valid_lap_time(value: Any) -> bool:
         """Return True when a class lap time can be used as a time scale."""
         return isinstance(value, (int, float)) and value > 0
-
-    @staticmethod
-    def _wrap_gap(raw_gap: float) -> float:
-        """
-        Convert a lap-position difference into the shortest signed track gap.
-
-        iRacing lap distance wraps from 1.0 back to 0.0 at the start/finish line.
-        Removing the nearest whole lap keeps cars close across the S/F line from
-        being classified as almost a full lap apart.
-        """
-        return raw_gap - round(raw_gap)

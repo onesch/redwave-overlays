@@ -151,6 +151,7 @@ def test_build_context_success(mock_service):
     assert ctx.starting_positions == {0: 2, 1: 3, 2: 1}
     assert ctx.starting_class_positions == {0: 2, 1: 3, 2: 1}
     assert ctx.radio_transmit_car_idx == -1
+    assert ctx.player_idx == 0
 
 
 def test_build_context_multiclass(mock_values):
@@ -181,18 +182,12 @@ def test_build_context_returns_none_when_no_drivers(irsdk_mock_factory):
     assert ctx is None
 
 
-@pytest.mark.parametrize(
-    "raw_laps,expected",
-    [
-        ([-1], [0]),
-        ([1], [1]),
-        ([0], [0]),
-        ([None], [0]),
-        (["str"], [0]),
-    ],
-)
-def test_normalize_laps_started(mock_service, raw_laps, expected):
-    assert mock_service._normalize_laps_started(raw_laps) == expected
+def test_build_context_calculates_lap_relations_from_player(mock_service):
+    # CarIdxLap [5, 5, 4], CarIdxLapDistPct [0.6, 0.3, 0.9], player 0:
+    # car 1 is on the same lap, car 2 is a lap behind.
+    ctx = mock_service._build_context()
+
+    assert ctx.lap_relations.deltas == {1: 0, 2: -1}
 
 
 def test_build_snapshot_includes_cached_irating_deltas(mock_service, mock_ctx):
@@ -201,6 +196,29 @@ def test_build_snapshot_includes_cached_irating_deltas(mock_service, mock_ctx):
     snapshot = mock_service._build_snapshot(ctx)
 
     assert snapshot["irating_deltas"] == {101: 60, 102: 2, 103: -60}
+
+
+def test_build_snapshot_uses_player_idx_from_context(mock_service, mock_ctx):
+    # The SDK reports PlayerCarIdx 0: the snapshot must follow the context.
+    ctx = mock_ctx(player_idx=1)
+
+    snapshot = mock_service._build_snapshot(ctx)
+
+    assert snapshot["player"]["car_idx"] == 1
+    assert 1 not in [car["car_idx"] for car in snapshot["cars"]]
+
+
+def test_get_snapshot_reads_player_car_idx_once(mock_values):
+    irsdk = mock_values()
+
+    Leaderboard(irsdk).get_snapshot()
+
+    reads = [
+        call
+        for call in irsdk.get_value.call_args_list
+        if call.args == ("PlayerCarIdx",)
+    ]
+    assert len(reads) == 1
 
 
 def test_calculate_irating_deltas_uses_finishing_order_by_class(

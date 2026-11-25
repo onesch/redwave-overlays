@@ -1,5 +1,6 @@
 from typing import Any, Literal
 
+from backend.components.lap_relation import LapRelationComponent
 from backend.services.base import BaseService
 from backend.services.irsdk.service import IRSDKService
 from backend.services.leaderboard.car_data_builder import CarDataBuilder
@@ -19,11 +20,14 @@ class Leaderboard(BaseService):
         super().__init__(irsdk_service, builder)
         self.neighbors = NeighborsService(builder)
         self.irating_calculator = IRatingCalculator()
+        self.lap_relation = LapRelationComponent()
         self._last_session_num: int | None = None
         self._last_session_time: float | None = None
 
     def _build_snapshot(self, ctx: LeaderboardContext) -> dict[str, Any]:
-        player_idx: int = self.irsdk.get_value("PlayerCarIdx")
+        # Read once in _build_context(): the snapshot and the context
+        # calculations (SOF, lap relations) must use the same player car.
+        player_idx = ctx.player_idx
 
         return {
             "status": "ok",
@@ -58,12 +62,15 @@ class Leaderboard(BaseService):
             starting_class_positions=starting_class_positions,
             last_lap_times=self.irsdk.get_value("CarIdxLastLapTime") or [],
             best_lap_times=self.irsdk.get_value("CarIdxBestLapTime") or [],
-            laps_started=self._normalize_laps_started(self.irsdk.get_value("CarIdxLap") or []),
+            laps_started=IRSDKService.normalize_laps(
+                self.irsdk.get_value("CarIdxLap") or []
+            ),
             lap_dist_pct=self.irsdk.get_value("CarIdxLapDistPct") or [],
             is_pitroad=self.irsdk.get_value("CarIdxOnPitRoad") or [],
             multiclass=IRSDKService.is_multiclass(drivers),
             est_times=self.irsdk.get_value("CarIdxEstTime") or [],
             radio_transmit_car_idx=self.irsdk.get_value("RadioTransmitCarIdx"),
+            player_idx=player_idx,
         )
 
         ctx.session_fastest_lap = self.lap_times.session_fastest_lap(ctx)
@@ -73,6 +80,11 @@ class Leaderboard(BaseService):
         }
         ctx.irating_deltas = self._calculate_irating_deltas(ctx)
         ctx.sof = self._calculate_sof(ctx, player_idx)
+        ctx.lap_relations = self.lap_relation.compute(
+            laps=ctx.laps_started,
+            lap_dist_pct=ctx.lap_dist_pct,
+            reference_idx=player_idx,
+        )
 
         return ctx
 
@@ -176,16 +188,6 @@ class Leaderboard(BaseService):
             "session_time_current": resolved_session_time_current,
             "session_time_formatted": f"~{session_time_formatted}" if is_approximate else session_time_formatted,
         }
-
-    def _normalize_laps_started(self, raw_laps: list[Any]) -> list[int]:
-        """
-        Replace invalid lap counts with 0.
-        Negative values, non-integers, and None are treated as 0.
-        """
-        return [
-            lap if isinstance(lap, int) and lap >= 0 else 0
-            for lap in raw_laps
-        ]
 
     def _reset_pit_status(
         self,

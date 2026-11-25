@@ -1,6 +1,7 @@
 from typing import Any
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
+from backend.components.lap_relation import LapRelationComponent, LapRelations
 from backend.services.session_tracker import SessionKey, SessionTracker
 from backend.services.base import (
     BaseService,
@@ -20,9 +21,16 @@ from backend.utils.paths import get_user_data_path
 class TrackMapContext(SessionStateContext):
     """
     Context container for track-map related data.
+
+    Attributes:
+        player_idx (int | None):
+            Car index of the player.
+        lap_relations (LapRelations):
+            Lap difference of each car relative to the player.
     """
 
-    pass
+    player_idx: int | None = None
+    lap_relations: LapRelations = field(default_factory=LapRelations)
 
 
 class TrackMapCarBuilder(BaseCarBuilder):
@@ -32,7 +40,7 @@ class TrackMapCarBuilder(BaseCarBuilder):
 
     def build(self, idx: int, ctx: TrackMapContext) -> dict | None:
         """
-        Extends base car data with class-specific data.
+        Extends base car data with class and lap relation data.
         """
         car = super().build(idx, ctx)
         if not car:
@@ -43,6 +51,7 @@ class TrackMapCarBuilder(BaseCarBuilder):
         car["color"] = IRSDKService.get_class_color(
             driver.get("CarClassColor")
         )
+        car["lap_diff"] = ctx.lap_relations.label(idx)
         return car
 
 
@@ -59,6 +68,8 @@ class TrackMapService(BaseService):
         self._track_cache = TrackGeometryCache(
             get_user_data_path() / TRACK_CACHE_FILENAME
         )
+
+        self.lap_relation = LapRelationComponent()
 
         super().__init__(irsdk_service, TrackMapCarBuilder())
 
@@ -101,14 +112,25 @@ class TrackMapService(BaseService):
             return None
 
         multiclass: bool = IRSDKService.is_multiclass(drivers)
+        player_idx: int | None = self.irsdk.get_value("PlayerCarIdx")
+        lap_dist_pct = self.irsdk.get_value("CarIdxLapDistPct") or []
+        laps = IRSDKService.normalize_laps(
+            self.irsdk.get_value("CarIdxLap") or []
+        )
 
         return TrackMapContext(
             drivers=drivers,
-            lap_dist_pct=self.irsdk.get_value("CarIdxLapDistPct") or [],
+            lap_dist_pct=lap_dist_pct,
             is_pitroad=self.irsdk.get_value("CarIdxOnPitRoad") or [],
             positions=self.irsdk.get_value("CarIdxPosition") or [],
             class_positions=self.irsdk.get_value("CarIdxClassPosition") or [],
             multiclass=multiclass,
+            player_idx=player_idx,
+            lap_relations=self.lap_relation.compute(
+                laps=laps,
+                lap_dist_pct=lap_dist_pct,
+                reference_idx=player_idx,
+            ),
         )
 
     def _build_snapshot(self, ctx: TrackMapContext) -> dict[str, Any]:
@@ -116,7 +138,6 @@ class TrackMapService(BaseService):
         Generates the snapshot for the API.
         Overridden method from BaseService.
         """
-        player_idx: int = self.irsdk.get_value("PlayerCarIdx")
         weekend_info: dict[str, Any] = (
             self.irsdk.get_value("WeekendInfo") or {}
         )
@@ -139,11 +160,12 @@ class TrackMapService(BaseService):
                     "lap_dist_pct": car["lap_dist_pct"],
                     "class_id": car["class_id"],
                     "color": car["color"],
+                    "lap_diff": car["lap_diff"],
                 }
             )
         return {
             "status": "ok",
-            "player_id": player_idx,
+            "player_id": ctx.player_idx,
             "is_session_changed": is_session_changed,
             "multiclass": ctx.multiclass,
             "cars": cars,

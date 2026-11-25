@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
 
+from backend.components.lap_relation import LapRelations
 from backend.services.base import SessionStateContext
 
 
@@ -34,7 +35,11 @@ class LeaderboardContext(SessionStateContext):
         radio_transmit_car_idx (int):
             Car index of the currently transmitting driver, or -1 when the
             radio is idle.
-            
+        player_idx (int | None):
+            Car index of the player, read once per snapshot.
+        lap_relations (LapRelations):
+            Lap difference of each car relative to the player.
+
     Used by NeighborsService, CarDataBuilder and Leaderboard to construct
     and sort leaderboard telemetry data.
     """
@@ -52,3 +57,6 @@ class LeaderboardContext(SessionStateContext):
     starting_positions: dict[int, int] = field(default_factory=dict)
     starting_class_positions: dict[int, int] = field(default_factory=dict)
     radio_transmit_car_idx: int = -1
+    player_idx: int | None = None
+    # Set in Leaderboard._build_context().
+    lap_relations: LapRelations = field(default_factory=LapRelations)

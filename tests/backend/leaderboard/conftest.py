@@ -76,6 +76,7 @@ def mock_ctx(mock_values: Callable) -> LeaderboardContext:
         "starting_positions": {0: 2, 1: 3, 2: 1},
         "starting_class_positions": {0: 2, 1: 3, 2: 1},
         "radio_transmit_car_idx": values.get_value("RadioTransmitCarIdx"),
+        "player_idx": values.get_value("PlayerCarIdx"),
     }
 
     def _make_ctx(**overrides):

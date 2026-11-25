@@ -66,6 +66,22 @@ def test_is_multiclass(drivers, expected):
 
 
 @pytest.mark.parametrize(
+    "raw_laps,expected",
+    [
+        ([-1], [0]),
+        ([1], [1]),
+        ([0], [0]),
+        ([None], [0]),
+        (["str"], [0]),
+        ([5, -1, 3], [5, 0, 3]),
+        ([], []),
+    ],
+)
+def test_normalize_laps(raw_laps, expected):
+    assert IRSDKService.normalize_laps(raw_laps) == expected
+
+
+@pytest.mark.parametrize(
     "rgb,expected",
     [
         (0xFF0000, "#ff0000"),

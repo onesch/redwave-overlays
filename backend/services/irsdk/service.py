@@ -68,6 +68,21 @@ class IRSDKService():
         return len(class_ids) > 1
 
     @staticmethod
+    def normalize_laps(raw_laps: list[Any]) -> list[int]:
+        """
+        Normalize lap counts by car index (CarIdxLap).
+
+        Negative values, non-integers and None are treated as 0.
+
+        :param raw_laps: the CarIdxLap value.
+        :return: lap counts with invalid values replaced by 0.
+        """
+        return [
+            lap if isinstance(lap, int) and lap >= 0 else 0
+            for lap in raw_laps
+        ]
+
+    @staticmethod
     def get_class_color(rgb: Any) -> str | None:
         """
         Decode an iRacing CarClassColor (0xRRGGBB integer) to '#rrggbb'.
