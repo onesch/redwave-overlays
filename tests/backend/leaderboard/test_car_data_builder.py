@@ -14,16 +14,6 @@ def test_builder_returns_none_for_pace_car(mock_ctx, mock_builder):
     assert result is None
 
 
-def test_reset_pit_data_clears_dicts(mock_builder):
-    mock_builder._last_pit_laps = {0: 5}
-    mock_builder._pit_exit_times = {0: 1234567890.0}
-
-    mock_builder.reset_pit_data()
-
-    assert mock_builder._last_pit_laps == {}
-    assert mock_builder._pit_exit_times == {}
-
-
 @pytest.mark.parametrize(
     "username,expected",
     [
@@ -218,24 +208,11 @@ def test_builder_uses_cached_fastest_laps(mock_values, mock_ctx):
     lap_times.class_fastest_lap.assert_not_called()
 
 
-def test_get_last_pit_lap_behavior(mock_builder):
-    laps_started = [5, 6]
-    is_pitroad = [True, False]
+def test_build_takes_pit_label_from_context(mock_builder, mock_ctx):
+    ctx = mock_ctx(pit_labels={0: "OUT L6"})
 
-    result_in = mock_builder._get_last_pit_lap(0, laps_started, is_pitroad)
-    assert result_in == "IN L5"
-
-    mock_builder._last_pit_laps[1] = 6
-    result_out_first = mock_builder._get_last_pit_lap(
-        1, laps_started, [False, False]
-    )
-    assert result_out_first.startswith("OUT L6")
-
-    mock_builder._pit_exit_times[1] -= 6
-    result_after = mock_builder._get_last_pit_lap(
-        1, laps_started, [False, False]
-    )
-    assert result_after == "L6"
+    assert mock_builder.build(0, ctx)["pit_label"] == "OUT L6"
+    assert mock_builder.build(1, ctx)["pit_label"] is None
 
 
 def test_build_all_returns_all_cars_except_excluded(mock_builder, mock_ctx):

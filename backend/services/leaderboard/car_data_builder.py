@@ -1,9 +1,8 @@
-import time
 from typing import Any
 
-from backend.services.leaderboard.car_sorter import CarSorter
+from backend.components.car_class import CarClassComponent
 from backend.services.base import BaseCarBuilder
-from backend.services.irsdk.service import IRSDKService
+from backend.services.leaderboard.car_sorter import CarSorter
 from backend.services.leaderboard.context import LeaderboardContext
 from backend.services.leaderboard.lap_times.formatter import TimeFormatter
 from backend.services.leaderboard.lap_times.service import LapTimeService
@@ -15,13 +14,6 @@ class CarDataBuilder(BaseCarBuilder):
     def __init__(self, irsdk_service, lap_times: LapTimeService):
         self.irsdk = irsdk_service
         self.lap_times = lap_times
-        self._last_pit_laps: dict[int, int] = {}
-        self._pit_exit_times: dict[int, float] = {}
-
-    def reset_pit_data(self):
-        """Reset pit tracking when session changes."""
-        self._last_pit_laps.clear()
-        self._pit_exit_times.clear()
 
     def build(
         self, idx: int, ctx: LeaderboardContext
@@ -45,7 +37,7 @@ class CarDataBuilder(BaseCarBuilder):
             "is_radio_transmitting": self._is_radio_transmitting(driver, ctx),
             "car_class_color": driver.get("CarClassColor"),
             "lap_dist_pct": self._format_lap_dist(idx, ctx),
-            "last_pit_lap": self._get_last_pit_lap(idx, ctx.laps_started, ctx.is_pitroad),
+            "pit_label": ctx.pit_labels.get(idx),
             "laps_started": ctx.laps_started[idx],
             "last_lap_time_formatted": TimeFormatter.format_lap_time(last_lap_seconds),
             "last_lap_seconds": last_lap_seconds,
@@ -79,7 +71,7 @@ class CarDataBuilder(BaseCarBuilder):
         drivers = []
 
         for car_idx, driver in enumerate(ctx.drivers):
-            if IRSDKService.is_pace_car(driver):
+            if CarClassComponent.is_pace_car(driver):
                 continue
 
             position = self._resolve_position(car_idx, ctx)
@@ -184,27 +176,6 @@ class CarDataBuilder(BaseCarBuilder):
                 starting_class_positions[car_idx] = class_position + 1
 
         return starting_positions, starting_class_positions
-
-    def _get_last_pit_lap(
-        self, idx: int, laps_started: list[int], is_pitroad: list[bool]
-    ) -> str | None:
-        """Returns the last lap the car was in pitroad."""
-        now = time.time()
-
-        if is_pitroad[idx]:
-            self._last_pit_laps[idx] = laps_started[idx]
-            self._pit_exit_times.pop(idx, None)
-            return f"IN L{laps_started[idx]}"
-
-        if idx in self._last_pit_laps:
-            if idx not in self._pit_exit_times:
-                self._pit_exit_times[idx] = now
-                return f"OUT L{self._last_pit_laps[idx]}"
-            if now - self._pit_exit_times[idx] <= 5:
-                return f"OUT L{self._last_pit_laps[idx]}"
-            return f"L{self._last_pit_laps[idx]}"
-
-        return None
 
     @staticmethod
     def _is_radio_transmitting(

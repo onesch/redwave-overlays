@@ -195,7 +195,8 @@ export class LeaderboardRenderer extends BaseRenderer {
         const nameElement = rowElement.querySelector('.driver .name');
         const pitFlag = rowElement.querySelector('.driver .pit-flag');
 
-        let pitLapText = this.formatPitLap(car.last_pit_lap);
+        // Ready to show, built by the backend ("IN L5", "OUT PIT", "L6").
+        const pitLapText = car.pit_label;
 
         if (car.is_in_pitroad) {
             nameElement.classList.add(
@@ -219,22 +220,6 @@ export class LeaderboardRenderer extends BaseRenderer {
         }
 
         pitFlag.style.display = 'none';
-    }
-
-    formatPitLap(pitLapText) {
-        switch (pitLapText) {
-            case "IN L0":
-                return "IN PIT";
-
-            case "L0":
-                return "";
-
-            case "OUT L0":
-                return "OUT PIT";
-
-            default:
-                return pitLapText;
-        }
     }
 
     showPitFlag(element, text) {
@@ -309,15 +294,9 @@ export class LeaderboardRenderer extends BaseRenderer {
         const gapElement = rowElement.querySelector('.gap');
         gapElement.className = 'gap';
 
-        switch (car.lap_diff) {
-            case "ahead_lap":
-                gapElement.classList.add('ahead_lap');
-                break;
-
-            case "behind_lap":
-                gapElement.classList.add('behind_lap');
-                break;
-        }
+        // Lap relation to the player's car, calculated by the backend.
+        gapElement.classList.toggle('ahead_lap', car.is_lap_ahead === true);
+        gapElement.classList.toggle('behind_lap', car.is_lap_behind === true);
 
         if (car.is_in_pitroad) {
             gapElement.classList.add('in-pit');

@@ -133,27 +133,6 @@ def test_build_context(mock_service):
     assert ctx.track_length_m == pytest.approx(3992.7)
 
 
-# --- _lap_delta tests ---
-
-
-def test_lap_delta_ahead():
-    assert RadarService._lap_delta(0.45, 0.47) == pytest.approx(0.02)
-
-
-def test_lap_delta_behind():
-    assert RadarService._lap_delta(0.47, 0.45) == pytest.approx(-0.02)
-
-
-def test_lap_delta_wraparound_ahead():
-    # Player at 98%, other at 2% — other is 4% ahead
-    assert RadarService._lap_delta(0.98, 0.02) == pytest.approx(0.04)
-
-
-def test_lap_delta_wraparound_behind():
-    # Player at 2%, other at 98% — other is 4% behind
-    assert RadarService._lap_delta(0.02, 0.98) == pytest.approx(-0.04)
-
-
 # --- _find_closest_side_car tests ---
 
 
@@ -165,6 +144,24 @@ def test_find_closest_side_car_basic(mock_service, mock_ctx):
     )
     result = mock_service._find_closest_side_car(ctx)
     assert result == 1
+
+
+def test_find_closest_side_car_skips_cars_off_the_track(mock_service, mock_ctx):
+    # Near the start/finish line a car in the garage (-1) used to look
+    # level with the player: -1 - 0.0 wrapped to a zero gap.
+    ctx = mock_ctx(
+        lap_dist_pct=[0.0, -1, 0.1],
+        player_idx=0,
+    )
+    assert mock_service._find_closest_side_car(ctx) == 2
+
+
+def test_find_closest_side_car_player_off_the_track(mock_service, mock_ctx):
+    ctx = mock_ctx(
+        lap_dist_pct=[-1, 0.5, 0.6],
+        player_idx=0,
+    )
+    assert mock_service._find_closest_side_car(ctx) is None
 
 
 def test_find_closest_side_car_no_player(mock_service, mock_ctx):

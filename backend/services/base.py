@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Any
 
-from backend.services.irsdk.service import IRSDKService
+from backend.components.car_class import CarClassComponent
 
 
 @dataclass
@@ -47,7 +47,7 @@ class BaseCarBuilder:
         Build a base representation of a car.
         """
         driver = ctx.drivers[idx]
-        if IRSDKService.is_pace_car(driver):
+        if CarClassComponent.is_pace_car(driver):
             return None
 
         return {

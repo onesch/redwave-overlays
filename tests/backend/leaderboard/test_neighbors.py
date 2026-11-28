@@ -1,143 +1,16 @@
 import pytest
 
-from backend.components.lap_relation import LapRelations
-
-
-# --- calc_gap ---
-
-
-def calc_gap(mock_neighbors, **overrides):
-    values = {
-        "my_dist": 0.2,
-        "my_laps": 5,
-        "my_est_time": 16.0,
-        "my_est_lap_time": 80.0,
-        "other_dist": 0.5,
-        "other_laps": 5,
-        "other_est_time": 40.0,
-        "other_est_lap_time": 80.0,
-        "same_class": True,
-    }
-    values.update(overrides)
-    return mock_neighbors._calc_gap(**values)
-
-
-def test_calc_gap_normalizes_estimated_time_between_classes(mock_neighbors):
-    result = calc_gap(
-        mock_neighbors,
-        my_est_time=50.0,
-        my_est_lap_time=100.0,
-        my_dist=0.5,
-        other_est_time=40.8,
-        other_est_lap_time=80.0,
-        other_dist=0.51,
-        same_class=False,
-    )
-    assert result["gap_sec"] == pytest.approx(1.0)
-
-
-def test_calc_gap_omits_cross_class_time_without_class_lap_estimate(
-    mock_neighbors,
-):
-    result = calc_gap(mock_neighbors, other_est_lap_time=0.0, same_class=False)
-
-    assert result["gap_pct"] == pytest.approx(0.3)
-    assert result["gap_sec"] is None
-
-
-def test_calc_gap_basic(mock_neighbors):
-    result = calc_gap(mock_neighbors)
-    assert result["gap_pct"] == pytest.approx(0.3)
-    assert result["gap_sec"] == pytest.approx(24.0)
-
-
-@pytest.mark.parametrize(
-    "my_dist,other_dist,expected_pct,expected_sec",
-    [
-        (0.98, 0.02, 0.04, 4.0),
-        (0.02, 0.98, -0.04, -4.0),
-    ],
+from backend.components.track_position import CarPositionContext
+from backend.components.track_time_line import (
+    SEGMENTS_PER_LAP,
+    TrackTimeLineComponent,
 )
-def test_calc_gap_corrects_start_finish_wraparound(
-    mock_neighbors,
-    my_dist,
-    other_dist,
-    expected_pct,
-    expected_sec,
-):
-    result = calc_gap(
-        mock_neighbors,
-        my_dist=my_dist,
-        my_est_time=my_dist * 100,
-        my_est_lap_time=100.0,
-        other_dist=other_dist,
-        other_est_time=other_dist * 100,
-    )
-    assert result["gap_pct"] == pytest.approx(expected_pct)
-    assert result["gap_sec"] == pytest.approx(expected_sec)
-
-
-@pytest.mark.parametrize(
-    "my_dist,other_dist,other_est_time,expected_sec",
-    [
-        (0.98, 0.02, 1.6, 4.0),
-        (0.02, 0.98, 78.4, -4.0),
-    ],
-)
-def test_calc_gap_normalizes_cross_class_time_across_start_finish(
-    mock_neighbors,
-    my_dist,
-    other_dist,
-    other_est_time,
-    expected_sec,
-):
-    result = calc_gap(
-        mock_neighbors,
-        my_dist=my_dist,
-        my_est_time=my_dist * 100.0,
-        my_est_lap_time=100.0,
-        other_dist=other_dist,
-        other_est_time=other_est_time,
-        other_est_lap_time=80.0,
-        same_class=False,
-    )
-    assert result["gap_sec"] == pytest.approx(expected_sec)
-
-
-@pytest.mark.parametrize(
-    "field,value",
-    [
-        ("other_dist", -1),
-        ("other_dist", "abc"),
-        ("other_dist", None),
-        ("my_dist", -1),
-        ("my_dist", "abc"),
-        ("my_dist", None),
-    ],
-)
-def test_calc_gap_invalid_distances(mock_neighbors, field, value):
-    assert calc_gap(mock_neighbors, **{field: value}) is None
-
-
-@pytest.mark.parametrize(
-    "field,value",
-    [
-        ("my_est_time", 0),
-        ("my_est_time", -1),
-        ("other_est_time", 0),
-        ("other_est_time", -1),
-    ],
-)
-def test_calc_gap_invalid_est_times_keep_physical_gap(mock_neighbors, field, value):
-    result = calc_gap(mock_neighbors, **{field: value})
-    assert result["gap_pct"] == pytest.approx(0.3)
-    assert result["gap_sec"] is None
 
 
 # --- collect_candidates ---
 
 
-def test_collect_candidates_orders_ahead_and_behind_by_physical_gap(
+def test_collect_candidates_orders_ahead_and_behind_by_distance_gap(
     mock_neighbors,
     mock_ctx,
 ):
@@ -159,7 +32,7 @@ def test_collect_candidates_orders_ahead_and_behind_by_physical_gap(
         is_pitroad=[False] * 5,
     )
 
-    ahead, behind, _, _ = mock_neighbors._collect_candidates(0, ctx)
+    ahead, behind = mock_neighbors._collect_candidates(0, ctx)
     ahead, behind = mock_neighbors._sort_candidates(ahead, behind)
 
     assert [candidate["car"]["name"] for candidate in ahead] == [
@@ -189,7 +62,7 @@ def test_collect_candidates_wraparound_neighbor_detection(mock_neighbors, mock_c
         is_pitroad=[False] * 3,
     )
 
-    ahead, behind, _, _ = mock_neighbors._collect_candidates(0, ctx)
+    ahead, behind = mock_neighbors._collect_candidates(0, ctx)
 
     assert ahead[0]["car"]["name"] == "ahead_across_line"
     assert ahead[0]["gap_pct"] == pytest.approx(0.04)
@@ -200,7 +73,7 @@ def test_collect_candidates_wraparound_neighbor_detection(mock_neighbors, mock_c
 
 
 
-def test_multiclass_traffic_is_separated_but_kept_in_neighbors(
+def test_other_class_cars_are_kept_in_neighbors_by_track_position(
     mock_neighbors,
     mock_ctx,
 ):
@@ -236,15 +109,73 @@ def test_multiclass_traffic_is_separated_but_kept_in_neighbors(
         "same_class",
         "traffic_ahead",
     ]
-    assert [car["name"] for car in neighbors["physical_ahead"]] == [
-        "traffic_ahead"
-    ]
-    assert [car["name"] for car in neighbors["physical_behind"]] == [
-        "traffic_behind"
-    ]
-    assert neighbors["physical_ahead"][0]["same_class"] is False
-    assert neighbors["physical_ahead"][0]["racing_relevance"] == "traffic"
-    assert neighbors["physical_ahead"][0]["gap_sec"] == pytest.approx(20.0)
+    assert [car["name"] for car in neighbors["behind"]] == ["traffic_behind"]
+    assert neighbors["ahead"][0]["same_class"] is True
+    assert neighbors["ahead"][1]["same_class"] is False
+    assert neighbors["ahead"][1]["gap_sec"] == pytest.approx(20.0)
+    assert neighbors["behind"][0]["same_class"] is False
+
+
+def make_traffic_ctx(mock_ctx, **overrides):
+    """The player, a GT3 car of another model and a car of another class."""
+    values = dict(
+        drivers=[
+            {"UserName": "me", "CarClassID": 1, "CarClassEstLapTime": 100.0},
+            # Same class, another car model: a 2% slower reference lap.
+            {"UserName": "same_class", "CarClassID": 1, "CarClassEstLapTime": 102.0},
+            {
+                "UserName": "traffic_ahead",
+                "CarClassID": 2,
+                "CarClassEstLapTime": 80.0,
+            },
+        ],
+        lap_dist_pct=[0.5, 0.6, 0.7],
+        laps_started=[5, 5, 5],
+        est_times=[50.0, 61.2, 56.0],
+        positions=[1, 2, 3],
+        class_positions=[1, 2, 1],
+        last_lap_times=[80.0] * 3,
+        best_lap_times=[80.0] * 3,
+        is_pitroad=[False] * 3,
+        multiclass=True,
+    )
+    values.update(overrides)
+    return mock_ctx(**values)
+
+
+def test_time_gaps_to_every_car_come_from_the_time_line(mock_neighbors, mock_ctx):
+    # The player's car is slow between 0.5 and 0.7: 0.2 lap takes 30 s,
+    # not the 20 s of the average pace (100 s lap).
+    time_line = TrackTimeLineComponent()
+    time_line.bind("track", 1, 100.0)
+    for segment in range(SEGMENTS_PER_LAP):
+        pct = (segment + 0.5) / SEGMENTS_PER_LAP
+        time_line.record(
+            CarPositionContext(
+                lap_dist_pct=pct,
+                est_time=pct * 100 + min(max(pct - 0.5, 0), 0.2) * 50,
+                est_lap_time=100.0,
+            )
+        )
+
+    neighbors = mock_neighbors.get_neighbors(
+        0, make_traffic_ctx(mock_ctx, track_time_line=time_line)
+    )
+    gaps = {car["name"]: car["gap_sec"] for car in neighbors["ahead"]}
+
+    # 0.1 lap into the slow part takes 15 s, 0.2 lap takes 30 s.
+    assert gaps["same_class"] == pytest.approx(15.0, abs=0.05)
+    assert gaps["traffic_ahead"] == pytest.approx(30.0, abs=0.05)
+
+
+def test_time_gaps_fall_back_until_the_time_line_has_data(mock_neighbors, mock_ctx):
+    neighbors = mock_neighbors.get_neighbors(0, make_traffic_ctx(mock_ctx))
+    gaps = {car["name"]: car["gap_sec"] for car in neighbors["ahead"]}
+
+    # Same class: CarIdxEstTime rescaled from the 102 s car model,
+    # 61.2 * 100 / 102 - 50 = 10 s. Another class: 0.2 lap * 100 s.
+    assert gaps["same_class"] == pytest.approx(10.0)
+    assert gaps["traffic_ahead"] == pytest.approx(20.0)
 
 
 def test_collect_candidates_skips_missing_or_invalid_telemetry(mock_neighbors, mock_ctx):
@@ -264,15 +195,10 @@ def test_collect_candidates_skips_missing_or_invalid_telemetry(mock_neighbors, m
         is_pitroad=[False] * 3,
     )
 
-    ahead, behind, physical_ahead, physical_behind = mock_neighbors._collect_candidates(
-        0,
-        ctx,
-    )
+    ahead, behind = mock_neighbors._collect_candidates(0, ctx)
 
     assert [candidate["car"]["name"] for candidate in ahead] == ["valid"]
     assert behind == []
-    assert physical_ahead == []
-    assert physical_behind == []
 
 
 def test_collect_candidates_returns_empty_for_invalid_player_telemetry(
@@ -281,8 +207,8 @@ def test_collect_candidates_returns_empty_for_invalid_player_telemetry(
 ):
     ctx = mock_ctx(lap_dist_pct=[-1, 0.6], laps_started=[5, 5], est_times=[50.0, 60.0])
 
-    assert mock_neighbors._collect_candidates(0, ctx) == ([], [], [], [])
-    assert mock_neighbors._collect_candidates(99, ctx) == ([], [], [], [])
+    assert mock_neighbors._collect_candidates(0, ctx) == ([], [])
+    assert mock_neighbors._collect_candidates(99, ctx) == ([], [])
 
 
 # --- sort_candidates ---
@@ -320,19 +246,14 @@ def test_format_neighbors_rounding(mock_neighbors):
 
 def test_get_neighbors_returns_expected_keys(mock_neighbors, mock_ctx):
     neighbors = mock_neighbors.get_neighbors(player_idx=0, ctx=mock_ctx())
-    assert set(neighbors) == {
-        "ahead",
-        "behind",
-        "physical_ahead",
-        "physical_behind",
-    }
+    assert set(neighbors) == {"ahead", "behind"}
     assert all("name" in c for c in neighbors["ahead"] + neighbors["behind"])
 
 
-# --- lap_diff ---
+# --- lap flags ---
 
 
-def test_neighbors_take_lap_diff_from_context_lap_relations(
+def test_neighbors_take_lap_flags_from_context_lap_deltas(
     mock_neighbors,
     mock_ctx,
 ):
@@ -351,17 +272,17 @@ def test_neighbors_take_lap_diff_from_context_lap_relations(
         last_lap_times=[80.0] * 4,
         best_lap_times=[80.0] * 4,
         is_pitroad=[False] * 4,
-        lap_relations=LapRelations({1: 1, 2: 0, 3: -1}),
+        lap_deltas={1: 1, 2: 0, 3: -1},
     )
 
     neighbors = mock_neighbors.get_neighbors(0, ctx)
-    lap_diffs = {
-        car["name"]: car["lap_diff"]
+    lap_flags = {
+        car["name"]: (car["is_lap_ahead"], car["is_lap_behind"])
         for car in neighbors["ahead"] + neighbors["behind"]
     }
 
-    assert lap_diffs == {
-        "lap_ahead": "ahead_lap",
-        "same_lap": None,
-        "lap_behind": "behind_lap",
+    assert lap_flags == {
+        "lap_ahead": (True, False),
+        "same_lap": (False, False),
+        "lap_behind": (False, True),
     }

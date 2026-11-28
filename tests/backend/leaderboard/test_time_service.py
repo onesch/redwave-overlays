@@ -1,31 +1,6 @@
 import pytest
 
 
-@pytest.mark.parametrize(
-    "lap_time,expected",
-    [
-        (80.0, True),
-        (1, True),
-        (0, False),
-        (-1, False),
-        (None, False),
-        ("80", False),
-    ],
-)
-def test_is_valid_lap_time(mock_lap_times, lap_time, expected):
-    assert mock_lap_times.is_valid_lap_time(lap_time) is expected
-
-
-def test_fastest_lap_ignores_invalid_values(mock_lap_times):
-    VALUES = [0, None, 81.2, "80", 79]
-    assert mock_lap_times.fastest_lap(VALUES) == pytest.approx(79.0)
-
-
-def test_fastest_lap_returns_none_without_valid_values(mock_lap_times):
-    VALUES = [0, None, "80", -1]
-    assert mock_lap_times.fastest_lap(VALUES) is None
-
-
 def test_session_and_class_fastest_lap(mock_lap_times, mock_ctx):
     ctx = mock_ctx(
         best_lap_times=[82.0, 79.5, 90.0, 0],

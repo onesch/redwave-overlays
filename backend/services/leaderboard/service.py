@@ -1,6 +1,11 @@
+import time
 from typing import Any, Literal
 
+from backend.components.car_class import CarClassComponent
 from backend.components.lap_relation import LapRelationComponent
+from backend.components.pit_stop import PitStopComponent
+from backend.components.track_position import CarPositionContext
+from backend.components.track_time_line import TrackTimeLineComponent
 from backend.services.base import BaseService
 from backend.services.irsdk.service import IRSDKService
 from backend.services.leaderboard.car_data_builder import CarDataBuilder
@@ -21,12 +26,15 @@ class Leaderboard(BaseService):
         self.neighbors = NeighborsService(builder)
         self.irating_calculator = IRatingCalculator()
         self.lap_relation = LapRelationComponent()
+        # Learned across snapshots, so it lives in the service.
+        self.track_time_line = TrackTimeLineComponent()
+        self.pit_stops = PitStopComponent()
         self._last_session_num: int | None = None
         self._last_session_time: float | None = None
 
     def _build_snapshot(self, ctx: LeaderboardContext) -> dict[str, Any]:
         # Read once in _build_context(): the snapshot and the context
-        # calculations (SOF, lap relations) must use the same player car.
+        # calculations (SOF, lap deltas) must use the same player car.
         player_idx = ctx.player_idx
 
         return {
@@ -67,7 +75,7 @@ class Leaderboard(BaseService):
             ),
             lap_dist_pct=self.irsdk.get_value("CarIdxLapDistPct") or [],
             is_pitroad=self.irsdk.get_value("CarIdxOnPitRoad") or [],
-            multiclass=IRSDKService.is_multiclass(drivers),
+            multiclass=CarClassComponent.is_multiclass(drivers),
             est_times=self.irsdk.get_value("CarIdxEstTime") or [],
             radio_transmit_car_idx=self.irsdk.get_value("RadioTransmitCarIdx"),
             player_idx=player_idx,
@@ -80,13 +88,154 @@ class Leaderboard(BaseService):
         }
         ctx.irating_deltas = self._calculate_irating_deltas(ctx)
         ctx.sof = self._calculate_sof(ctx, player_idx)
-        ctx.lap_relations = self.lap_relation.compute(
+        ctx.lap_deltas = self.lap_relation.compute(
             laps=ctx.laps_started,
             lap_dist_pct=ctx.lap_dist_pct,
             reference_idx=player_idx,
         )
+        ctx.car_positions = self.build_car_positions(
+            drivers=ctx.drivers,
+            lap_dist_pct=ctx.lap_dist_pct,
+            est_times=ctx.est_times,
+        )
+        self._record_track_time_line(ctx)
+        ctx.track_time_line = self.track_time_line
+        ctx.pit_labels = self._update_pit_stops(ctx)
 
         return ctx
+
+    @staticmethod
+    def build_car_positions(
+        drivers: list[dict[str, Any]],
+        lap_dist_pct: list[float],
+        est_times: list[float],
+    ) -> dict[int, CarPositionContext]:
+        """
+        Collect the track position of every car for the track components.
+
+        Built once per snapshot from the telemetry arrays read in
+        _build_context(), so the neighbors and the time line recording
+        use the same values.
+
+        Example:
+
+            drivers      = [{"CarClassID": 4074, "CarClassEstLapTime": 230.72},
+                            {"CarClassID": 4074, "CarClassEstLapTime": 232.76},
+                            {"CarClassID": 2523, "CarClassEstLapTime": 211.4}]
+            lap_dist_pct = [0.5, 0.62]
+            est_times    = [115.36, 144.31]
+
+            -> {
+                0: CarPositionContext(0.5, 115.36, 230.72, 4074),
+                1: CarPositionContext(0.62, 144.31, 232.76, 4074),
+            }
+
+            Car 2 has no telemetry yet and is left out.
+
+        Args:
+            drivers: DriverInfo.Drivers entries.
+            lap_dist_pct: Lap distance by car index (CarIdxLapDistPct).
+            est_times: Estimated time by car index (CarIdxEstTime).
+
+        Returns:
+            Track positions keyed by car index, for the cars present in all
+            three sources.
+        """
+        count = min(len(drivers), len(lap_dist_pct), len(est_times))
+
+        return {
+            idx: CarPositionContext(
+                lap_dist_pct=lap_dist_pct[idx],
+                est_time=est_times[idx],
+                est_lap_time=drivers[idx].get("CarClassEstLapTime"),
+                class_id=drivers[idx].get("CarClassID"),
+            )
+            for idx in range(count)
+        }
+
+    def _record_track_time_line(self, ctx: LeaderboardContext) -> None:
+        """
+        Record the cars of the player's class into the player's time line.
+
+        The time line is bound to the track, the player's class and the
+        player's reference lap (cleared when any of them changes), then every
+        car of the class on the track records its CarIdxEstTime; the time
+        line rescales it to the player's car. Cars of another class, cars in
+        the pits and the pace car are not recorded.
+
+        Example:
+
+            Player: Ferrari GT3 (class 4074, reference lap 230.72) at Le Mans.
+
+            Ferrari GT3 (player)   -> recorded
+            BMW GT3     (4074)     -> recorded, rescaled 232.76 -> 230.72
+            Porsche GT3 (4074), in the pits     -> skipped
+            LMP2        (2523)     -> skipped, another class
+            Pace car               -> skipped
+
+        Args:
+            ctx: Leaderboard context of the current snapshot.
+
+        Returns:
+            None. Nothing is recorded without a valid player car.
+        """
+        player_idx = ctx.player_idx
+        if player_idx is None or not 0 <= player_idx < len(ctx.drivers):
+            return
+
+        player_driver = ctx.drivers[player_idx]
+        class_id = player_driver.get("CarClassID")
+        weekend_info: dict[str, Any] = self.irsdk.get_value("WeekendInfo") or {}
+
+        self.track_time_line.bind(
+            track_id=weekend_info.get("TrackID"),
+            class_id=class_id,
+            est_lap_time=player_driver.get("CarClassEstLapTime"),
+        )
+
+        for idx, driver in enumerate(ctx.drivers):
+            if driver.get("CarClassID") != class_id:
+                continue
+            if CarClassComponent.is_pace_car(driver):
+                continue
+            if idx < len(ctx.is_pitroad) and ctx.is_pitroad[idx]:
+                continue
+
+            car = ctx.car_positions.get(idx)
+            if car is None:
+                continue
+
+            self.track_time_line.record(car)
+
+    def _update_pit_stops(self, ctx: LeaderboardContext) -> dict[int, str]:
+        """
+        Update the pit stops of all cars and return their pit labels.
+
+        Runs once per snapshot, so the pit stop state does not depend on how
+        many times a car is built (the cars list and the neighbors build the
+        same car). Pit stops of the previous session are cleared first.
+
+        Example:
+
+            Session 1, car 3 on the pit road on lap 5  -> {3: "IN L5"}
+            Session changes to 2 (or restarts)         -> cleared -> {}
+
+        Args:
+            ctx: Leaderboard context of the current snapshot.
+
+        Returns:
+            Pit labels keyed by car index (see PitStopComponent.labels).
+        """
+        session_info: dict[str, Any] = self.irsdk.get_value("SessionInfo") or {}
+        self._reset_pit_stops(session_info, self.irsdk.get_value("SessionTime"))
+
+        now = time.time()
+        self.pit_stops.update(
+            laps_started=ctx.laps_started,
+            is_pitroad=ctx.is_pitroad,
+            now=now,
+        )
+        return self.pit_stops.labels(now)
 
     def _calculate_irating_deltas(self, ctx: LeaderboardContext) -> dict[int, int]:
         """
@@ -167,8 +316,6 @@ class Leaderboard(BaseService):
         session_laps: int | Literal["unlimited"] = current_session.get("SessionLaps")
         session_time_current: float = self.irsdk.get_value("SessionTime")
 
-        self._reset_pit_status(session_info, session_time_current)
-
         player_lap_time = self.lap_times.car_lap_time(player_idx, ctx)
 
         session_time, is_approximate = self.get_session_time(
@@ -189,12 +336,12 @@ class Leaderboard(BaseService):
             "session_time_formatted": f"~{session_time_formatted}" if is_approximate else session_time_formatted,
         }
 
-    def _reset_pit_status(
+    def _reset_pit_stops(
         self,
         session_info: dict,
-        session_time: float,
+        session_time: float | None,
     ) -> None:
-        """Reset pit tracking when the session changes or restarts."""
+        """Clear the pit stops when the session changes or restarts."""
         current_num = session_info.get("CurrentSessionNum", 0)
 
         session_changed = self._last_session_num != current_num
@@ -205,7 +352,7 @@ class Leaderboard(BaseService):
         )
 
         if session_changed or session_restarted:
-            self.builder.reset_pit_data()
+            self.pit_stops.clear()
 
         self._last_session_num = current_num
         self._last_session_time = session_time

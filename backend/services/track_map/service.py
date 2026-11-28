@@ -1,7 +1,8 @@
 from typing import Any
 from dataclasses import dataclass, field
 
-from backend.components.lap_relation import LapRelationComponent, LapRelations
+from backend.components.car_class import CarClassComponent
+from backend.components.lap_relation import LapRelationComponent
 from backend.services.session_tracker import SessionKey, SessionTracker
 from backend.services.base import (
     BaseService,
@@ -25,12 +26,13 @@ class TrackMapContext(SessionStateContext):
     Attributes:
         player_idx (int | None):
             Car index of the player.
-        lap_relations (LapRelations):
-            Lap difference of each car relative to the player.
+        lap_deltas (dict[int, int]):
+            Whole laps each car is ahead (positive) or behind (negative) of
+            the player, keyed by car index (see LapRelationComponent).
     """
 
     player_idx: int | None = None
-    lap_relations: LapRelations = field(default_factory=LapRelations)
+    lap_deltas: dict[int, int] = field(default_factory=dict)
 
 
 class TrackMapCarBuilder(BaseCarBuilder):
@@ -51,7 +53,9 @@ class TrackMapCarBuilder(BaseCarBuilder):
         car["color"] = IRSDKService.get_class_color(
             driver.get("CarClassColor")
         )
-        car["lap_diff"] = ctx.lap_relations.label(idx)
+        lap_delta = ctx.lap_deltas.get(idx)
+        car["is_lap_ahead"] = LapRelationComponent.is_lap_ahead(lap_delta)
+        car["is_lap_behind"] = LapRelationComponent.is_lap_behind(lap_delta)
         return car
 
 
@@ -111,7 +115,7 @@ class TrackMapService(BaseService):
         if not drivers:
             return None
 
-        multiclass: bool = IRSDKService.is_multiclass(drivers)
+        multiclass: bool = CarClassComponent.is_multiclass(drivers)
         player_idx: int | None = self.irsdk.get_value("PlayerCarIdx")
         lap_dist_pct = self.irsdk.get_value("CarIdxLapDistPct") or []
         laps = IRSDKService.normalize_laps(
@@ -126,7 +130,7 @@ class TrackMapService(BaseService):
             class_positions=self.irsdk.get_value("CarIdxClassPosition") or [],
             multiclass=multiclass,
             player_idx=player_idx,
-            lap_relations=self.lap_relation.compute(
+            lap_deltas=self.lap_relation.compute(
                 laps=laps,
                 lap_dist_pct=lap_dist_pct,
                 reference_idx=player_idx,
@@ -160,7 +164,8 @@ class TrackMapService(BaseService):
                     "lap_dist_pct": car["lap_dist_pct"],
                     "class_id": car["class_id"],
                     "color": car["color"],
-                    "lap_diff": car["lap_diff"],
+                    "is_lap_ahead": car["is_lap_ahead"],
+                    "is_lap_behind": car["is_lap_behind"],
                 }
             )
         return {

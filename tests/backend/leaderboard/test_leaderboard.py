@@ -1,7 +1,8 @@
 import pytest
 from unittest.mock import MagicMock
 
-from backend.services.irsdk.service import IRSDKService
+from backend.components.car_class import CarClassComponent
+from backend.components.track_position import CarPositionContext
 from backend.services.leaderboard.context import LeaderboardContext
 from backend.services.leaderboard.service import Leaderboard
 
@@ -70,46 +71,73 @@ def test_leaderboard_no_drivers_returns_error(irsdk_mock_factory):
 
 def test_is_multiclass_returns_false_for_single_class(mock_ctx):
     ctx = mock_ctx(drivers=[{"CarClassID": 1}, {"CarClassID": 1}])
-    assert IRSDKService.is_multiclass(ctx.drivers) is False
+    assert CarClassComponent.is_multiclass(ctx.drivers) is False
 
 
 def test_is_multiclass_returns_true_for_multiple_classes(mock_ctx):
     ctx = mock_ctx(drivers=[{"CarClassID": 1}, {"CarClassID": 2}])
-    assert IRSDKService.is_multiclass(ctx.drivers) is True
+    assert CarClassComponent.is_multiclass(ctx.drivers) is True
 
 
-def test_reset_pit_status_calls_reset_on_new_session(mock_service):
+def test_reset_pit_stops_calls_reset_on_new_session(mock_service):
     mock_service._last_session_num = 1
     mock_service._last_session_time = 100.0
     session_info = {"CurrentSessionNum": 2}
-    mock_service.builder.reset_pit_data = MagicMock()
+    mock_service.pit_stops.clear = MagicMock()
 
-    mock_service._reset_pit_status(session_info, session_time=200.0)
+    mock_service._reset_pit_stops(session_info, session_time=200.0)
 
-    mock_service.builder.reset_pit_data.assert_called_once()
+    mock_service.pit_stops.clear.assert_called_once()
 
 
-def test_reset_pit_status_does_not_call_reset_on_same_session(mock_service):
+def test_reset_pit_stops_does_not_call_reset_on_same_session(mock_service):
     mock_service._last_session_num = 2
     mock_service._last_session_time = 100.0
     session_info = {"CurrentSessionNum": 2}
-    mock_service.builder.reset_pit_data = MagicMock()
+    mock_service.pit_stops.clear = MagicMock()
 
-    mock_service._reset_pit_status(session_info, session_time=101.0)
+    mock_service._reset_pit_stops(session_info, session_time=101.0)
 
-    mock_service.builder.reset_pit_data.assert_not_called()
+    mock_service.pit_stops.clear.assert_not_called()
 
 
-def test_reset_pit_status_resets_on_same_session_restart(mock_service):
+def test_reset_pit_stops_resets_on_same_session_restart(mock_service):
     mock_service._last_session_num = 2
     mock_service._last_session_time = 1200.0
     session_info = {"CurrentSessionNum": 2}
-    mock_service.builder.reset_pit_data = MagicMock()
+    mock_service.pit_stops.clear = MagicMock()
 
-    mock_service._reset_pit_status(session_info, session_time=0.0)
+    mock_service._reset_pit_stops(session_info, session_time=0.0)
 
-    mock_service.builder.reset_pit_data.assert_called_once()
+    mock_service.pit_stops.clear.assert_called_once()
     assert mock_service._last_session_time == 0.0
+
+
+def test_build_context_collects_pit_labels_of_the_snapshot(mock_values, monkeypatch):
+    irsdk = mock_values()
+    read = irsdk.get_value.side_effect
+    irsdk.get_value.side_effect = lambda key: (
+        [False, True, False] if key == "CarIdxOnPitRoad" else read(key)
+    )
+    monkeypatch.setattr(
+        "backend.services.leaderboard.service.time.time", lambda: 1000.0
+    )
+    lb = Leaderboard(irsdk)
+
+    ctx = lb._build_context()
+
+    # Car 1 is on the pit road on lap 5 (CarIdxLap).
+    assert ctx.pit_labels == {1: "IN L5"}
+
+
+def test_build_context_clears_pit_stops_of_the_previous_session(mock_service):
+    mock_service.pit_stops.update(laps_started=[3], is_pitroad=[True], now=0.0)
+    # The mocked SessionInfo is on CurrentSessionNum 1.
+    mock_service._last_session_num = 0
+
+    ctx = mock_service._build_context()
+
+    assert ctx.pit_labels == {}
 
 
 def test_get_current_session_empty_or_out_of_bounds(mock_service):
@@ -182,12 +210,41 @@ def test_build_context_returns_none_when_no_drivers(irsdk_mock_factory):
     assert ctx is None
 
 
-def test_build_context_calculates_lap_relations_from_player(mock_service):
+def test_build_context_calculates_lap_deltas_from_player(mock_service):
     # CarIdxLap [5, 5, 4], CarIdxLapDistPct [0.6, 0.3, 0.9], player 0:
     # car 1 is on the same lap, car 2 is a lap behind.
     ctx = mock_service._build_context()
 
-    assert ctx.lap_relations.deltas == {1: 0, 2: -1}
+    assert ctx.lap_deltas == {1: 0, 2: -1}
+
+
+def test_build_context_collects_car_positions_once_per_snapshot(mock_service):
+    ctx = mock_service._build_context()
+
+    assert ctx.car_positions == Leaderboard.build_car_positions(
+        drivers=ctx.drivers,
+        lap_dist_pct=ctx.lap_dist_pct,
+        est_times=ctx.est_times,
+    )
+    assert set(ctx.car_positions) == set(range(len(ctx.drivers)))
+
+
+def test_build_car_positions_takes_values_by_car_index():
+    positions = Leaderboard.build_car_positions(
+        drivers=[
+            {"CarClassID": 4074, "CarClassEstLapTime": 230.72},
+            {"CarClassID": 4074, "CarClassEstLapTime": 232.76},
+            # No telemetry for this car yet.
+            {"CarClassID": 2523, "CarClassEstLapTime": 211.4},
+        ],
+        lap_dist_pct=[0.5, 0.62],
+        est_times=[115.36, 144.31],
+    )
+
+    assert positions == {
+        0: CarPositionContext(0.5, 115.36, 230.72, 4074),
+        1: CarPositionContext(0.62, 144.31, 232.76, 4074),
+    }
 
 
 def test_build_snapshot_includes_cached_irating_deltas(mock_service, mock_ctx):
@@ -375,3 +432,87 @@ def test_calculate_sof_includes_unstarted_drivers(
     )
 
     assert result == expected
+
+
+# --- track time line ---
+
+
+class RecordingTimeLine:
+    """Records what Leaderboard records into the player's time line."""
+
+    def __init__(self):
+        self.bindings = []
+        self.samples = []
+
+    def bind(self, track_id, class_id, est_lap_time):
+        self.bindings.append((track_id, class_id, est_lap_time))
+
+    def record(self, car):
+        self.samples.append((car.lap_dist_pct, car.est_time, car.est_lap_time))
+
+
+def test_track_time_line_records_player_class_cars_off_pit_road(
+    mock_service,
+    mock_ctx,
+):
+    mock_service.track_time_line = RecordingTimeLine()
+    ctx = mock_ctx(
+        drivers=[
+            {"CarClassID": 1, "CarClassEstLapTime": 100.0},
+            {"CarClassID": 2},
+            # Another car model of the player's class.
+            {"CarClassID": 1, "CarClassEstLapTime": 102.0},
+            {"CarClassID": 1},
+            {"CarClassID": 1, "UserName": "Pace Car", "CarIsPaceCar": 1},
+        ],
+        lap_dist_pct=[0.1, 0.2, 0.3, 0.4, 0.5],
+        est_times=[10.0, 20.0, 30.0, 40.0, 50.0],
+        is_pitroad=[False, False, False, True, False],
+        player_idx=0,
+    )
+
+    mock_service._record_track_time_line(ctx)
+
+    # Another class, pit road and the pace car are left out; every sample
+    # comes with its car's reference lap for rescaling.
+    assert mock_service.track_time_line.samples == [
+        (0.1, 10.0, 100.0),
+        (0.3, 30.0, 102.0),
+    ]
+
+
+def test_track_time_line_is_bound_to_track_class_and_player_lap_time(
+    mock_service,
+    mock_ctx,
+):
+    mock_service.track_time_line = RecordingTimeLine()
+    mock_service.irsdk.get_value = lambda key: (
+        {"TrackID": 123} if key == "WeekendInfo" else None
+    )
+    ctx = mock_ctx(
+        drivers=[{"CarClassID": 1, "CarClassEstLapTime": 100.0}],
+        lap_dist_pct=[0.1],
+        est_times=[10.0],
+        is_pitroad=[False],
+        player_idx=0,
+    )
+
+    mock_service._record_track_time_line(ctx)
+
+    assert mock_service.track_time_line.bindings == [(123, 1, 100.0)]
+
+
+def test_track_time_line_is_not_recorded_without_player(mock_service, mock_ctx):
+    mock_service.track_time_line = RecordingTimeLine()
+
+    mock_service._record_track_time_line(mock_ctx(player_idx=None))
+
+    assert mock_service.track_time_line.samples == []
+
+
+def test_build_context_keeps_one_track_time_line_across_snapshots(mock_service):
+    first = mock_service._build_context()
+    second = mock_service._build_context()
+
+    assert first.track_time_line is mock_service.track_time_line
+    assert second.track_time_line is mock_service.track_time_line

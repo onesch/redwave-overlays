@@ -12,3 +12,4 @@ TODOLIST.md
 .venv/
 coverage/
 coverage_stats.py
+tools/

@@ -1,6 +1,7 @@
-from typing import Any
-
-from backend.components.lap_relation import wrap_gap
+from backend.components.car_class import CarClassComponent
+from backend.components.lap_relation import LapRelationComponent
+from backend.components.time_gap import TimeGapComponent
+from backend.components.track_position import TrackPositionComponent
 from backend.services.leaderboard.context import LeaderboardContext
 
 
@@ -12,141 +13,46 @@ class NeighborsService:
 
     def __init__(self, builder):
         self.builder = builder
+        self.time_gap = TimeGapComponent()
 
     def get_neighbors(self, player_idx, ctx) -> dict:
         """
         Calculate and return cars surrounding the player.
         
-        1. Collect all possible candidates around the player.
-        2. Split candidates into:
-        - cars ahead;
-        - cars behind;
-        - physical traffic ahead;
-        - physical traffic behind.
-        3. Sort cars by their physical distance from the player.
-        4. Format data into a structure ready for API/UI.
+        1. Collect all cars on the track, of every class, and split them
+           into cars ahead and cars behind the player.
+        2. Sort cars by their physical distance from the player.
+        3. Format data into a structure ready for API/UI.
 
         Returns:
             {
                 "ahead": [...],
-                "behind": [...],
-                "physical_ahead": [...],
-                "physical_behind": [...]
+                "behind": [...]
             }
         """
-        ahead, behind, physical_ahead, physical_behind = self._collect_candidates(
-            player_idx, ctx
-        )
+        ahead, behind = self._collect_candidates(player_idx, ctx)
         ahead, behind = self._sort_candidates(ahead, behind)
-        physical_ahead, physical_behind = self._sort_candidates(
-            physical_ahead, physical_behind
-        )
-        result = self._format_neighbors(ahead, behind)
-        result["physical_ahead"] = self._format_candidate_list(physical_ahead)
-        result["physical_behind"] = self._format_candidate_list(physical_behind)
-        return result
-
-    def _calc_gap(
-        self,
-        my_dist: float,
-        my_laps: int,
-        my_est_time: float,
-        my_est_lap_time: float,
-        other_dist: float,
-        other_laps: int,
-        other_est_time: float,
-        other_est_lap_time: float,
-        same_class: bool = True,
-    ) -> dict[str, float | None] | None:
-        """
-        Calculate physical and time distance between two cars.
-
-        - gap_pct:
-            Physical distance difference on the track.
-        - gap_sec:
-            Time difference between two cars based on CarIdxEstTime.
-
-            CarIdxEstTime uses a class-specific lap-time scale,
-            so cars from another class must first be normalized
-            to the player's class time scale before comparison.
-        """
-        if not self._is_valid_distance(other_dist):
-            return None
-
-        if not self._is_valid_distance(my_dist):
-            return None
-
-        # Calculate the shortest physical gap between the cars on the track.
-        raw = (other_laps + other_dist) - (my_laps + my_dist)
-        gap_pct = wrap_gap(raw)
-
-        # Calculate the estimated time gap when both cars have valid telemetry.
-        gap_sec = None
-
-        if other_est_time > 0 and my_est_time > 0:
-            comparable_other_est_time = other_est_time
-
-            # Normalize another class's estimated time to the player's time scale.
-            if not same_class:
-                if not (
-                    self._is_valid_lap_time(my_est_lap_time)
-                    and self._is_valid_lap_time(other_est_lap_time)
-                ):
-                    return {
-                        "gap_pct": gap_pct,
-                        "gap_sec": None,
-                    }
-
-                comparable_other_est_time = (
-                    other_est_time
-                    * my_est_lap_time
-                    / other_est_lap_time
-                )
-
-            # Calculate the time difference using comparable time scales.
-            gap_sec = comparable_other_est_time - my_est_time
-
-            # Wrap the time gap across the start/finish line.
-            if self._is_valid_lap_time(my_est_lap_time):
-                half_lap = my_est_lap_time / 2
-
-                if gap_sec > half_lap:
-                    gap_sec -= my_est_lap_time
-
-                elif gap_sec < -half_lap:
-                    gap_sec += my_est_lap_time
-
-        return {
-            "gap_pct": gap_pct,
-            "gap_sec": gap_sec,
-        }
+        return self._format_neighbors(ahead, behind)
 
     def _collect_candidates(
         self,
         player_idx: int,
         ctx: LeaderboardContext,
-    ) -> tuple[list[dict], list[dict], list[dict], list[dict]]:
+    ) -> tuple[list[dict], list[dict]]:
         """
         Collect cars around the player and group them by relative
-        track position and racing relevance.
+        track position.
         """
         # Validate the player's required telemetry arrays.
         if not self._has_required_arrays(player_idx, ctx):
-            return [], [], [], []
+            return [], []
 
-        my_dist = ctx.lap_dist_pct[player_idx]
-        my_laps = ctx.laps_started[player_idx]
-        my_est_time = ctx.est_times[player_idx]
+        player = ctx.car_positions.get(player_idx)
+        if player is None:
+            return [], []
 
-        my_driver = ctx.drivers[player_idx]
-        my_class_id = my_driver.get("CarClassID")
-        my_est_lap_time = my_driver.get("CarClassEstLapTime") or 0.0
-
-        # Prepare collections for racing neighbors and multiclass traffic.
         ahead = []
         behind = []
-        physical_ahead = []
-        physical_behind = []
 
         # Collect valid cars around the player.
         for idx in range(len(ctx.drivers)):
@@ -160,54 +66,34 @@ class NeighborsService:
             if not car_data:
                 continue
 
-            other_driver = ctx.drivers[idx]
-            other_class_id = other_driver.get("CarClassID")
-            same_class = (
-                my_class_id is not None
-                and other_class_id is not None
-                and other_class_id == my_class_id
-            )
-            other_laps = ctx.laps_started[idx]
-            other_dist = ctx.lap_dist_pct[idx]
-            other_est_lap_time = (
-                other_driver.get("CarClassEstLapTime") or 0.0
-            )
-
-            # Calculate the physical and estimated time gaps.
-            gap = self._calc_gap(
-                my_dist=my_dist,
-                my_laps=my_laps,
-                my_est_time=my_est_time,
-                my_est_lap_time=my_est_lap_time,
-                other_dist=other_dist,
-                other_laps=other_laps,
-                other_est_time=ctx.est_times[idx],
-                other_est_lap_time=other_est_lap_time,
-                same_class=same_class,
-            )
-
-            if not gap or gap["gap_pct"] == 0:
+            car = ctx.car_positions.get(idx)
+            if car is None:
                 continue
 
-            # Add racing and multiclass metadata.
-            car_data["lap_diff"] = ctx.lap_relations.label(idx)
-            car_data["same_class"] = same_class
-            car_data["racing_relevance"] = "class" if same_class else "traffic"
+            # Skip cars off the track or level with the player.
+            gap_pct = TrackPositionComponent.distance_gap(
+                player.lap_dist_pct,
+                car.lap_dist_pct,
+            )
 
-            candidate = {"car": car_data, **gap}
-            # Add the car to the main physical neighbor collection.
-            target = ahead if gap["gap_pct"] > 0 else behind
+            if gap_pct is None or gap_pct == 0:
+                continue
+
+            gap_sec = self.time_gap.time_gap(player, car, ctx.track_time_line)
+
+            lap_delta = ctx.lap_deltas.get(idx)
+            car_data["is_lap_ahead"] = LapRelationComponent.is_lap_ahead(lap_delta)
+            car_data["is_lap_behind"] = LapRelationComponent.is_lap_behind(lap_delta)
+            car_data["same_class"] = CarClassComponent.is_same_class(
+                player.class_id,
+                car.class_id,
+            )
+
+            candidate = {"car": car_data, "gap_pct": gap_pct, "gap_sec": gap_sec}
+            target = ahead if gap_pct > 0 else behind
             target.append(candidate)
 
-            if same_class:
-                continue
-
-            # Keep other-class cars available as a separate traffic layer,
-            # but do not remove them from the main lap-distance neighbors.
-            traffic_target = physical_ahead if gap["gap_pct"] > 0 else physical_behind
-            traffic_target.append(candidate)
-
-        return ahead, behind, physical_ahead, physical_behind
+        return ahead, behind
 
     @staticmethod
     def _sort_candidates(
@@ -279,13 +165,3 @@ class NeighborsService:
             and 0 <= idx < len(ctx.laps_started)
             and 0 <= idx < len(ctx.est_times)
         )
-
-    @staticmethod
-    def _is_valid_distance(value: Any) -> bool:
-        """Return True when a lap-distance value can be used for gap math."""
-        return isinstance(value, (int, float)) and value >= 0
-
-    @staticmethod
-    def _is_valid_lap_time(value: Any) -> bool:
-        """Return True when a class lap time can be used as a time scale."""
-        return isinstance(value, (int, float)) and value > 0

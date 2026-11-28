@@ -1,6 +1,5 @@
 import pytest
 
-from backend.components.lap_relation import LapRelations
 from backend.services.track_map.service import TrackMapCarBuilder
 
 
@@ -22,24 +21,24 @@ def test_track_map_builder_adds_class_data(mock_builder, mock_ctx):
 @pytest.mark.parametrize(
     "delta,expected",
     [
-        (1, "ahead_lap"),
-        (-2, "behind_lap"),
-        (0, None),
-        (None, None),
+        (1, (True, False)),
+        (-2, (False, True)),
+        (0, (False, False)),
+        (None, (False, False)),
     ],
 )
-def test_track_map_builder_adds_lap_diff_from_context(
+def test_track_map_builder_adds_lap_flags_from_context(
     mock_builder,
     mock_ctx,
     delta,
     expected,
 ):
     deltas = {} if delta is None else {1: delta}
-    ctx = mock_ctx(lap_relations=LapRelations(deltas))
+    ctx = mock_ctx(lap_deltas=deltas)
 
     car = mock_builder.build(1, ctx)
 
-    assert car["lap_diff"] == expected
+    assert (car["is_lap_ahead"], car["is_lap_behind"]) == expected
 
 
 # --- Negative tests ---

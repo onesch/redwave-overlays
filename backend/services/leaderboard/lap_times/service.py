@@ -1,28 +1,15 @@
-from typing import Any, Iterable, Literal
+from typing import Any, Literal
 
+from backend.components.lap_time import LapTimeComponent
 from backend.services.leaderboard.context import LeaderboardContext
 
 
 class LapTimeService:
     """Encapsulates Leaderboard service lap-time selection and calculations."""
 
-    @staticmethod
-    def is_valid_lap_time(lap_time: Any) -> bool:
-        """Return True when a telemetry value can be used as a lap time."""
-        return isinstance(lap_time, (int, float)) and lap_time > 0
-
-    def fastest_lap(self, lap_times: Iterable[Any]) -> float | None:
-        """Return the fastest valid lap from an arbitrary collection."""
-        valid_laps = [
-            lap_time
-            for lap_time in lap_times
-            if self.is_valid_lap_time(lap_time)
-        ]
-        return min(valid_laps) if valid_laps else None
-
     def session_fastest_lap(self, ctx: LeaderboardContext) -> float | None:
         """Return the fastest valid best lap across the session."""
-        return self.fastest_lap(ctx.best_lap_times)
+        return LapTimeComponent.fastest_lap(ctx.best_lap_times)
 
     def class_fastest_lap(
         self,
@@ -35,7 +22,7 @@ class LapTimeService:
             for idx, driver in enumerate(ctx.drivers)
             if idx < len(ctx.best_lap_times) and driver.get("CarClassID") == class_id
         )
-        return self.fastest_lap(class_laps)
+        return LapTimeComponent.fastest_lap(class_laps)
 
     def best_lap_time(
         self,
@@ -47,7 +34,7 @@ class LapTimeService:
             return None
 
         best_lap = ctx.best_lap_times[player_idx]
-        return best_lap if self.is_valid_lap_time(best_lap) else None
+        return best_lap if LapTimeComponent.is_valid_lap_time(best_lap) else None
 
     def estimated_lap_time(
         self,
@@ -59,7 +46,10 @@ class LapTimeService:
             return None
 
         estimated_lap = ctx.drivers[player_idx].get("CarClassEstLapTime")
-        return estimated_lap if self.is_valid_lap_time(estimated_lap) else None
+        if not LapTimeComponent.is_valid_lap_time(estimated_lap):
+            return None
+
+        return estimated_lap
 
     def car_lap_time(
         self,

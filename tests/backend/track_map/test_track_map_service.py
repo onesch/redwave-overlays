@@ -94,7 +94,7 @@ def test_snapshot_cars_contain_class_data(mock_service):
     assert car["color"] == "#ff0000"
 
 
-def test_snapshot_cars_contain_lap_diff_relative_to_player(
+def test_snapshot_cars_contain_lap_flags_relative_to_player(
     irsdk_mock_factory, mock_values_dict
 ):
     # Player 0 at 5 + 0.3; car 1 at 6 + 0.2 is almost a lap up the road.
@@ -102,17 +102,19 @@ def test_snapshot_cars_contain_lap_diff_relative_to_player(
 
     cars = TrackMapService(irsdk_mock_factory(values)).get_snapshot()["cars"]
 
-    assert [car["lap_diff"] for car in cars] == [None, "ahead_lap"]
+    assert [car["is_lap_ahead"] for car in cars] == [False, True]
+    assert [car["is_lap_behind"] for car in cars] == [False, False]
 
 
-def test_snapshot_cars_have_no_lap_diff_without_lap_data(mock_service):
+def test_snapshot_cars_have_no_lap_flags_without_lap_data(mock_service):
     # mock_values_dict has no CarIdxLap.
     cars = mock_service.get_snapshot()["cars"]
 
-    assert [car["lap_diff"] for car in cars] == [None, None]
+    assert [car["is_lap_ahead"] for car in cars] == [False, False]
+    assert [car["is_lap_behind"] for car in cars] == [False, False]
 
 
-def test_snapshot_cars_have_no_lap_diff_when_player_is_off_track(
+def test_snapshot_cars_have_no_lap_flags_when_player_is_off_track(
     irsdk_mock_factory, mock_values_dict
 ):
     values = {
@@ -123,7 +125,8 @@ def test_snapshot_cars_have_no_lap_diff_when_player_is_off_track(
 
     cars = TrackMapService(irsdk_mock_factory(values)).get_snapshot()["cars"]
 
-    assert [car["lap_diff"] for car in cars] == [None, None]
+    assert [car["is_lap_ahead"] for car in cars] == [False, False]
+    assert [car["is_lap_behind"] for car in cars] == [False, False]
 
 
 def test_snapshot_contains_multiclass_and_track(mock_service):

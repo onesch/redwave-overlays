@@ -1,5 +1,6 @@
 from typing import Any
 
+from backend.components.track_position import TrackPositionComponent
 from backend.services.base import BaseService
 from backend.services.radar.context import RadarContext
 from backend.services.radar.constants import (
@@ -185,33 +186,15 @@ class RadarService(BaseService):
 
         return left_data, right_data
 
-    @staticmethod
-    def _lap_delta(my: float, other: float) -> float:
-        """
-        Computes the normalized lap distance delta between two cars,
-        accounting for wrap-around at 0/1.
-
-        Returns:
-            Positive value if the other car is ahead.
-            Negative value if the other car is behind.
-            Zero if both cars are aligned.
-        """
-        delta = other - my
-
-        if delta > 0.5:
-            delta -= 1.0
-        elif delta < -0.5:
-            delta += 1.0
-
-        return delta
-
     def _find_closest_side_car(self, ctx: RadarContext) -> int | None:
         """
         Find the car closest to the player along the track.
 
         Uses lap distance percentages to compare the longitudinal
         position of each car relative to the player's car.
-        Wrap-around at the start/finish line is handled by `_lap_delta()`.
+        Wrap-around at the start/finish line is handled by
+        `TrackPositionComponent.distance_gap()`.
+        Cars off the track (negative lap distance) are skipped.
 
         Example:
             Player car is at 50% of the lap.
@@ -239,12 +222,14 @@ class RadarService(BaseService):
             if i == my_idx:
                 continue
 
-            # Skip cars without a valid lap-distance value.
-            if pct is None:
+            # Longitudinal gap from the player's car; None when either car
+            # has no valid lap distance (missing or off the track).
+            gap = TrackPositionComponent.distance_gap(my_pct, pct)
+
+            if gap is None:
                 continue
 
-            # Calculate the absolute longitudinal distance from the player's car.
-            delta = abs(self._lap_delta(my_pct, pct))
+            delta = abs(gap)
 
              # Keep the closest car found so far.
             if delta < best_score:
@@ -293,7 +278,9 @@ class RadarService(BaseService):
 
         other_pct = ctx.lap_dist_pct[car_idx]
 
-        delta_pct = self._lap_delta(my_pct, other_pct)
+        delta_pct = TrackPositionComponent.distance_gap(my_pct, other_pct)
+        if delta_pct is None:
+            return None
 
         offset_m = delta_pct * ctx.track_length_m
 

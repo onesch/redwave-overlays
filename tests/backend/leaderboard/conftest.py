@@ -81,6 +81,15 @@ def mock_ctx(mock_values: Callable) -> LeaderboardContext:
 
     def _make_ctx(**overrides):
         data = {**defaults, **overrides}
+        # Built from the context arrays like Leaderboard._build_context() does.
+        data.setdefault(
+            "car_positions",
+            Leaderboard.build_car_positions(
+                drivers=data["drivers"],
+                lap_dist_pct=data["lap_dist_pct"],
+                est_times=data["est_times"],
+            ),
+        )
         return LeaderboardContext(**data)
 
     return _make_ctx
